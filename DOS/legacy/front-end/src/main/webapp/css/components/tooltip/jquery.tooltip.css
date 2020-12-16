@@ -1,0 +1,33 @@
+/* Tooltip */
+
+#tooltip {
+	position:absolute;
+	z-index:9999;
+	color:#fff;
+	font-size:10px;
+	width:180px;
+	
+}
+
+#tooltip .tipHeader {
+	height:8px;
+	background:url(images/tipHeader.gif) no-repeat;
+}
+
+
+#tooltip .tipBody {
+	background-color:#000;
+	padding:5px 5px 5px 15px;
+}
+
+#tooltip .tipFooter {
+	height:8px;
+	background:url(images/tipFooter.gif) no-repeat;
+}
+/*
+a:hover {background:#ffffff; text-decoration:none;}   
+a.tooltip span {display:none; padding:2px 3px; margin-left:3px; width:130px;}  
+*/
+a.tooltip span {display:none; padding:2px 3px; margin-left:3px;}  
+    
+a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; border:1px solid #cccccc; color:#6c6c6c;}

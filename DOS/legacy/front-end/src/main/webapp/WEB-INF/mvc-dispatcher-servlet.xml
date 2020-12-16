@@ -1,0 +1,136 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd">
+        
+	<context:component-scan base-package="com.agnux.kemikal.controllers" />
+        
+	<mvc:annotation-driven />
+
+    <bean id="propertyPlaceholderConfigurer"
+          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE" />
+        <property name="searchSystemEnvironment" value="true" />
+   </bean>
+       
+        <bean id="velocityConfig" class="org.springframework.web.servlet.view.velocity.VelocityConfigurer">
+            <property name="resourceLoaderPath" value="/"/>
+        </bean>
+        
+        <bean id="viewResolver" class=" org.springframework.web.servlet.view.velocity.VelocityViewResolver" >
+            <property name="prefix">
+                <value>/vm/</value>
+            </property>
+            <property name="suffix">
+                <value>.vm</value>
+            </property>
+        </bean>
+        
+        <!-- conf para archivos   --> 
+        <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+            <property name="maxUploadSize" value="15744000"/>
+        </bean>
+        
+        
+        <!--  Finaliza  nuevo   -->
+        <bean id="jdbcTemplateSpring" class="org.springframework.jdbc.core.JdbcTemplate">
+	     <constructor-arg>
+	         <ref bean="dataSource" />
+	     </constructor-arg>
+	</bean>
+	
+        
+        <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+            <property name="driverClassName" value="org.postgresql.Driver" />
+            <property name="url" value="#{systemEnvironment['MS_DBMS_URL']}" />
+            <property name="username" value="#{systemEnvironment['MS_DBMS_USER']}" />
+            <property name="password" value="#{systemEnvironment['MS_DBMS_PASS']}" />
+        </bean>
+        
+        
+        <!--<bean name="beanOutCfdi" class="com.agnux.cfdi.BeanSolicitidesOut"></bean>-->
+        
+        <!--http://static.springsource.org/spring/docs/2.5.x/reference/beans.html#beans-factory-lifecycle-initializingbean-->
+        
+        <bean name="beanFacturador" class="com.agnux.cfd.v2.BeanFacturador"></bean>
+        <bean name="beanFacturadorCfdi" class="com.agnux.cfdi.BeanFacturadorCfdi"></bean>
+        <bean name="beanFacturadorCfdiTf" class="com.agnux.cfdi.timbre.BeanFacturadorCfdiTimbre"></bean>
+        <bean name="beanCancelaCfdi" class="com.agnux.cfdi.BeanCancelaCfdi"></bean>
+        
+        
+        <bean name="daoHome" class="com.agnux.kemikal.springdaos.HomeSpringDao">
+	     <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoCotizacion" class="com.agnux.kemikal.springdaos.CotizacionesSpringDao">
+	     <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoPrefactura" class="com.agnux.kemikal.springdaos.PrefacturasSpringDao">
+	     <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoParametros" class="com.agnux.kemikal.springdaos.ParametrosGeneralesSpringDao">
+	     <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoFacturas" class="com.agnux.kemikal.springdaos.FacturasSpringDao">
+	     <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoCxc" class="com.agnux.kemikal.springdaos.CxcSpringDao">
+	     <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoCxp" class="com.agnux.kemikal.springdaos.CxpSpringDao">
+	     <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoInv" class="com.agnux.kemikal.springdaos.InvSpringDao">
+	     <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoGral" class="com.agnux.kemikal.springdaos.GralSpringDao">
+	     <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoCtb" class="com.agnux.kemikal.springdaos.CtbSpringDao">
+	     <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoTes" class="com.agnux.kemikal.springdaos.TesSpringDao">
+             <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoPoc" class="com.agnux.kemikal.springdaos.PocSpringDao">
+             <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoPro" class="com.agnux.kemikal.springdaos.ProSpringDao">
+             <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoLog" class="com.agnux.kemikal.springdaos.LogSpringDao">
+             <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoCom" class="com.agnux.kemikal.springdaos.ComSpringDao">
+            <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoCrm" class="com.agnux.kemikal.springdaos.CrmSpringDao">
+             <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+        <bean name="daoEnv" class="com.agnux.kemikal.springdaos.EnvSpringDao">
+             <property name="jdbcTemplate" ref="jdbcTemplateSpring" />
+        </bean>
+        
+</beans>

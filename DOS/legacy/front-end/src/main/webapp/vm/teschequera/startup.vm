@@ -1,0 +1,635 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+		
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/teschequera/formaTeschequera.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/teschequera/formaBuscaCuentaContable.css" type="text/css" />
+		
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/teschequera/modalboxTeschequera.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/teschequera/modalboxBuscaCuentaContable.js"></script>
+        <script type="text/javascript" src="../../js/implements/teschequera/index.js" ></script>
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        <!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+			<tr>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="new_item" class="tooltip"><div class="onmouseOutNewItem" id="nItem"></div><span>Registrar nueva Chequera</span></a></td>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="visualiza_buscador" class="tooltip"><div class="onmouseOutVisualizaBuscador" id="vbuscador"></div><span>Busqueda</span></a>  </td>
+			</tr>
+		</table>
+        
+        <!--Esta tabla va  en la barra de buscador -->
+                <table border="0" class="tabla_buscador" style="display:none">
+			<tr>
+				<td colspan="9">&nbsp;&nbsp;</td>
+			</tr>
+			<tr>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>Banco:</td>
+				<td width="10">&nbsp;&nbsp;</td>
+				<td>
+					<SELECT NAME="busqueda_select_banco" style="width:150px;">
+						<option value="0" selected="yes">[--Elige un Banco--]</option>
+                                        </SELECT>
+				</td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="button" value="Buscar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td ><INPUT TYPE="button" value="Limpiar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+		</table>
+        
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+		
+        
+        
+		
+      
+        <!--form for Chequera -->
+        <form id="formachequera" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal chequeras_div_one"  style="display:none;" title="">
+                
+                    <input type="hidden" name="identificador">
+					
+                    <div id="div_two" title="" class="chequeras_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" id="cierra" style="width:560px; padding-left:6px;"><strong>Cat&aacute;logo de Chequera</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="div_three" title="" class="chequeras_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Chequera</strong></a></li>
+                                    <li><a href="#tabx-2"><strong>Datos</strong></a></li>
+                                    <li><a href="#tabx-3"><strong>Otros</strong></a></li>
+                                    <li><a href="#tabx-4"><strong>Contabilidad</strong></a></li>
+                                    
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+									
+                                    <div id="tabx-1" class="contenidoPes" >
+                                        <table border="0">  
+                                                 
+                                                <tr>
+													<td width="5">&nbsp;</td>
+													<td width="70">Chequera</td>
+													<td width="5">&nbsp;</td>
+													<td width="100" colspan="5"><INPUT TYPE="text" name="chequera" style="width:100px;"></td>
+													<td width="25">&nbsp;<div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_chequera"></div></td>
+													<td width="40">&nbsp;</td>
+													<td width="100">&nbsp;</td>
+													<td width="70" align="center"><font><strong>Captura&nbsp;cheque</strong></font></td>
+													<td width="5">&nbsp;</td>
+													<td width="25">&nbsp;</td>
+													<td width="5">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="16" height="5px">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+													<td width="5">&nbsp;</td>
+													<td width="70">Moneda</td>
+													<td width="5">&nbsp;</td>
+													<td width="100"  colspan="5"><SELECT NAME="moneda" style="width:70px;"></SELECT></td>
+													<td width="25">&nbsp;<div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_moneda"></div></td>
+													<td width="40">&nbsp;</td>
+													<td width="100">&nbsp;</td>
+													<td width="70">Permitir&nbsp;modificar&nbsp;consecutivo</td>
+													<td width="5">&nbsp;</td>
+													<td width="25"><input type="checkbox" name="check_modificar_consecutivo"></td>
+													<td width="5">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="16" height="5px">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+													<td width="5">&nbsp;</td>
+													<td width="70">&nbsp</td><!----cuenta-->
+													<td width="5">&nbsp;</td>
+													<td width="40"><!--<SELECT NAME="moneda" style="width:40px;"><option value="true">123</option>
+														<option value="false" >123</option></SELECT>-->
+													</td>
+													<td width="5">&nbsp;</td>
+													<td width="40"><!--<SELECT NAME="moneda" style="width:40px;"><option value="true">123</option>
+														<option value="false" >123</option></SELECT>-->
+													</td>
+													<td width="5">&nbsp;</td>
+													<td width="40"><!--<SELECT NAME="moneda" style="width:40px;"><option value="true">123</option>
+														<option value="false" >123</option></SELECT>-->
+													</td>
+													<td width="5">&nbsp;</td>
+													<td width="40" ><!--<SELECT NAME="moneda" style="width:40px;"><option value="true">123</option>
+														<option value="false" >123</option></SELECT>-->
+													</td>
+													<td width="100">&nbsp;</td>
+													<td width="70">Permitir&nbsp;modificar&nbsp;fecha</td>
+													<td width="5">&nbsp;</td>
+													<td width="25"><input type="checkbox" name="check_modificar_fecha"></td>
+													<td width="5">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="16" height="5px">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+													<td width="5">&nbsp;</td>
+													<td width="70"></td><!--Descripcion-->
+													<td width="5">&nbsp;</td>
+													<td width="100" colspan="5"><!--<INPUT TYPE="text" name="descripcion" style="width:100px;">--></td>
+													<td width="25">&nbsp;<div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_descripcion"></div></td>
+													<td width="40">&nbsp;</td>
+													<td width="100">&nbsp;</td>
+													<td width="70">Permitir&nbsp;modificar&nbsp;cheque</td>
+													<td width="5">&nbsp;</td>
+													<td width="25"><input type="checkbox" name="check_modificar_cheque"></td>
+													<td width="5">&nbsp;</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td colspan="16" height="5px">&nbsp;</td>
+                                                </tr>
+                                                <tr>
+													<td width="5">&nbsp;</td>
+													<td width="70" colspan="3">Imprime&nbsp;cheque&nbsp;en&nbsp;Ingles</td>
+													<td width="5">&nbsp;</td>
+													<td width="25" colspan="4"><input type="checkbox" name="check_imprimir_chequeningles"></td>
+													<td width="100">&nbsp;</td>
+													<td width="70">&nbsp;</td>
+													<td width="5">&nbsp;</td>
+													<td width="25">&nbsp;</td>
+													<td width="5">&nbsp;</td>
+                                                </tr>
+                                    <!--
+                                                <tr>
+                                                    <td colspan="16" height="5px">&nbsp;</td>
+                                                </tr>
+
+                                                <tr>
+                                                        <td width="5">&nbsp;</td>
+                                                        <td width="70">Cuenta&nbsp;complementaria</td>
+                                                        <td width="5">&nbsp;</td>
+                                                        <td width="40"><SELECT NAME="moneda" style="width:40px;"></td>
+                                                        <td width="5">&nbsp;</td>
+                                                        <td width="40"><SELECT NAME="moneda" style="width:40px;"><option value="true">123</option>
+                                                            <option value="false" >123</option></SELECT>
+                                                        </td>
+                                                        <td width="5">&nbsp;</td>
+                                                        <td width="40"><SELECT NAME="moneda" style="width:40px;"><option value="true">123</option>
+                                                            <option value="false" >123</option></SELECT>
+                                                        </td>
+                                                        <td width="5">&nbsp;</td>
+                                                        <td width="40"><SELECT NAME="moneda" style="width:40px;"><option value="true">123</option>
+                                                            <option value="false" >123</option></SELECT>
+                                                        </td>
+                                                        <td width="100">&nbsp;</td>
+                                                        <td width="70">&nbsp;</td>
+                                                        <td width="5">&nbsp;</td>
+                                                        <td width="25">&nbsp;</td>
+                                                        <td width="5">&nbsp;</td>
+
+                                                </tr>
+                                    -->                                                                            
+                                                                                        
+                                        </table>
+                                    </div>
+									
+                                    <div id="tabx-2" class="contenidoPes" >
+                                        <table border="0">
+							
+											<tr>
+												<td width="5"></td>
+												<td width="80">Banco</td>
+												<td width="5">&nbsp;</td>
+												<td width="200" >
+													<SELECT NAME="select_banco" style="width:200px;">
+													   <!-- <option value="true"  >banco 1</option>
+														<option value="false" >banco 2</option>
+														<option value="false" >banco 3</option>-->
+													</SELECT>
+												</td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_banco"></div></td>
+												<td width="5" height="10" colspan="6"></td>
+											</tr>
+											<tr>
+												<td height="11" colspan="11"></td>
+											</tr>
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="80">No.&nbsp;Sucursal</td>
+												<td width="5">&nbsp;</td>
+												<td width="100"><INPUT TYPE="text" name="numero_sucursal" style="width:100px;"></td>												
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_numero_sucursal"></div></td>
+												<td width="50" colspan="2">Nombre&nbsp;Sucursal</td>
+												<td width="100" colspan="3"><INPUT TYPE="text" name="nombre_sucursal" style="width:150px;"></td>												
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_nombre_sucursal"></div></td>
+											</tr>
+											<tr>
+												<td height="11" colspan="11"></td>
+											</tr>
+											<tr>
+												<td width="5"></td>
+												<td width="80">Calle</td>
+												<td width="5">&nbsp;</td>
+												<td width="295" colspan="4"><INPUT TYPE="text" name="calle" style="width:295px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_calle"></div></td>
+												<td width="50">N&uacute;mero</td>
+												<td width="75"><INPUT TYPE="text" name="numero" style="width:75px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_numero"></div></td>
+											</tr>
+											<tr>
+												<td height="11" colspan="11"></td>
+											</tr>
+											<tr>
+												<td width="5"></td>
+												<td width="80">Colonia</td>
+                                                <td width="5">&nbsp;</td>
+												<td width="295" colspan="4"><INPUT TYPE="text" name="colonia" style="width:295px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_colonia"></div></td>
+												<td width="50">C.P.</td>
+												<td width="75"><INPUT TYPE="text" name="cp" style="width:75px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_codigo_postal"></div></td>
+											</tr>
+											<tr>
+												<td height="11" colspan="11"></td>
+											</tr>
+											
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="80">Pa&iacute;s</td>
+												<td width="5">&nbsp;</td>
+												<td width="150"><SELECT NAME="pais" style="width:150px;"></SELECT></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_pais"></div></td>
+												<td width="50"></td>
+												<td width="70">Estado</td>
+												<td width="150" colspan="3"><SELECT NAME="estado" style="width:150px;"></SELECT></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_Estado"></div></td>
+											</tr>
+											<tr>
+												<td height="11" colspan="11"></td>
+											</tr>
+											
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="80">Municipio</td>
+												<td width="5">&nbsp;</td>
+												<td width="150"><SELECT NAME="municipio" style="width:150px;"></SELECT></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_municipio"></div></td>
+												<td width="50"></td>
+												<td width="70"></td>
+												<td width="150" colspan="3"></td>
+												<td width="25"></div></td>
+											</tr>
+											<tr>
+												<td height="11" colspan="11"></td>
+											</tr>
+											<!--<tr>
+												<td width="5" height="10"></td>
+												<td width="80">Tel&eacute;fono&nbsp;1</td>
+												<td width="5">&nbsp;</td>
+												<td width="150"><INPUT TYPE="text" name="tel1" style="width:150px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tel1"></div></td>
+												<td width="50"></td>
+												<td width="70">Extensi&oacute;n&nbsp;1</td>
+												<td width="150" colspan="3"><INPUT TYPE="text" name="ext1" style="width:150px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_ext1"></div></td>
+											</tr>
+											<tr>
+												<td height="11" colspan="11"></td>
+											</tr>
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="80">Tel&eacute;fono&nbsp;2</td>
+                                                                                                <td width="5">&nbsp;</td>
+												<td width="150"><INPUT TYPE="text" name="tel2" style="width:150px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tel2"></div></td>
+												<td width="50"></td>
+												<td width="70">Extensi&oacute;n&nbsp;2</td>
+												<td width="150" colspan="3"><INPUT TYPE="text" name="ext2" style="width:150px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_ext2"></div></td>
+											</tr>-->
+                                                                                        
+                                        </table>
+                                    </div>
+									
+                                    <div id="tabx-3" class="contenidoPes" >
+										<table border="0">
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="80">Tel&eacute;fono&nbsp;1</td>
+												<td width="5">&nbsp;</td>
+												<td width="100"><INPUT TYPE="text" name="tel1" style="width:100px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tel1"></div></td>
+												<td width="70">Extensi&oacute;n&nbsp;1</td>
+												<td width="5">&nbsp;</td>
+												<td width="100" ><INPUT TYPE="text" name="ext1" style="width:100px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_ext1"></div></td>
+												<td width="70">Fax</td>
+												<td width="5">&nbsp;</td>
+												<td width="100" ><INPUT TYPE="text" name="fax" style="width:100px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_fax"></div></td>
+												<td width="5">&nbsp;</td>
+											</tr>
+											<tr>
+											   <td colspan="14">&nbsp;</td>
+											</tr>
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="80">Tel&eacute;fono&nbsp;2</td>
+												<td width="5">&nbsp;</td>
+												<td width="100"><INPUT TYPE="text" name="tel2" style="width:100px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tel1"></div></td>
+												<td width="70">Extensi&oacute;n&nbsp;2</td>
+												<td width="5">&nbsp;</td>
+												<td width="100"><INPUT TYPE="text" name="ext2" style="width:100px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_ext1"></div></td>
+												<td width="70">&nbsp;</td>
+												<td width="5">&nbsp;</td>
+												<td width="100" ></td>
+												<td width="25"></td>
+												<td width="5">&nbsp;</td>
+											</tr>
+											<tr>
+												<td colspan="14">&nbsp;</td>
+											</tr>
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="80">Gerente</td>
+												<td width="5">&nbsp;</td>
+												<td width="100" colspan="10"><INPUT TYPE="text" name="gerente" style="width:400px;"></td>
+												<td width="5">&nbsp;</td>
+											</tr>
+											<tr>
+												<td colspan="14">&nbsp;</td>
+											</tr>
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="80">Ejecutivo</td>
+												<td width="5">&nbsp;</td>
+												<td width="100" colspan="10"><INPUT TYPE="text" name="ejecutivo" style="width:400px;"></td>
+												<td width="5">&nbsp;</td>
+											</tr>
+											<tr>
+												<td colspan="14">&nbsp;</td>
+											</tr>
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="80">Email</td>
+												<td width="5">&nbsp;</td>
+												<td width="100" colspan="10"><INPUT TYPE="text" name="email" style="width:400px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_email"></div></td>
+											</tr>
+										</table>
+                                    </div>
+                                    
+                                    
+                                    
+                                    
+                                    <div id="tabx-4" class="contenidoPes" >
+                                        <table border="0" class="gral">
+											<tr>
+												<td width="5"></td>
+												<td width="150">Cuenta&nbsp;Activo</td>
+												<td>
+													<input type="hidden" name="id_cta_activo" value="0">
+													<input name="ac_cuenta" style="width:40px;" maxlength="4" readOnly="true">
+												</td>
+												<td width="5"></td>
+												<td><input name="ac_scuenta" style="width:40px;" maxlength="4" readOnly="true"></td>
+												<td width="5"></td>
+												<td><input name="ac_sscuenta" style="width:40px;" maxlength="4" readOnly="true"></td>
+												<td width="5"></td>
+												<td><input name="ac_ssscuenta" style="width:40px;" maxlength="4" readOnly="true"></td>
+												<td width="5"></td>
+												<td><input name="ac_sssscuenta" style="width:40px;" maxlength="4" readOnly="true"></td>
+												<td width="52"><a href="busca_activo">&nbsp;(Buscar)</a></td>
+												<td width="250"><input type="text"name="descripcion_ac" style="width:250px;" readOnly="true"></td>
+												<td width="50"><a href="limpiar_activo">&nbsp;(Limpiar)</a></td>
+											</tr>
+											<tr>
+												<td width="14">&nbsp;</td>
+											</tr>
+                                        </table>
+                                    </div>
+                                    <!--Termina tabx-4  contabilidad-->
+                                    
+                                    
+								</div>
+                            </div>
+							
+							
+                            <div class="fixed column" id="botones" style="width:579px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+								<table border="0">
+									<tr><td colspan="4" height="7"></td></tr>
+									<tr>
+										<td width="579"></td>
+										<td>
+											<input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+										</td>
+										<td width="30"></td>
+										<td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+									</tr>
+								</table>
+                            </div>
+                            
+                            
+                            
+                        </div>
+                    </div>
+                </div>
+        </form>
+        
+        #include("${layoutfooter}")
+        
+        
+        
+        
+        
+        
+
+
+
+		<div class="buscador_cuentas" style="display:none;">	
+			<table width="100%" border="0" class="formaBusqueda_cuentas">
+				<tr>
+					<td>
+						<div class="div_dos_buscactacontable">
+							<table width="100%" border="0">
+								<thead>
+									<tr>
+										<td colspan="10" height="50" valign="top"><div class="titulo_buscactacontable" width="100%"><strong>Buscador de cuentas contables</strong></div></td>
+									</tr>
+								</thead>
+								
+								<tbody>
+									<tr class="gral">
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff;"></td>
+										<td colspan="6" style="background:#ffffff;" width="600">
+											
+											<table id="tabla_busqueda" border="0"  class="contenidobusqueda">
+												<tr>
+													<td colspan="13" width="600" height="10"></td>
+												</tr>
+												
+												<tr>
+													<td width="100">Cuenta&nbsp;de&nbsp;mayor</td>
+													<td width="220" colspan="8">
+														<select name="select_cta_mayor" style="width:220px;">
+															<option value="0" selected="yes">[--  --]</OPTION>
+														</select>
+													</td>
+													<td width="50"></td>
+													<td width="80">Clasificaci&oacute;n</td>
+													<td width="100"><input type="text" name="clasif" style="width:50px;" maxlength="4"></td>
+													<td width="50"></td>
+												</tr>
+												<tr>
+													<td colspan="13" width="600" height="10"></td>
+												</tr>
+												<tr>
+													<td width="100">Cuenta</td>
+													<td width="50"><input name="cuenta" style="width:50px;" maxlength="4"></td>
+													<td width="5"></td>
+													<td width="50"><input name="scuenta" style="width:50px;" maxlength="4"></td>
+													<td width="5"></td>
+													<td width="50"><input name="sscuenta" style="width:50px;" maxlength="4"></td>
+													<td width="5"></td>
+													<td width="50"><input name="ssscuenta" style="width:50px;" maxlength="4"></td>
+													<td width="5"></td>
+													<td width="50"><input name="sssscuenta" style="width:50px;" maxlength="4"></td>
+													<td width="80"></td>
+													<td width="100"></td>
+													<td width="50"></td>
+												</tr>
+												
+												<tr>
+													<td colspan="13" width="600" height="10"></td>
+												</tr>
+												<tr>
+													<td width="100">Descripci&oacute;n</td>
+													<td width="270" colspan="9"><input type="text" name="campo_descripcion" style="width:270px;"></td>
+													<td width="80"></td>
+													<td width="100"></td>
+													<td width="50" align="right"><input type="button" id="boton_busca" class="onmouseOutBuscar"></td>
+												</tr>
+												
+											</table>
+											
+										</td>
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									
+									<tr style="font-size:13px;">
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff"></td>
+										
+										<td width="30" style="background:#A8A9AB;">M&nbsp;</td>
+										<td width="30" style="background:#A8A9AB;">C&nbsp;</td>
+										<td width="170" style="background:#A8A9AB;">Cuenta&nbsp;</td>
+										<td width="230" style="background:#A8A9AB;">Descripci&oacute;n</td>
+										<td width="70" style="background:#A8A9AB;">Detalle</td>
+										<td width="70" style="background:#A8A9AB;">Nivel Cta.</td>
+										
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									
+									<tr>
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff"></td>
+										<td style="background:#ffffff; border: solid 1px #454442;" colspan="6" width="600">
+											<div style="overflow:scroll; overflow-x:auto; overflow-y:auto; width:600px; height:120px; align=top;">
+												<table  border="0" id="tabla_resultado" width="580">
+													<!--aqui van los resultados de la busqueda-->
+												</table>
+											</div>
+										</td>
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									<tr>
+										<td width="10"></td>
+										<td width="10" colspan="8" height="4" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									<tr>
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff"></td>
+										
+										<td width="30"  style="background:#ffffff"></td>
+										<td width="30"  style="background:#ffffff"></td>
+										<td width="170"  style="background:#ffffff"></td>
+										<td width="230" style="background:#ffffff"></td>
+										<td width="70" style="background:#ffffff"></td>
+										<td width="70" style="background:#ffffff" align="right">
+											<input type="button" id="boton_cencela" class="onmouseOutCancelar">
+										</td>
+										
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									<tr>
+										<td width="10"></td>
+										<td width="10" colspan="8" height="6" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+								</tbody>
+								
+							</table>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+
+        
+        
+        
+        
+        
+        
+        
+    </body>
+</html>	
+
+

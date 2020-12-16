@@ -1,0 +1,475 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+        
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/components/jquery-ui/jquery-ui-1.8.21.custom.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/propreordenproduccion/formaProPreordenProduccion.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/propreordenproduccion/formaBuscaPedidos.css" type="text/css" />
+        <!--<link rel="stylesheet" href="../../css/modalbox/propreordenproduccion/formaBuscaproducto.css" type="text/css" />-->
+        
+        
+        
+        
+        
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/jquery-ui/jquery-ui-1.7.2.custom.min.js"></script>
+        
+        <script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/propreordenproduccion/modalboxProPreordenProduccion.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/propreordenproduccion/modalboxBuscaPedido.js"></script>
+        
+        <script type="text/javascript" src="../../js/implements/propreordenproduccion/index.js" ></script>
+	
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+		<input type="hidden" name="user" value="$username">
+		<input type="hidden" name="emp" value="$empresa">
+		<input type="hidden" name="iu" value="$iu">
+		<input type="hidden" name="suc" value="$sucursal">
+		
+        <!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+                    <tr>
+                        <td width="15" height="30"></td>
+                        <td height="30"><a href="new_item" class="tooltip"><img src="../../img/catalogo/crear.png" border=0 ><span>Registro de Preorden de Producci&oacute;n</span></a></td>
+                        <td width="15" height="30"></td>
+                        <td height="30"><a href="visualiza_buscador" class="tooltip"><img src="../../img/catalogo/buscar.png" border=0 ><span>Busqueda</span></a>  </td>
+                    </tr>
+		</table>
+        
+        <!--Esta tabla va  en la barra de buscador -->
+		<table border="0" class="tabla_buscador" style="display:none">
+				<tr>
+                                    <td colspan="13">&nbsp;&nbsp;</td>
+				</tr>
+                                <tr>
+                                    <td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                    <td>Folio Proceso</td>
+                                    <td width="10">&nbsp;</td>
+                                    <td>Tipo de Orden</td>
+                                    <td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                    
+                                    <td width="25">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                    <td></td>
+                                    <td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                    <td ></td>
+                                    <td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				</tr>
+				<tr>
+                                    <td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                    <td><INPUT TYPE="text" name="busqueda_folio" style="width:100px;"></td>
+                                    <td width="10">&nbsp;</td>
+                                    <td>
+                                        <select name="buscador_tipoorden">
+                                            <option value="0">[-- Seleccione un opcion --]</option>
+                                        </select>
+                                    </td>
+                                    <td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                    
+                                    <td width="25">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                    <td><INPUT TYPE="button" value="Buscar"></td>
+                                    <td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                    <td ><INPUT TYPE="button" value="Limpiar"></td>
+                                    <td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				</tr>
+                                
+		</table>
+		
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+	
+	
+        
+        <!--form for proconfigproduccion -->
+        <form id="formaProPreordenProduccion00" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal propreordenproduccion_div_one"  style="display:none;" title="">
+                    <input type="hidden" name="id_preorden">
+                    <input type="hidden" name="command_selected">
+                    
+                    <div id="div_two" title="" class="propreordenproduccion_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" style="width:938px; padding-left:6px;"><strong>Registro de Preorden de Producci&oacute;n</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="div_three" title="" class="propreordenproduccion_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Proceso</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+                                    
+                                    <div id="tabx-1" class="contenidoPes" >
+											
+										<table border="0" style="margin:0; padding:0;">
+                                                                                    <tr>
+                                                                                        <td valign="top" colspan="3" > 
+                                                                                            <table border="0" class="gral">
+                                                                                                <tr >
+                                                                                                    <td width="10"></td>
+                                                                                                    <td width="90">Tipo Preorden</td>
+                                                                                                    <td width="10"></td>
+                                                                                                    <td>
+                                                                                                        <SELECT NAME="tipoorden" style="width:150px;" />
+                                                                                                    </td>
+                                                                                                    <td width="30"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tipoorden"></div></td>
+                                                                                                    <td width="100">Observaciones</td>
+                                                                                                    <td width="10"></td>
+                                                                                                    <td colspan="3">
+                                                                                                        <textarea name="observaciones" style="width:270px;resize: none;" rows="1"></textarea>
+                                                                                                    </td>
+                                                                                                    <td width="15"></td>
+                                                                                                    <td colspan="100">
+                                                                                                        <INPUT TYPE="button" id="confirmar_orden" name="confirmar_orden" value="Confirmar Orden" style="height:20px;" class="confirmar">&nbsp;&nbsp;&nbsp;
+                                                                                                        <INPUT TYPE="button" id="cancelar_orden" name="cancelar_orden" value="Cancelar Preorden" style="height:20px;" class="confirmar">&nbsp;&nbsp;&nbsp;
+                                                                                                        <INPUT TYPE="button" id="descargar_pdf" name="descargar_pdf" value="Descargar PDF" style="height:20px;" class="confirmar">
+                                                                                                    </td>
+                                                                                                    <td width="10"></td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    <td colspan="11"></td>
+                                                                                                </tr>
+                                                                                            </table>
+
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                        <td colspan="3"></td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                        <!--<td style="border: solid 1px #313E74;">-->
+                                                                                        <td colspan="3" >
+
+                                                                                            <!-- Para tipos pedido-->
+                                                                                            <div class="tipo_pedido" style="display:none;" >
+                                                                                                <table>
+                                                                                                    <tr>
+                                                                                                        <td width="10"></td>
+                                                                                                        <td width="10">Pedido </td>
+                                                                                                        <td width="5"></td>
+                                                                                                        <td>
+                                                                                                            <INPUT TYPE="text" name="folio_pedido" style="width:100px;" >
+                                                                                                        </td>
+                                                                                                        <td width="10"></td>
+                                                                                                        <td width="80">No. Cliente</td>
+                                                                                                        <td width="5"></td>
+                                                                                                        <td>
+                                                                                                            <input type="hidden" name="id_pedido_parent">
+                                                                                                            <INPUT TYPE="text" name="num_cliente" style="width:100px;" readOnly="true">
+                                                                                                        </td>
+                                                                                                        <td width="10"></td>
+                                                                                                        <td width="100"><a href="busca_pedido">(Buscar Pedido)</a></td>
+                                                                                                        <td width="10">Cliente</td>
+                                                                                                        <td width="10"></td>
+                                                                                                        <td><INPUT TYPE="text" name="rsocialcliente" style="width:250px;" readOnly="true"></td>
+                                                                                                        <td width="15"></td>
+                                                                                                    </tr>
+                                                                                                    <tr >
+                                                                                                        <td colspna="14">
+                                                                                                            &nbsp;
+                                                                                                        </td>
+                                                                                                    </tr>
+                                                                                                    <tr>
+                                                                                                        <td colspan="14" style="border: solid 1px #313E74;">
+                                                                                                            
+                                                                                                            <table border="0">
+                                                                                                                <thead>
+                                                                                                                    <!--
+                                                                                                                    <tr class="productos_pedido">
+                                                                                                                        <td class="grid" colspan="3">Productos del pedido: <span class="folio_prod_pedido"></td>
+                                                                                                                    </tr>-->
+                                                                                                                    <th class="productos_pedido">
+                                                                                                                        <td class="grid" width="100">Codigo</td>
+                                                                                                                        <td class="grid" width="100">Presentacion</td>
+                                                                                                                        <td class="grid" width="500">&nbsp;Descripci&oacute;n</td>
+                                                                                                                        <td class="grid" width="100">U. Medida</td>
+                                                                                                                        <td class="grid" width="100">Cantidad</td>
+                                                                                                                    </th>
+                                                                                                                </thead>
+                                                                                                            </table>
+                                                                                                            <div style="overflow:scroll; overflow-x: hidden; overflow-y: auto;  width:935px; height: 90px; border:1px solid #C1DAD7 !important;">	
+                                                                                                                <table class="productos_porpedido" border="0">
+                                                                                                                    <tbody style="background-color: #FFFFFF;" valign="top" id="productos_porpedido">
+
+                                                                                                                    </tbody>
+                                                                                                                </table>
+                                                                                                            </div>
+
+                                                                                                        </td>
+                                                                                                    </tr>
+                                                                                                </table>
+                                                                                            </div>
+                                                                                            
+                                                                                            
+                                                                                            <!--Para tipos laboratorio-->
+                                                                                            <div class="tipo_laboratorio" style="display:none;">
+                                                                                                <table>
+                                                                                                    <tr>
+                                                                                                        <td >
+                                                                                                            
+                                                                                                        </td>
+                                                                                                    </tr>
+                                                                                                </table>
+                                                                                            </div>
+                                                                                        </td>
+                                                                                        
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                        <td colspan="3" height="10">&nbsp;</td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                            <!--<td style="border: solid 1px #313E74;">-->
+                                                                                            <td style="border: solid 1px #313E74;" colspan="3">
+                                                                                                <table class="gral">
+                                                                                                    <tr>
+                                                                                                        <td width="10"></td>
+                                                                                                        <td>
+
+                                                                                                            <table >
+                                                                                                                <thead>
+                                                                                                                    <tr class="subprocesos_seleccionados">
+                                                                                                                        <td class="grid" id="td_eliminar" width="61"><div class="delete">&nbsp;#</div></td>
+                                                                                                                        <td class="grid" width="100">&nbsp;Codigo</td>
+                                                                                                                        <td class="grid" width="100">&nbsp;Presentaci&oacute;n</td>
+                                                                                                                        <td class="grid" width="410">&nbsp;Descripci&oacute;n</td>
+                                                                                                                        <td class="grid" width="100">U. Medida</td>
+                                                                                                                        <td class="grid" width="100">&nbsp;Cantidad</td>
+                                                                                                                    </tr>
+                                                                                                                </thead>
+                                                                                                            </table>
+                                                                                                            <div style="overflow:scroll; overflow-x: hidden; overflow-y: auto;  width:871; height: 115px; border:1px solid #C1DAD7 !important;">	
+                                                                                                                <table class="grid_productos_seleccionados" >
+                                                                                                                    <tbody style="background-color: #FFFFFF;" valign="top" id="grid_productos_seleccionados">
+                                                                                                                        
+                                                                                                                    </tbody>
+                                                                                                                </table>
+                                                                                                            </div>
+                                                                                                            
+                                                                                                            
+                                                                                                        </td>
+                                                                                                        <td width="10"></td>
+                                                                                                    </tr>
+                                                                                                </table>
+                                                                                            </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                        <td colspan="3">
+                                                                                            
+                                                                                            
+                                                                                            <!-- Codigo para errores -->
+                                                                                            <div id="div_warning_grid" style="display:none;">
+                                                                                                <table border ="0">
+                                                                                                    <tr>
+                                                                                                        <td width="10"></td>
+                                                                                                        <td width="600" colspan="4"><div style="color:#d41000;">&nbsp;&nbsp;Datos&nbsp;no&nbsp;validos</div></td>
+                                                                                                        <td width="10"></td>
+                                                                                                    </tr>
+                                                                                                    <tr>
+                                                                                                        <td width="5"></td>
+                                                                                                        <td width="20" style="background-color:#A8A9AB; font-weight: bold;"></td>
+                                                                                                        <td width="120" style="background-color:#A8A9AB; font-weight: bold;">C&oacute;digo&nbsp;producto</td>
+                                                                                                        <td width="200" style="background-color:#A8A9AB; font-weight: bold;">Nombre</td>
+                                                                                                        <td width="375" style="background-color:#A8A9AB; font-weight: bold;">Descripci&oacute;n&nbsp;del&nbsp;error</td>
+                                                                                                        <td width="10"></td>
+                                                                                                    </tr>
+                                                                                                    <tr>
+                                                                                                        <td width="10"></td>
+                                                                                                        <td colspan="4">
+                                                                                                            <div align="left" style="width:721px; height:58px; overflow:scroll; overflow-x: auto; overflow-y: auto; color:#d41000;">
+                                                                                                                <table id="grid_warning" border="0" style="width:715px;"">
+                                                                                                                    <!-- Aqui se muestran los warning
+                                                                                                                    style="background-color:#e7e8ea;"
+                                                                                                                    -->
+                                                                                                                </table>
+                                                                                                            </div>
+                                                                                                        </td>
+                                                                                                        <td width="10"></td>
+                                                                                                    </tr>
+                                                                                                </table>
+                                                                                            </div>
+                                                                                            
+                                                                                            
+                                                                                        </td>
+                                                                                    </tr>
+										</table>
+										 
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+                            <div class="fixed column" style="width:955px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+                                <table border="0">
+                                    <tr>
+                                        <td width="955"></td>
+                                        <td>
+                                            <!--<input  id="submit" style="width:77px; height:24px; background-image:url('../../img/modalbox/btn1.png'); background-repeat:no-repeat;">-->
+                                            <input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+                                        </td>
+                                        <td width="30"></td>
+                                        <td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                                                      
+
+
+                        </div>
+                    </div>
+                </div>
+        </form>
+        
+        
+        
+        
+        
+        
+        
+        
+        #include("${layoutfooter}")
+        
+        
+    </body>
+</html>	
+
+
+
+
+
+
+<div class="buscador_pedidos" style="display:none;">	
+	<table width="100%" border="0" class="formaBusqueda_pedidos">
+		<tr>
+			<td>
+				<div class="div_dos_buscapedido">
+					<table width="100%" border="0">
+						<thead>
+                                                    <tr>
+                                                        <td colspan="8" height="50" valign="top"><div class="titulo_buscapedido" width="100%"><strong>Buscador de pedidos</strong></div></td>
+                                                    </tr>
+						</thead>
+						
+						<tbody>
+							<tr>
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff;"></td>
+								<td colspan="4" style="background:#ffffff;" width="600">
+									
+									<table id="tabla_busqueda" border="0"  class="contenidobusqueda">
+                                                                            <tr>
+                                                                                <td colspan="7" width="600" height="10"></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td width="70">Folio</td>
+                                                                                <td width="120"><INPUT TYPE="text" name="buscapedido_folio" style="width:120px;"></td>
+                                                                                <td width="25"></td>
+                                                                                <td width="90">Proveedor</td>
+                                                                                <td width="200">
+                                                                                    <INPUT TYPE="text" name="buscapedido_proveedor" style="width:250px;">
+                                                                                </td>
+                                                                                <td width="25"></td>
+                                                                                <td width="90"><INPUT TYPE="button" id="busca_producto_modalbox" class="onmouseOutBuscar"></td>
+                                                                            </tr>
+
+                                                                            <tr>
+                                                                                <td colspan="7" width="600" height="10"></td>
+                                                                            </tr>
+                                                                        </table>
+									
+								</td>
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr style="font-size:13px;">
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff"></td>
+								
+								<td width="100" align="center" style="background:#A8A9AB;">Folio</td>
+								<td width="350"  align="center" style="background:#A8A9AB;" colspan="2">Proveedor</td>
+								<td width="150"  align="center" style="background:#A8A9AB;">Fecha</td>
+								
+                                                                <td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							
+							<tr>
+                                                            <td width="10"></td>
+                                                            <td width="10" style="background:#ffffff"></td>
+                                                            <td style="background:#ffffff; border: solid 1px #313E74;" colspan="4" width="630">
+                                                                <div style="overflow:scroll; overflow-x:auto; overflow-y:auto; width:630px; height:120px; align=top;">
+                                                                    <table  border="0" id="tabla_resultado" width="610" style="font-size:12px;">
+                                                                        <!--aqui van los resultados de la busqueda-->
+                                                                        <!--
+                                                                            <tr>
+                                                                                <td width="90">Folio</td>
+                                                                                <td width="320" colspan="2">Proveedor</td>
+                                                                                <td width="140">Fecha</td>
+                                                                            </tr>
+                                                                        -->
+                                                                    </table>
+                                                                </div>
+                                                            </td>
+                                                            <td width="10" style="background:#ffffff"></td>
+                                                            <td width="10"></td>
+							</tr>
+							<tr>
+                                                            <td width="10"></td>
+                                                            <td width="10" colspan="6" height="4" style="background:#ffffff"></td>
+                                                            <td width="10"></td>
+							</tr>
+							<tr>
+                                                            <td width="10"></td>
+                                                            <td width="10" style="background:#ffffff"></td>
+                                                            <td width="120"  style="background:#ffffff"></td>
+                                                            <td width="280" style="background:#ffffff"></td>
+                                                            <td width="90" style="background:#ffffff"></td>
+                                                            <td width="110" style="background:#ffffff" align="right">
+                                                                    <INPUT TYPE="button" id="cencela" class="onmouseOutCancelar">
+                                                            </td>
+
+                                                            <td width="10" style="background:#ffffff"></td>
+                                                            <td width="10"></td>
+							</tr>
+							<tr>
+                                                            <td width="10"></td>
+                                                            <td width="10" colspan="6" height="6" style="background:#ffffff"></td>
+                                                            <td width="10"></td>
+							</tr>
+						</tbody>
+						
+					</table>
+				</div>
+			</td>
+		</tr>
+	</table>
+</div>
+
+

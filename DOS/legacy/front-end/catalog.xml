@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="system">
+    <system systemId="file:/home/agnux/NetBeansProjects/erp-quimicos/../../Documentos/CONTABILIDAD_ELECTRONICA/catalogo_cuentas/CatalogoCuentas_1_1.xsd" uri="src/main/resources/jaxb/CatalogoCuentas/CatalogoCuentas_1_1.xsd"/>
+    <system systemId="http://www.sat.gob.mx/esquemas/ContabilidadE/1_1/CatalogosParaEsqContE/CatalogosParaEsqContE.xsd" uri="src/main/resources/jaxb/CatalogoCuentas/www.sat.gob.mx/esquemas/ContabilidadE/1_1/CatalogosParaEsqContE/CatalogosParaEsqContE.xsd"/>
+</catalog>

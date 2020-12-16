@@ -1,0 +1,296 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+        
+        <!--  css for this catalogo -->
+        <!--<link rel="stylesheet" href="../../css/components/jquery-ui/jquery-ui-1.8.21.custom.css" type="text/css" />-->
+        <link rel="stylesheet" href="../../css/modalbox/procalidad/formaProCalidad.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/procalidad/formaBuscaproducto.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/procalidad/formaRequisicionOP.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/procalidad/formaEquivalentes.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/procalidad/formaEspecificaciones.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/procalidad/formaFormulasendesarrollo.css" type="text/css" />
+        
+        
+        
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <!--<script type="text/javascript" src="../../js/components/jquery-ui/jquery-ui.min.js"></script>-->
+        
+        <script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/procalidad/modalboxProCalidad.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/procalidad/modalboxBuscaproducto.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/procalidad/modalboxRequisicionOP.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/procalidad/modalboxEquivalentes.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/procalidad/modalboxEspecificaciones.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/procalidad/modalboxFormulasendesarrollo.js"></script>
+        <script type="text/javascript" src="../../js/implements/procalidad/index.js" ></script>
+	
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+		<input type="hidden" name="user" value="$username">
+		<input type="hidden" name="emp" value="$empresa">
+		<input type="hidden" name="iu" value="$iu">
+		<input type="hidden" name="suc" value="$sucursal">
+		
+        <!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+			<tr>
+				<!--
+				<td width="15" height="30"></td>
+				<td height="30"><a href="new_item" class="tooltip"><img src="../../img/catalogo/crear.png" border=0 ><span>Registro de Orden de Producci&oacute;n</span></a></td>
+				-->
+				<td width="15" height="30"></td>
+				<td height="30"><a href="visualiza_buscador" class="tooltip"><img src="../../img/catalogo/buscar.png" border="0" ><span>Busqueda</span></a>  </td>
+			</tr>
+		</table>
+        
+        <!--Esta tabla va  en la barra de buscador -->
+		<table border="0" class="tabla_buscador" style="display:none">
+			<tr>
+				<td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>Folio Proceso</td>
+				<td width="10">&nbsp;</td>
+				<td>Tipo de Orden</td>
+				<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>Codigo Producto</td>
+				<td width="20">&nbsp;</td>
+				
+				<td width="25">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td></td>
+				<td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td ></td>
+				<td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+			<tr>
+				<td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="text" name="busqueda_folio" style="width:100px;"></td>
+				<td width="10">&nbsp;</td>
+				<td>
+					<select name="buscador_tipoorden">
+						<option value="0">[-- Seleccione un opcion --]</option>
+					</select>
+				</td>
+				<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="text" name="sku_producto_busqueda" style="width:100px;"></td>
+				<td width="20">&nbsp;</td>
+				
+				<td width="25">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="button" value="Buscar"></td>
+				<td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td ><INPUT TYPE="button" value="Limpiar"></td>
+				<td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+                                
+		</table>
+		
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+	
+	
+        
+        <!--form for procalidad -->
+        <form id="formaprocalidad00" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal procalidad_div_one"  style="display:none;" title="">
+                    <input type="hidden" name="id_orden">
+                    <input type="hidden" name="proceso_flujo_id">
+                    
+                    <div id="div_two" title="" class="procalidad_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" style="width:610px; padding-left:6px;"><strong>Aseguramiento de Calidad</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <div id="div_three" title="" class="procalidad_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Producci&oacute;n</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+                                    
+                                    <div id="tabx-1" class="contenidoPes" >
+										
+                                        <table border="0" style="margin:0; padding:0;">
+											<tr>
+												<td></td>
+											</tr>
+											<tr>
+												<td valign="top" > 
+													<fieldset style="border:solid 1px #313E74;; margin:0px; padding:0px;" class="gral">
+														<legend>&nbsp;Datos&nbsp;de&nbsp;la&nbsp;Orden&nbsp;de&nbsp;Producci&oacute;n</legend> 
+														<ol valign="top" style="margin:0px; padding:0px;">
+															<table border="0" class="gral">
+																<tr>
+																	<td height="5" colspan="10"></td>
+																</tr>
+																<tr>
+																	<td width="10"></td>
+																	<td width="70">Tipo&nbsp;Orden</td>
+																	<td width="100"><SELECT NAME="select_tipoorden" style="width:100px;"/></td>
+																	<td width="30"></td>
+																	<td width="50"></td>
+																	<td width="130" colspan="2"><INPUT TYPE="text" name="cancelada" class="borde_oculto" style="width:130px;" readOnly="true"></td>
+																	<td width="50"></td>
+																	<td width="100"></td>
+																	<td width="30"></td>
+																</tr>
+																<tr><td colspan="10" height="7"></td></tr>
+																<tr>
+																	<td width="10"></td>
+																	<td width="70">Folio</td>
+																	<td width="100"><INPUT TYPE="text" name="folio" style="width:100px;" readOnly="true"></td>
+																	<td width="30"></td>
+																	<td width="50">Fecha</td>
+																	<td width="100"><INPUT TYPE="text" name="fecha" style="width:100px;" readOnly="true"></td>
+																	<td width="30"></td>
+																	<td width="50">Lote</td>
+																	<td width="100"><INPUT TYPE="text" name="lote" style="width:100px;" readOnly="true"></td>
+																	<td width="30"></td>
+																</tr>
+																<tr><td colspan="10" height="7"></td></tr>
+																<tr>
+																	<td width="9"></td>
+																	<td width="70">C&oacute;digo</td>
+																	<td width="100"><INPUT TYPE="text" name="codigo" style="width:100px;" readOnly="true"></td>
+																	<td width="30"></td>
+																	<td width="50">Unidad</td>
+																	<td width="100"><INPUT TYPE="text" name="unidad" style="width:100px;" readOnly="true"></td>
+																	<td width="30"></td>
+																	<td width="50">Cantidad</td>
+																	<td width="100"><INPUT TYPE="text" name="cantidad" style="width:100px;" readOnly="true"></td>
+																	<td width="30"></td>
+																</tr>
+																<tr><td colspan="10" height="7"></td></tr>
+																<tr>
+																	<td width="9"></td>
+																	<td width="70">Descripci&oacute;n</td>
+																	<td width="100" colspan="7"><INPUT TYPE="text" name="nombre" style="width:462px;" readOnly="true"></td>
+																	<td width="30"></td>
+																</tr>
+																<tr><td colspan="10" height="7"></td></tr>
+																<tr>
+																	<td width="10"></td>
+																	<td width="70">Observaciones</td>
+																	<td width="460" colspan="7">
+																		<textarea name="observaciones" style="width:460px; resize:none;" rows="2" readOnly="true"></textarea>
+																	</td>
+																	<td width="30"></td>
+																</tr>
+															</table>
+														</ol>
+													</fieldset>
+														
+												</td>
+										   </tr>
+										   
+											<tr>
+												<td height="10"></td>
+											</tr>
+										   
+											<tr>
+												<td valign="top" > 
+													
+													<fieldset style="border:solid 1px #313E74;; margin:0px; padding:0px;" class="gral">
+														<legend>&nbsp;Calidad</legend> 
+														<ol valign="top" style="margin:0px; padding:0px;">
+															<table border="0" class="gral">
+																<tr>
+																	<td width="10"></td>
+																	<td width="70">Estado</td>
+																	<td width="100"><SELECT NAME="select_status_calidad" style="width:100px;"/></td>
+																	<td width="30"></td>
+																	<td width="50"></td>
+																	<td width="100"></td>
+																	<td width="30"></td>
+																	<td width="50"></td>
+																	<td width="100"></td>
+																	<td width="30"></td>
+																</tr>
+																<tr><td colspan="10" height="7"></td></tr>
+																<tr>
+																	<td width="10"></td>
+																	<td width="70">Comentarios</td>
+																	<td width="100" colspan="7">
+																		<textarea name="comentarios" style="width:460px; resize:none;" rows="2"></textarea>
+																	</td>
+																	<td width="30"></td>
+																</tr>
+															</table>
+														</ol>
+													</fieldset>
+													
+												</td>
+										   </tr>
+										   
+										</table>
+										
+										
+										 
+                                    </div>
+
+                                </div>
+                            </div>
+
+							
+                            <div class="fixed column" style="width:623px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+								<table border="0">
+									<tr>
+										<td width="523"></td>
+										<td>
+											<!--<input  id="submit" style="width:77px; height:24px; background-image:url('../../img/modalbox/btn1.png'); background-repeat:no-repeat;">-->
+											<input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+										</td>
+										<td width="30"></td>
+										<td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+									</tr>
+								</table>
+                                
+                            </div>
+                            
+                                                      
+
+
+                        </div>
+                    </div>
+                </div>
+        </form>
+        
+        
+        
+        
+        
+        
+        
+        
+        #include("${layoutfooter}")
+        
+        
+    </body>
+</html>	
+
+

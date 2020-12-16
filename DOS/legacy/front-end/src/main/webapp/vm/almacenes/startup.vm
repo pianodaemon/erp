@@ -1,0 +1,382 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+		
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/almacenes/formaAlmacenes.css" type="text/css" />
+		
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/almacenes/modalboxAlmacenes.js"></script>
+        <script type="text/javascript" src="../../js/implements/almacenes/index.js" ></script>
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        <!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+			<tr>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="new_item" class="tooltip"><div class="onmouseOutNewItem" id="nItem"></div><span>Registrar nuevo almacen</span></a></td>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="visualiza_buscador" class="tooltip"><div class="onmouseOutVisualizaBuscador" id="vbuscador"></div><span>Busqueda</span></a>  </td>
+			</tr>
+		</table>
+        
+        <!--Esta tabla va  en la barra de buscador -->
+		<table border="0" class="tabla_buscador" style="display:none">
+			<tr>
+				<td colspan="13">&nbsp;&nbsp;</td>
+			</tr>
+			<tr>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>Nombre</td>
+				<td width="10">&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="text" name="busqueda_nombre" style="width:200px;"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>Tipo</td>
+				<td width="10">&nbsp;&nbsp;</td>
+				<td>
+					<SELECT NAME="busqueda_select_tipo" style="width:150px;">
+						<option value="0">[--Seleccionar tipo --]</option>
+					</SELECT>
+				</td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="button" value="Buscar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td ><INPUT TYPE="button" value="Limpiar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+		</table>
+        
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+		
+        
+        
+		
+        
+        
+		
+        
+        
+        <!--form for centros de costo -->
+        <form id="formaalmacenes00" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal almacenes_div_one"  style="display:none;" title="">
+                
+                <input type="hidden" name="identificador">
+					
+                    <div id="div_two" title="" class="almacenes_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" id="cierra" style="width:560px; padding-left:6px;"><strong>Cat&aacute;logo de Almacenes</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="div_three" title="" class="almacenes_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Almacen</strong></a></li>
+                                    <li><a href="#tabx-2"><strong>Responsable</strong></a></li>
+                                    <li><a href="#tabx-3"><strong>Disponibilidad</strong></a></li>
+                                    <li><a href="#tabx-4"><strong>Sucursales</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+									
+                                    <div id="tabx-1" class="contenidoPes" >
+                                        <table border="0">
+											<tr>
+												<td width="5"></td>
+												<td width="70">Nombre</td>
+												<td width="445" colspan="7"><INPUT TYPE="text" name="nombre" style="width:445px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_nombre"></div></td>
+											</tr>
+											
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="70"></td>
+												<td width="150"></td>
+												<td width="25"></td>
+												<td width="50"></td>
+												<td width="70"></td>
+												
+												<td width="25"></td>
+												<td width="50"></td>
+												<td width="75"></td>
+												<td width="25"></td>
+											</tr>
+											
+											<tr>
+												<td width="5"></td>
+												<td width="70">Calle</td>
+												<td width="295" colspan="4"><INPUT TYPE="text" name="calle" style="width:295px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_calle"></div></td>
+												<td width="50">N&uacute;mero</td>
+												<td width="75"><INPUT TYPE="text" name="numero" style="width:75px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_numero"></div></td>
+											</tr>
+											
+											<tr>
+												<td height="10" colspan="10"></td>
+											</tr>
+											
+											<tr>
+												<td width="5"></td>
+												<td width="70">Colonia</td>
+												<td width="295" colspan="4"><INPUT TYPE="text" name="colonia" style="width:295px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_colonia"></div></td>
+												<td width="50">C.P.</td>
+												<td width="75"><INPUT TYPE="text" name="cp" style="width:75px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_cp"></div></td>
+											</tr>
+											<tr>
+												<td height="10" colspan="10"></td>
+											</tr>
+											
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="70">Pa&iacute;s</td>
+												<td width="150"><SELECT NAME="pais" style="width:150px;"></SELECT></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_pais"></div></td>
+												<td width="50"></td>
+												<td width="70">Estado</td>
+												<td width="150" colspan="3"><SELECT NAME="estado" style="width:150px;"></SELECT></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_estado"></div></td>
+											</tr>
+											<tr>
+												<td height="10" colspan="10"></td>
+											</tr>
+											
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="70">Municipio</td>
+												<td width="150"><SELECT NAME="municipio" style="width:150px;"></SELECT></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_municipio"></div></td>
+												<td width="50"></td>
+												<td width="70"></td>
+												<td width="150" colspan="3"></td>
+												<td width="25"></div></td>
+											</tr>
+											<tr>
+												<td height="10" colspan="10"></td>
+											</tr>
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="70">Tel&eacute;fono&nbsp;1</td>
+												<td width="150"><INPUT TYPE="text" name="tel1" style="width:150px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tel1"></div></td>
+												<td width="50"></td>
+												<td width="70">Extensi&oacute;n&nbsp;1</td>
+												<td width="150" colspan="3"><INPUT TYPE="text" name="ext1" style="width:150px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_ext1"></div></td>
+											</tr>
+											<tr>
+												<td height="10" colspan="10"></td>
+											</tr>
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="70">Tel&eacute;fono&nbsp;2</td>
+												<td width="150"><INPUT TYPE="text" name="tel2" style="width:150px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tel2"></div></td>
+												<td width="50"></td>
+												<td width="70">Extensi&oacute;n&nbsp;1</td>
+												<td width="150" colspan="3"><INPUT TYPE="text" name="ext2" style="width:150px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_ext2"></div></td>
+											</tr>
+                                        </table>
+                                    </div>
+									
+                                    <div id="tabx-2" class="contenidoPes" >
+                                        <table border="0">
+											<tr>
+												<td width="5"></td>
+												<td width="70">Responsable</td>
+												<td width="445"><INPUT TYPE="text" name="responsable" style="width:445px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_responsable"></div></td>
+											</tr>
+											<tr>
+												<td width="5" height="12"></td>
+												<td width="70"></td>
+												<td width="445"></td>
+												<td width="25"></td>
+											</tr>
+											<tr>
+												<td width="5"></td>
+												<td width="70">Puesto</td>
+												<td width="445"><INPUT TYPE="text" name="puesto" style="width:445px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_puesto"></div></td>
+											</tr>
+											<tr>
+												<td width="5" height="12"></td>
+												<td width="70"></td>
+												<td width="445"></td>
+												<td width="25"></td>
+											</tr>
+											<tr>
+												<td width="5"></td>
+												<td width="70">E-Mail</td>
+												<td width="445"><INPUT TYPE="text" name="email" style="width:445px;"></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_email"></div></td>
+											</tr>
+                                        </table>
+                                    </div>
+									
+                                    <div id="tabx-3" class="contenidoPes" >
+										<table border="0">
+											<tr>
+												<td height="12"></td>
+											</tr>
+											
+											<tr>
+												<td width="260" valign="top" style="border-right: solid 1px #454442;">
+													<table border="0">
+														<tr><td width="5"></td><td width="85">Habilitar para:</td><td width="120">Reporteo</td><td width="30"><input type="checkbox" name="check_reporteo"></td></tr>
+														<tr><td width="5" height="6"></td><td width="85"></td><td width="120"></td><td width="30"></td></tr>
+														<tr><td width="5"></td><td width="85"></td><td width="120">Ventas</td><td width="30"><input type="checkbox" name="check_ventas"></td></tr>
+														<tr><td width="5" height="6"></td><td width="85"></td><td width="120"></td><td width="30"></td></tr>
+														<tr><td width="5"></td><td width="85"></td><td width="120">Compras</td><td width="30"><input type="checkbox" name="check_compras"></td></tr>
+														<tr><td width="5" height="6"></td><td width="85"></td><td width="120"></td><td width="30"></td></tr>
+														<tr><td width="5"></td><td width="85"></td><td width="120">Traspaso</td><td width="30"><input type="checkbox" name="check_traspaso"></td></tr>
+														<tr><td width="5" height="6"></td><td width="85"></td><td width="120"></td><td width="30"></td></tr>
+														<tr><td width="5"></td><td width="85"></td><td width="120">Reabastecimiento</td><td width="30"><input type="checkbox" name="check_reabastecimiento"></td></tr>
+														<tr><td width="5" height="6"></td><td width="85"></td><td width="120"></td><td width="30"></td></tr>
+														<tr><td width="5"></td><td width="85"></td><td width="120">Garant&iacute;as</td><td width="30"><input type="checkbox" name="check_garantias"></td></tr>
+														<tr><td width="5" height="6"></td><td width="85"></td><td width="120"></td><td width="30"></td></tr>
+														<tr><td width="5"></td><td width="85"></td><td width="120">Consignaci&oacute;n</td><td width="30"><input type="checkbox" name="check_consignacion"></td></tr>
+														<tr><td width="5" height="6"></td><td width="85"></td><td width="120"></td><td width="30"></td></tr>
+														<tr><td width="5"></td><td width="85"></td><td width="120">Recepci&oacute;n&nbsp;de&nbsp;Materiales</td><td width="30"><input type="checkbox" name="check_recepcion_mat"></td></tr>
+														<tr><td width="5" height="6"></td><td width="85"></td><td width="120"></td><td width="30"></td></tr>
+														<tr><td width="5"></td><td width="85"></td><td width="120">Explosi&oacute;n&nbsp;de&nbsp;Materiales</td><td width="30"><input type="checkbox" name="check_explosion_mat"></td></tr>
+													</table>
+												<td>
+												<td width="25"></td>
+												<td valign="top">
+													<table border="0">
+														<tr>
+															<td width="80">Tipo&nbsp;Almacen</td>
+															<td width="155"><SELECT NAME="tipo_almacen" style="width:155px;"></SELECT></td>
+															<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tipoalm"></div></td>
+														</tr>
+													</table>
+												<td>
+											</tr>
+										</table>
+                                    </div>
+									
+									
+									
+                                    <div id="tabx-4" class="contenidoPes" >
+                                        <table border="0">
+											<tr>
+												<td width="10" height="18"></td>
+												<td width="375" colspan="3" align="center" style="background-color:#e7e8ea;">Asignaci&oacute;n de Sucursales al Almacen</td>
+												<td width="25"></td>
+											</tr>
+											
+											
+											<tr>
+												<td width="10" height="6"></td>
+												<td width="250" align="center" style="background-color:#A8A9AB;">Sucursales NO Asignadas</td>
+												<td width="15"></td>
+												<td width="250" align="center" style="background-color:#A8A9AB;">Sucursales Asignadas</td>
+												<td width="25"></td>
+											</tr>
+											
+											<tr>
+												<td width="10" height="6"></td>
+												<td width="250"valign="top">
+													<select name="disponibles" multiple="multiple" style="width: 250px;height:147px;"></select>
+												</td>
+												<td width="15"></td>
+												<td width="250" valign="top">
+													<select name="seleccionados" multiple="multiple" style="width: 250px;height:147px;"></select>
+													<input type="hidden" name="suc_on">
+												</td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_seleccionados"></div></td>
+											</tr>
+											
+											<tr>
+												<td width="10" height="6"></td>
+												<td width="250" align="center"></td>
+												<td width="15"></td>
+												<td width="250" align="center"></td>
+												<td width="25"></td>
+											</tr>
+											
+											<tr>
+												<td width="10" height="6"></td>
+												<td width="250" align="center"><a  href="agregar_pres">Agregar >></a></td>
+												<td width="15"></td>
+												<td width="250" align="center"><a  href="remover_pres"> << Remover</a></td>
+												<td width="25"></td>
+											</tr>
+                                        </table>
+                                    </div>
+									
+									
+									
+									
+                                </div>
+                            </div>
+							
+							
+                            <div class="fixed column" id="botones" style="width:579px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+								<table border="0">
+									<tr><td colspan="4" height="7"></td></tr>
+									<tr>
+										<td width="579"></td>
+										<td>
+											<input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+										</td>
+										<td width="30"></td>
+										<td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+									</tr>
+								</table>
+                                
+                            </div>
+                            
+                            
+                            
+                        </div>
+                    </div>
+                </div>
+        </form>
+        
+        
+        
+        
+        #include("${layoutfooter}")
+        
+        
+    </body>
+</html>	
+
+

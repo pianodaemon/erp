@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+		
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/repinvexispres/formarepinvexispres.css" type="text/css" />
+		
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/implements/repinvexispres/index.js" ></script>
+        <script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        
+        <form id="formaRepExisLote" action="print.json" method="POST" >
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+            
+            
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td style="background-color:#ffffff;" >
+					<table id="busqueda" border="0" >
+						<tr>
+							<td colspan="16" height="8"></td>
+						</tr>
+						<tr>
+							<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td width="120">Opciones</td>
+							<td width="20"></td>
+							<td width="180">Almacen</td>
+							<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td width="90">C&oacute;digo&nbsp;producto</td>
+							<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td width="200">Descripci&oacute;n</td>
+							<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td width="150">Presentaci&oacute;n</td>
+							<td width="30"></td>
+							<td width="50"></td>
+							<td width="10"></td>
+						</tr>
+						
+						<tr>
+							<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td width="120"><SELECT NAME="opciones" style="width:120px;" title="Filtros para el reporte de Existencias en Inventario"></SELECT></td>
+							<td width="20"></td>
+							<td width="180">
+								<SELECT NAME="select_almacen" style="width:180px;">
+									<option value="0" selected="yes">[--Seleccionar Almacen--]</option>
+								</SELECT>
+							</td>
+							<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td width="90"><INPUT TYPE="text" name="codigo" style="width:90px;"></td>
+							<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td width="200"><INPUT TYPE="text" name="descripcion" style="width:200px;"></td>
+							<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td width="150">								
+								<SELECT NAME="select_presentacion" style="width:150px;">
+									<option value="0" selected="yes">[--Seleccionar--]</option>
+								</SELECT></td>
+							<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td width="50"><INPUT TYPE="button" id="boton_buscador" value="Buscar"></td>
+							<td width="30">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td width="50"><INPUT TYPE="button" id="genera_reporte" value="Generar PDF"></td>
+							<td width="10"></td>
+						</tr>					
+					</table>
+                </td>
+            </tr>
+            <tr>
+                <td height="8"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td>
+					<div> 
+						<table id="table_exis" cellspacing="0">
+							<thead>
+								<tr>
+									<td width="150">C&oacute;digo</td>
+									<td width="385">Descripci&oacute;n</td>
+									<td width="110">Unidad</td>
+									<td width="120">Presentaci&oacute;n</td>
+									<td width="110">Exis.&nbsp;Unidad</td>
+									<td width="100">Exis.&nbsp;Presentaci&oacute;n</td>
+								</tr>
+							</thead>
+							<tbody></tbody>
+							<tfoot></tfoot>
+						</table>
+					</div>
+                </td>
+            </tr>
+		</table>
+        </form>
+        
+        #include("${layoutfooter}")
+        
+    </body>
+</html>	
+
+

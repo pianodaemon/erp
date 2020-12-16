@@ -1,0 +1,57 @@
+table tr td.grid_head {
+	font-size: 11px;
+	font-weight: bold;
+	/*font: 12px normal Tahoma,Geneva,"Helvetica Neue",Helvetica,Arial,sans-serif;*/
+	background: #fff;
+	/*padding: 2px;*/
+	/*padding: 3px 5px;*/
+	text-align: center;
+	vertical-align: centerline;
+	/*background-color:rgb(180, 180, 180);*/
+	background-color:#FFFFFF;
+	border-top:1px solid #ccc !important;
+	border-bottom:1px solid #ccc !important;
+	border-right:1px solid #ccc !important;
+	border-left:1px solid #ccc !important;
+	/*border-right: 1px solid #ccc !important;*/
+	background-image: url("../../../img/datagrid00/bar_table.png");
+	height:18px;
+
+}
+
+
+table tr td.grid_datos {
+	font: 12px normL Tahoma,Geneva,"Helvetica Neue",Helvetica,Arial,sans-serif;
+	background: #FFFFFF ;
+	vertical-align: top;
+	background-color:#FFFFFF ;
+	border:1px solid #ccc !important;
+	border-right: 1px solid #ccc !important;
+}
+
+
+tfoot tr td.grid_foot {
+	font-size: 12px;
+	font-weight: bold;
+	background: #fff;
+	vertical-align: centerline;
+	background-color:#dddddd;
+	border-top:0px solid #ccc !important;
+	border-bottom:0px solid #ccc !important;
+	border-right:1px solid #ccc !important;
+	border-left:1px solid #ccc !important;
+	/*border-right: 1px solid #ccc !important;*/
+	background-image: url("../../../img/datagrid00/bar_table.png");
+	height:18px;
+
+}
+/*table .table_reporte {
+	background: #fff;
+	padding: 2px;
+	text-align: center;
+	vertical-align: top;
+	/*background-color:rgb(180, 180, 180);*/
+	/*background-color:#dddddd;
+	border:1px solid #C1DAD7 !important;
+	border-right: 1px solid #ccc !important;
+}*/

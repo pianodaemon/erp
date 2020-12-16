@@ -1,0 +1,730 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+		
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/crmregistrovisitas/formaCrmRegistroVisitas.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/crmregistrovisitas/formaBuscaContactos.css" type="text/css" />
+        
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/crmregistrovisitas/modalboxCrmRegistroVisitas.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/crmregistrovisitas/modalboxBuscaContactos.js"></script>
+        
+        <script type="text/javascript" src="../../js/implements/crmregistrovisitas/index.js" ></script>
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        <!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+			<tr>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="new_item" class="tooltip"><img src="../../img/catalogo/crear.png" border=0 ><span>Registrar Nueva Visita</span></a></td>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="visualiza_buscador" class="tooltip"><img src="../../img/catalogo/buscar.png" border=0 ><span>Busqueda</span></a>  </td>
+			</tr>
+		</table>
+        
+        <!--Esta tabla va  en la barra de buscador -->
+		<table border="0" class="tabla_buscador" style="display:none">
+			<tr>
+				<td colspan="19">&nbsp;&nbsp;</td>
+			</tr>
+			<tr>
+				<td width="10"></td>
+				<td width="80">Folio</td>
+				<td width="10"></td>
+				<td width="100">Tipo&nbsp;de&nbsp;Visita</td>
+				<td width="10"></td>
+				<td width="200">Cliente/Prospecto</td>
+				<td width="10"></td>
+				<td width="200">Nombre&nbsp;del&nbsp;contacto</td>
+				<td width="10"></td>
+				<td width="200">Agente</td>
+				<td width="20"></td>
+				<td width="25"></td>
+				<td colspan="3">Fecha&nbsp;de&nbsp;Visita</td>
+				<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td width="25"></td>
+				<td width="25"></td>
+				<td width="10"></td>
+				<td ></td>
+				<td width="10"></td>
+			</tr>
+			
+			<tr>
+				<td width="10"></td>
+				<td width="80"><input type="text" name="busqueda_folio" style="width:80px;"></td>
+				<td width="20"></td>
+				<td>
+					<select name="busqueda_tipo_visita" style="width:100px;">
+						<option value="0" selected="yes">[-- Todos --]</option>
+						<option value="1">Cliente</option>
+						<option value="2">Prospecto</option>
+					</select>
+				</td>
+				<td width="10"></td>
+				<td width="200"><input type="text" name="busqueda_cliente" value="" style="width:200px;"></td>
+				<td width="10"></td>
+				<td width="200"><input type="text" name="busqueda_contacto" value="" style="width:200px;"></td>
+				<td width="10"></td>
+				<td width="200">
+					<select name="busqueda_agente" style="width:200px;">
+						<option value="0" >[-- Selecionar Agente --]</option>
+					</select>
+				</td>
+				<td width="20"></td>
+				
+				<td width="25"><IMG SRC="../../img/catalogo/calendario.png" ALIGN="top"></td>
+				<td width="90"><input type="text" name="busqueda_fecha_inicial" style="width:90px;" readOnly="true"></td>
+				<td width="15"></td>
+				<td width="25"><IMG SRC="../../img/catalogo/calendario.png" ALIGN="top"></td>
+				<td width="90"><input type="text" name="busqueda_fecha_final" style="width:90px;" readOnly="true"></td>
+				<td width="25"></td>
+				<td><input type="button" id="boton_buscador" class="onmouseOutBuscar"></td>
+				<td width="10"></td>
+				<td ><input type="button" id="boton_limpiar" class="onmouseOutLimpiar"></td>
+				<td width="10"></td>
+			</tr>
+		</table>
+        
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+
+        <!--form for crmregistrovisitas -->
+        <form id="formacrmregistrovisitas" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal crmregistrovisitas_div_one"  style="display:none;" title="">
+                
+                <input type="hidden" name="identificador">
+                
+					
+                    <div id="div_two" title="" class="crmregistrovisitas_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" id="cierra" style="width:765px; padding-left:6px;"><strong>Registro de Visitas</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="div_three" title="" class="crmregistrovisitas_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Visita</strong></a></li>
+                                    <li><a href="#tabx-2"><strong>Llamada</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+                                    <div id="tabx-1" class="contenidoPes" >
+										
+                                        <table border="0" style="margin:0; padding:0;">
+                                                <tr>
+                                                    <td valign="top"> 
+                                                        <table border="0" class="gral">
+                                                            <tr>
+                                                                <td width="10"></td>
+                                                                <td width="70">Folio Visita</td>
+                                                                <td width="100"><input type="text" name="folio" style="width:100px;" readOnly="true"></td>
+                                                                <td width="30"></td>
+                                                                <td width="60">Agente</td>
+                                                                <td width="420" colspan="3">
+																	<select name="select_agente" style="width:420px;"></select>
+                                                                </td>
+                                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_agente"></div></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td width="10" height="8"></td>
+                                                                <td width="70"></td>
+                                                                <td width="100"></td>
+                                                                <td width="30"></td>
+                                                                <td width="50"></td>
+                                                                <td width="305"></td>
+                                                                <td width="25"></td>
+                                                                <td width="90"></td>
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td width="10"></td>
+                                                                <td width="70">Contacto</td>
+                                                                <td width="485" colspan="4">
+																	<input type="hidden" name="id_contacto" value="0">
+																	<input type="text" name="contacto" style="width:485px;">
+                                                                </td>
+                                                                <!--
+                                                                <td width="30"></td>
+                                                                <td width="50"></td>
+                                                                <td width="305"></td>
+                                                                -->
+                                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_contacto"></div></td>
+                                                                <td width="90"><a href="#" id="busca_contacto">(Buscar&nbsp;Contacto)</a></td>
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                
+                                                <tr>
+                                                    <td valign="top"  > 
+                                                        <table border="0" class="gral" style="margin:0px; padding:0px;">
+                                                            <tr>
+                                                                <td width="10"></td>
+                                                                <td width="70">Fecha Visita</td>
+                                                                <td width="100" colspan="4"><input type="text" name="fecha" style="width:100px;" readOnly="true"></td>
+                                                                <!--
+                                                                <td width="5"></td>
+                                                                <td width="20"></td>
+                                                                <td width="55"></td>
+                                                                -->
+                                                                <td width="30"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_fechavisita"></div></td>
+                                                                <td width="60"></td>
+                                                                <td width="20"></td>
+                                                                <td width="5"></td>
+                                                                <td width="20"></td>
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+                                                                <td width="30">Recursos Utilizados</td>
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td colspan="11" height="10"></td>
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+                                                                <td width="350" rowspan="3">
+																	<textarea name="recusrsos_visita" cols="60" rows="1" style="width:350px; height:35px; resize:none;"></textarea>
+                                                                </td>
+                                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_recursosvisita"></div></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td width="10"></td>
+                                                                <td width="70">Hora</td>
+                                                                <td width="40" colspan="3"><input type="text" name="hora_visita" style="width:45px;"></td>
+                                                                <!--
+                                                                <td width="5" align="center">:</td>
+                                                                <td width="20"><input type="text" name="min_visita" style="width:20px;"></td>
+                                                                -->
+                                                                <td width="55">(HH:MM)</td>
+                                                                <td width="30"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_horavisita"></div></td>
+                                                                <td width="60">Duraci&oacute;n</td>
+                                                                <td width="45" colspan="3"><input type="text" name="hora_duracion" style="width:45px;"></td>
+                                                                <!--
+                                                                <td width="5" align="center">:</td>
+                                                                <td width="20"><input type="text" name="min_duracion" style="width:20px;"></td>
+                                                                -->
+                                                                <td width="50">(HH:MM)</td>
+                                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_duracionvisita"></div></td>
+                                                                <!--<td width="30"></td>-->
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td colspan="11" height="8"></td>
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+                                                                <!--<td width="30"></td>-->
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td width="10"></td>
+                                                                <td width="70">Motivo</td>
+                                                                <td width="235" colspan="9">
+																	<select name="select_motivo_visita" style="width:235px;">
+																		<option value="0">[--Seleccione Motivo--]</option>
+																	</select>
+                                                                </td>
+                                                                <!--
+                                                                <td width="5" align="center">:</td>
+                                                                <td width="20"><input type="text" name="min_visita" style="width:20px;"></td>
+                                                                <td width="55"></td>
+                                                                <td width="30"></td>
+                                                                <td width="60">Duraci&oacute;n</td>
+                                                                <td width="20"><input type="text" name="hora_duracion" style="width:20px;"></td>
+                                                                <td width="5" align="center">:</td>
+                                                                <td width="20"><input type="text" name="min_duracion" style="width:20px;"></td>
+                                                                -->
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+                                                                <td width="30">Resultado de la Visita</td>
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td colspan="11" height="8"></td>
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+																<td width="350" rowspan="3">
+																	<textarea name="resultado_visita" cols="60" rows="1" style="width:350px; height:35px; resize:none;"></textarea>
+                                                                </td>
+                                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_resultadovisita"></div></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td width="10"></td>
+                                                                <td width="70">Calificaci&oacute;n</td>
+                                                                <td width="235" colspan="9">
+																	<select name="select_calif_visita" style="width:235px;">
+																		<option value="0">[--Seleccione Calificaci&oacute;n--]</option>
+																	</select>
+                                                                </td>
+                                                                <!--
+                                                                <td width="5" align="center">:</td>
+                                                                <td width="20"><input type="text" name="min_visita" style="width:20px;"></td>
+                                                                <td width="55"></td>
+                                                                <td width="30"></td>
+                                                                <td width="60">Duraci&oacute;n</td>
+                                                                <td width="20"><input type="text" name="hora_duracion" style="width:20px;"></td>
+                                                                <td width="5" align="center">:</td>
+                                                                <td width="20"><input type="text" name="min_duracion" style="width:20px;"></td>
+                                                                -->
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+                                                                <!--<td width="350"></td>-->
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td colspan="11" height="8"></td>
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+                                                                <!--<td width="350"></td>-->
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td width="10"></td>
+                                                                <td width="70">Seguimiento</td>
+                                                                <td width="235" colspan="9">
+																	<select name="select_tipo_seguimiento" style="width:235px;">
+																		<option value="0">[--Seleccione Seguimiento--]</option>
+																	</select>
+                                                                </td>
+                                                                <!--
+                                                                <td width="5" align="center">:</td>
+                                                                <td width="20"><input type="text" name="min_visita" style="width:20px;"></td>
+                                                                <td width="55"></td>
+                                                                <td width="30"></td>
+                                                                <td width="60">Duraci&oacute;n</td>
+                                                                <td width="20"><input type="text" name="hora_duracion" style="width:20px;"></td>
+                                                                <td width="5" align="center">:</td>
+                                                                <td width="20"><input type="text" name="min_duracion" style="width:20px;"></td>
+                                                                -->
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+                                                                <td width="350">Observaciones</td>
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td colspan="11" height="8"></td>
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+																<td width="350" rowspan="3">
+																	<textarea name="observaciones_visita" cols="60" rows="1" style="width:350px; height:35px; resize:none;"></textarea>
+                                                                </td>
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td width="10"></td>
+                                                                <td width="170" colspan="5">Detecci&oacute;n de Oportunidad</td>
+                                                                <!--
+                                                                <td width="20"><input type="text" name="hora_visita" style="width:20px;"></td>
+                                                                <td width="5" align="center">:</td>
+                                                                <td width="20"><input type="text" name="min_visita" style="width:20px;"></td>
+                                                                <td width="55"></td>
+                                                                -->
+                                                                <td width="135" colspan="5">
+																	<select name="select_oportunidad" style="width:135px;">
+																		<option value="1">Si</option>
+																		<option value="0">No</option>
+																	</select>
+                                                                </td>
+                                                                
+                                                                <!--
+                                                                <td width="105"></td>
+                                                                <td width="20"><input type="text" name="hora_duracion" style="width:20px;"></td>
+                                                                <td width="5" align="center">:</td>
+                                                                <td width="20"><input type="text" name="min_duracion" style="width:20px;"></td>
+                                                                -->
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+                                                                <!--<td width="30"></td>-->
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td colspan="11" height="8"></td>
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+                                                                <!--<td width="350"></td>-->
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td width="10">&nbsp;</td>
+                                                                <td width="70" colspan="11">Productos</td>
+                                                                <td width="25"></td>
+                                                                <td width="350"></td>
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td width="10">&nbsp;</td>
+                                                                <td width="70" colspan="11">
+																	<textarea name="productos" cols="60" rows="1" style="width:350px; height:35px; resize:none;"></textarea>
+                                                                </td>
+                                                                <td width="25"></td>
+                                                                <td width="350"></td>
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td colspan="11" height="5"></td>
+                                                                <td width="25"></td>
+                                                                <td width="25"></td>
+                                                                <td width="350"></td>
+                                                                <td width="25"></td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td valign="top"> 
+														<fieldset style="border: solid 1px #313E74;" class="gral">
+															<legend>&nbsp;Pr&oacute;xima&nbsp;visita&nbsp;</legend>
+															<ol valign="top" style="margin:0px; padding:0px;">
+																<table border="0" style="margin:0px; padding:0px;">
+																	<tr>
+																		<td width="10"></td>
+																		<td width="50">Fecha</td>
+																		<td width="100" colspan="4"><input type="text" name="fecha_proxima_visita" style="width:100px;" readOnly="true"></td>
+																		<!--
+																		<td width="5"></td>
+																		<td width="20"></td>
+																		<td width="55"></td>
+																		-->
+																		<td width="30"></td>
+																		<td width="60"></td>
+																		<td width="20"></td>
+																		<td width="5"></td>
+																		<td width="20"></td>
+																		<td width="25"></td>
+																		<td width="25"></td>
+																		<td width="350">Comentarios para la pr&oacute;xima visita</td>
+																		<td width="25"></td>
+																	</tr>
+																	<tr>
+																		<td width="10"></td>
+																		<td colspan="10" height="10"></td>
+																		<td width="25"></td>
+																		<td width="25"></td>
+																		<td width="350" rowspan="3">
+																			<textarea name="comentarios_proxima_visita" cols="60" rows="1" style="width:350px; height:35px; resize:none;"></textarea>
+																		</td>
+																		<td width="25"></td>
+																	</tr>
+																	<tr>
+																		<td width="10"></td>
+																		<td width="50">Hora</td>
+																		<td width="45" colspan="3" ><input type="text" name="hora_proxima_visita" style="width:45px;"></td>
+																		<!--
+																		<td width="5" align="center">:</td>
+																		<td width="20"><input type="text" name="min_proxima_visita" style="width:20px;"></td>
+																		-->
+																		<td width="55">(HH:MM)</td>
+																		<td width="30"></td>
+																		<td width="60"></td>
+																		<td width="20"></td>
+																		<td width="5"></td>
+																		<td width="20"></td>
+																		<td width="50"></td>
+																		<td width="25"></td>
+																		<!--<td width="350"></td>-->
+																		<td width="25"></td>
+																	</tr>
+																	<tr>
+																		<td width="10"></td>
+																		<td colspan="10" height="8"></td>
+																		<td width="25"></td>
+																		<td width="25"></td>
+																		<!--<td width="350"></td>-->
+																		<td width="25"></td>
+																	</tr>
+																	<tr>
+																		<td width="10"></td>
+																		<td colspan="10" height="5"></td>
+																		<td width="25"></td>
+																		<td width="25"></td>
+																		<td width="350"></td>
+																		<td width="25"></td>
+																	</tr>
+																	
+																	
+																</table>
+															</ol>
+														</fieldset>
+														
+                                                    </td>
+                                                </tr>
+											</table>
+                                        
+                                    </div>
+                                    
+                                    <!--Pestaña llamada-->
+                                    <div id="tabx-2" class="contenidoPes" >
+										<table border="0" style="margin:0; padding:0;">
+											<tr>
+												<td valign="top"> 
+													<fieldset style="border: solid 1px #313E74;" class="gral">
+														<legend>&nbsp;Pr&oacute;xima&nbsp;llamada&nbsp;</legend>
+														<ol valign="top" style="margin:0px; padding:0px;">
+															<table border="0" style="margin:0px; padding:0px;">
+																<tr>
+																	<td width="10"></td>
+																	<td width="50">Fecha</td>
+																	<td width="100" colspan="4"><input type="text" name="fecha_proxima_llamada" style="width:100px;" readOnly="true"></td>
+																	<!--
+																	<td width="5"></td>
+																	<td width="20"></td>
+																	<td width="55"></td>
+																	-->
+																	<td width="30"></td>
+																	<td width="60"></td>
+																	<td width="20"></td>
+																	<td width="5"></td>
+																	<td width="20"></td>
+																	<td width="25"></td>
+																	<td width="25"></td>
+																	<td width="350">Comentarios para la pr&oacute;xima llamada</td>
+																	<td width="25"></td>
+																</tr>
+																<tr>
+																	<td width="10"></td>
+																	<td colspan="10" height="10"></td>
+																	<td width="25"></td>
+																	<td width="25"></td>
+																	<td width="350" rowspan="3">
+																		<textarea name="comentarios_proxima_llamada" cols="60" rows="1" style="width:350px; height:35px; resize:none;"></textarea>
+																	</td>
+																	<td width="25"></td>
+																</tr>
+																<tr>
+																	<td width="10"></td>
+																	<td width="50">Hora</td>
+																	<td width="45" colspan="3" ><input type="text" name="hora_proxima_llamada" style="width:45px;"></td>
+																	<!--
+																	<td width="5" align="center">:</td>
+																	<td width="20"><input type="text" name="min_proxima_visita" style="width:20px;"></td>
+																	-->
+																	<td width="55">(HH:MM)</td>
+																	<td width="30"></td>
+																	<td width="60"></td>
+																	<td width="20"></td>
+																	<td width="5"></td>
+																	<td width="20"></td>
+																	<td width="50"></td>
+																	<td width="25"></td>
+																	<!--<td width="350"></td>-->
+																	<td width="25"></td>
+																</tr>
+																<tr>
+																	<td width="10"></td>
+																	<td colspan="10" height="8"></td>
+																	<td width="25"></td>
+																	<td width="25"></td>
+																	<!--<td width="350"></td>-->
+																	<td width="25"></td>
+																</tr>
+																<tr>
+																	<td width="10"></td>
+																	<td colspan="10" height="5"></td>
+																	<td width="25"></td>
+																	<td width="25"></td>
+																	<td width="350"></td>
+																	<td width="25"></td>
+																</tr>
+															</table>
+														</ol>
+													</fieldset>
+													
+												</td>
+											</tr>
+											
+										</table>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+
+
+                            <div class="fixed column" id="botones" style="width:790px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+                                <table border="0">
+                                        <tr>
+                                                <td width="590"></td>
+                                                <td>
+                                                        <input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+                                                </td>
+                                                <td width="30"></td>
+                                                <td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+                                        </tr>
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </form>
+        
+        #include("${layoutfooter}")
+        
+    </body>
+</html>	
+
+
+
+
+
+
+<!-- Buscador de contactos -->
+<div class="buscador_contactos" style="display:none;">	
+	<table width="100%" border="0" class="formaBusqueda_contactos">
+		<tr>
+			<td>
+				<div class="div_dos_buscacontactos">
+					<table width="100%" border="0">
+						<thead>
+							<tr>
+								<td colspan="7" height="50" valign="top"><div class="titulo_buscacontactos" width="100%"><strong>Buscador de contactos</strong></div></td>
+							</tr>
+						</thead>
+						
+						<tbody>
+							<tr>
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff;"></td>
+								<td colspan="3" style="background:#ffffff;" width="500">
+									
+									<table id="tabla_busqueda" border="0"  class="contenidobusqueda">
+										<tr>
+											<td colspan="7" width="500" height="10"></td>
+										</tr>
+										<tr>
+											<td width="110">Nombre</td>
+											<td width="120"><INPUT TYPE="text" name="buscador_nombre" style="width:120px;"></td>
+											<td width="25"></td>
+											<td width="100">Apellido Paterno</td>
+											<td width="120"><INPUT TYPE="text" name="buscador_apellidop" style="width:120px;"></td>
+											<td width="70"></td>
+											<td width="25"></td>
+										</tr>
+										<tr>
+											<td colspan="7" width="500" height="10"></td>
+										</tr>
+										<tr>
+											<td width="110">Apellido Materno</td>
+											<td width="120"><INPUT TYPE="text" name="buscador_apellidom" style="width:120px;"></td>
+											<td width="25"></td>
+											<td width="120">Tipo Contacto</td>
+											<td colspan="4">
+												<SELECT NAME="buscador_tipo_contacto" style="width:180px;">
+													<OPTION value="1" selected="yes">Cliente</OPTION>
+													<OPTION value="2">Prospecto</OPTION>
+												</SELECT>
+											</td>
+											<td width="70" align="right">
+												<INPUT TYPE="button" id="busca_contacto_modalbox" class="onmouseOutBuscar">
+											</td>
+											<td width="25"></td>
+										</tr>
+										<tr>
+											<td colspan="7" width="500" height="10"></td>
+										</tr>
+									</table>
+									
+								</td>
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr style="font-size:13px;">
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff"></td>
+								
+								<td width="280" style="background:#A8A9AB;">Contacto</td>
+								<td width="210" style="background:#A8A9AB;">Empresa</td>
+								<td width="110" style="background:#A8A9AB;">RFC</td>
+								
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff"></td>
+								<td style="background:#ffffff; border: solid 1px #313E74;" colspan="3" width="600">
+									<div style="overflow:scroll; overflow-x:auto; overflow-y:auto; width:600px; height:120px; align=top;">
+										<table  border="0" id="tabla_resultado" width="600" style="font-size:12px;">
+											<!--aqui van los resultados de la busqueda-->
+										</table>
+									</div>
+								</td>
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="10" colspan="5" height="4" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff"></td>
+								<td width="280"  style="background:#ffffff"></td>
+								<td width="210" style="background:#ffffff"></td>
+								<td width="110" style="background:#ffffff" align="right">
+									<INPUT TYPE="button" id="cencela" class="onmouseOutCancelar">
+								</td>
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="10" colspan="5" height="6" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+						</tbody>
+						
+					</table>
+				</div>
+			</td>
+		</tr>
+	</table>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

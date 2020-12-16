@@ -1,0 +1,150 @@
+body {margin:0px; font:10px Verdana,Arial; background:#eee }
+
+ul.jd_menu, ul.jd_menu_vertical {
+	margin: 0px;
+	padding: 0px;
+	list-style-type: none !important;
+        
+	
+	/*list-style-image: url('../img/fondos/punto_transparente.png');*/
+}
+ul.jd_menu ul,
+ul.jd_menu_vertical ul {
+	display: none;
+	list-style-type: none !important;
+        
+}
+ul.jd_menu li {
+	float: left;
+	list-style-type: none !important;
+}
+ul.jd_menu_vertical {
+	width: 100px;
+	list-style-type: none !important;
+}
+ul.jd_menu_vertical li {
+	float: none;
+	list-style-type: none !important;
+}
+
+/* -- Sub-Menus -- */
+ul.jd_menu ul,
+ul.jd_menu_vertical ul {
+	position: absolute;
+	display: none;
+	list-style-type: none !important;
+	/*list-style-image: url('../img/fondos/punto_transparente.png');*/
+	margin: 0px;
+	padding: 0px;
+	z-index: 10000;
+}
+ul.jd_menu ul li, ul.jd_menu_vertical ul li {
+	float: none;
+	margin: 0px;
+	list-style-type: none !important;
+}
+
+/*Cambios Edwin*/
+ul.jd_menu  {
+	list-style-type: none !important;
+	background-color: #transparent;
+	border: 0px solid #0000;
+	border-top: 0px solid #0000;
+	border-left: 0px solid #0000;
+	height: 20px;
+}
+
+
+
+/*ul.jd_menu,*/
+ul.jd_menu ul, ul.jd_menu_vertical, ul.jd_menu_vertical ul {
+	list-style-type: none !important;
+	background-color: #D8D8D8;
+	border: 1px solid #c8ced5;
+	border-top: 1px solid #c8ced5;
+	border-left: 1px solid #c8ced5;	
+	height: 20px;
+}
+ul.jd_menu_vertical {
+	list-style-type: none !important;
+	height: auto;
+}
+ul.jd_menu ul {
+	list-style-type: none !important;
+	height: auto;
+}
+* html ul.jd_menu ul {
+	list-style-type: none !important;
+	width: 1%;
+}
+ul.jd_menu li {
+	list-style-type: none !important;
+
+	color: #000000;
+	
+	line-height: 14px;
+	
+	margin: 0px;
+	padding: 4px 7px 3px 7px;
+	height: 13px;
+	
+	cursor: pointer;
+	white-space: nowrap;
+}
+ul.jd_menu li li {
+	list-style-type: none !important;
+	width: 200px;
+}
+ul.jd_menu li a {
+	color: #000000;
+	text-decoration: none;
+}
+
+ul.jd_menu li.jdm_hover , ul.jd_menu  li.jdm_active {
+	/*color: #000000;*/
+	list-style-type: none !important;
+	/*background-color: #c5c5c5;*/
+	background-image:url(../../../img/barra_nav.png);
+	/* background-color: #ddecff; */
+        /*background-color: #e5c67c;	*/
+	padding: 3px 6px 2px 6px;
+	border-right: 1px solid #6E6E6E;
+	border-bottom: 1px solid #6E6E6E;
+	border-left: 1px solid #6E6E6E;
+	border-top: 1px solid #6E6E6E;
+	
+}
+
+
+
+/*
+body {margin:0px; font:10px Verdana,Arial; background:#eee }
+ul.menu_ext {list-style:none; margin:0; padding:0}
+ul.menu_ext * {margin:0; padding:0; list-style:none !important;}
+ul.menu_ext a {display:block; color:#000000; text-decoration:none ;  }
+
+
+ul.menu_ext li {position:relative; float:left; margin-right:0px ; right:1px; }
+
+ul.menu_ext ul {position:absolute; top:26px; left:0;  display:none; opacity:0; list-style:none;  }
+
+
+ul.menu_ext ul li {position:relative; border:1px solid #aaa;   border-top:none; width:112px; margin:0  }
+
+
+
+
+ul.menu_ext ul li a { display:block; padding:3px 7px 5px; background-color:#d1d1d1}
+
+
+
+ul.menu_ext ul li a:hover {background-color:#c5c5c5 ;  }
+ul.menu_ext ul ul {left:113px; top:-1px;  }
+ul.menu_ext .menulink_ {border:0px solid #aaa; padding:5px 7px 7px; font-weight:bold; background:url(../../../img/menu/header.png); width:98px}
+ul.menu_ext .menulink_:hover, ul.menu_ext .menuhover {background:url(../../../img/menu/header_over.gif); }
+ul.menu_ext .sub {background:#d1d1d1 url(../../../img/menu/arrow.gif) 100px 8px no-repeat}
+ul.menu_ext .topline {border-top:1px solid #aaa;}
+li{
+list-style-image: none;list-style-type: none;
+}
+* */

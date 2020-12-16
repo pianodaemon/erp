@@ -1,0 +1,916 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+        
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/facnomina/formaFacNomina.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/facnomina/formaNominaEmpleado.css" type="text/css" />
+        
+        <!--
+        <link rel="stylesheet" href="../../css/modalbox/facnomina/formaBuscaclientes.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/facnomina/formaBuscapresentaciones.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/facnomina/formaBuscaproducto.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/facnomina/formaCancelaEmision.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/facnomina/formaBuscaUnidad.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/facnomina/formaBuscaOperador.css" type="text/css" />
+        -->
+        
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+		<script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/facnomina/modalboxFacNomina.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/facnomina/modalboxNominaEmpleado.js"></script>
+        
+        
+        <!--
+        <script type="text/javascript" src="../../js/components/modalbox/facnomina/modalboxBuscacliente.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/facnomina/modalboxBuscapresentaciones.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/facnomina/modalboxBuscaproducto.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/facnomina/modalboxCancelaEmision.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/facnomina/modalboxDireccionesFiscales.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/facnomina/modalboxBuscaUnidad.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/facnomina/modalboxBuscaOperador.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/clientsasignadest/modalboxBuscaDestinatario.js"></script>
+        -->
+        <script type="text/javascript" src="../../js/implements/facnomina/index.js" ></script>
+        
+        
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        
+        <!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+			<tr>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="new_item" class="tooltip"><div class="onmouseOutNewItem" id="nItem"></div><span>Crear Nuevo</span></a></td>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="visualiza_buscador" class="tooltip"><div class="onmouseOutVisualizaBuscador" id="vbuscador"></div><span>Busqueda</span></a> </td>
+			</tr>
+		</table>
+        
+        
+        <!--Esta tabla va  en la barra de buscador -->
+		<table border="0" class="tabla_buscador" style="display:none">
+			<tr>
+				<td colspan="21">&nbsp;&nbsp;</td>
+			</tr>
+			<tr>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td width="100">No. de Periodo</td>
+				<td width="20"></td>
+				<td width="200">Titulo del Periodo</td>
+				<td width="15"></td>
+				
+				<td width="150">Tipo de Periodicidad</td>
+				<td width="20">&nbsp;</td>
+				<td width="25"></td>
+				<td colspan="3">Fecha de Pago</td>
+				<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td></td>
+				<td width="25"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;</td>
+				<td></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+			
+			<tr>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td width="100"><input type="text" name="busqueda_no_periodo" style="width:100px;"></td>
+				<td width="20"></td>
+				<td width="200"><input type="text" name="busqueda_titulo_periodo" style="width:200px;"></td>
+				<td width="15"></td>
+				
+				<td>
+					<select name="busqueda_select_tipo_periodo" style="width:150px;">
+						<option value="0" selected="yes">[-Seleccionar Tipo-]</option>
+					</select>
+				</td>
+				
+				<td width="20">&nbsp;</td>
+				<td width="25"><img src="../../img/catalogo/calendario.png" align="top"></td>
+				<td width="90"><input type="text" name="busqueda_fecha_inicial" style="width:90px;" readOnly="true"></td>
+				<td width="15"></td>
+				<td width="25"><img src="../../img/catalogo/calendario.png" align="top"></td>
+				<td width="90"><input type="text" name="busqueda_fecha_final" style="width:90px;" readOnly="true"></td>
+				<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><input type="button" id="boton_buscador" class="onmouseOutBuscar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td ><input type="button" id="boton_limpiar" class="onmouseOutLimpiar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+		</table>
+        
+        
+        
+        <!--  otra parte -->
+        <table class="acciones" >
+			<!--
+            <tr>
+                <td height="25px"></td>
+                <td></td>
+            </tr>
+            -->
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+		
+		
+		
+		
+		
+		
+		
+        <!--form for facnomina -->
+        <form id="formafacnomina00" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal facnomina_div_one"  style="display:none;" title="">
+					<input type="hidden" name="identificador">
+					<input type="hidden" name="accion">
+					<input type="hidden" name="nivel_ejecucion">
+					
+                    <div id="div_two" title="" class="facnomina_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" id="titulo_plugin" style="width:873px; padding-left:6px;"><strong>N&oacute;mina</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px; background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="div_three" title="" class="facnomina_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>N&oacute;mina</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+									
+                                    <div id="tabx-1" class="contenidoPes" >
+                                        <table border="0" style="margin:0; padding:0;">
+											<tr>
+												<td width="520"></td>
+												<td width="10"></td>
+												<td width="90"></td>
+												<td width="250"></td>
+											</tr>
+											<tr>
+												<td width="870" colspan="4" style="border-top: 1px solid #C1DAD7; border-bottom:1px solid #C1DAD7; border-left:1px solid #FFFFFF; border-right:1px solid #FFFFFF; background-color:#D4D3D3;">Emisor</td>
+											</tr>
+											<tr>
+												<td width="870" colspan="4" height="5"></td>
+											</tr>
+											<tr>
+												<td width="870" colspan="4" valign="top">
+												   <table border="0" class="gral">
+														<tr>
+															<td width="10"></td>
+															<td width="80"></td>
+															<td width="120"></td>
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="150"></td>
+															<td width="365"></td>
+															<td width="25"></td>
+														</tr>
+														<tr>
+															<td width="10"></td>
+															<td width="80">*RFC</td>
+															<td width="120"><input type="text" name="emisor_rfc" value="" style="width:120px;" readOnly="true"></td>
+															<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_emisorrfc"></div></td>
+															<td width="80">Raz&oacute;n&nbsp;social</td>
+															<td width="515" colspan="2"><input type="text" name="emisor_nombre" value="" style="width:515px;" readOnly="true"></td>
+															<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_emisornombre"></div></td>
+														</tr>
+														<tr><td colspan="8" height="5"></td></tr>
+														<tr>
+															<td width="10"></td>
+															<td width="80">*R&oacute;gimen&nbsp;Fiscal</td>
+															<td width="390" colspan="4"><input type="text" name="emisor_regimen" value="" style="width:390px;" readOnly="true"></td>
+															<td width="365"></td>
+															<td width="25"></td>
+														</tr>
+														<tr><td colspan="8" height="5"></td></tr>
+														<tr>
+															<td width="10"></td>
+															<td width="80">Direcci&oacute;n</td>
+															<td width="755" colspan="5"><input type="text" name="emisor_dir" value="" style="width:755px;" readOnly="true"></td>
+															<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_emisordir"></div></td>
+														</tr>
+													</table>
+												</td>
+											</tr>
+											
+											<tr>
+												<td width="870" colspan="4" style="border-top: 1px solid #C1DAD7; border-bottom:1px solid #C1DAD7; border-left:1px solid #FFFFFF; border-right:1px solid #FFFFFF; background-color:#D4D3D3;">Comprobante</td>
+											</tr>
+											<tr>
+												<td width="870" colspan="4" height="5"></td>
+											</tr>
+											<tr>
+												<td width="870" colspan="4" valign="top">
+												   <table border="0" class="gral">
+														<tr>
+															<td width="10"></td>
+															<td width="80"></td>
+															<td width="120"></td>
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="100"></td>
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="150"></td>
+															<td width="40"></td>
+														</tr>
+														<tr><td colspan="12" height="5"></td></tr>
+														<tr>
+															<td width="10"></td>
+															<td width="80">Tipo</td>
+															<td width="120"><input type="text" name="comp_tipo" style="width:120px;" readOnly="true" title="Tipo de Comprobante"></td>
+															<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_comptipo"></div></td>
+															<td width="80">Forma&nbsp;de&nbsp;Pago</td>
+															<td width="220" colspan="3"><input type="text" name="comp_forma_pago" value="" style="width:220px;" readOnly="true" title="Forma de Pago"></td>
+															<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_compformapago"></div></td>
+															<td width="80">M&eacute;todo&nbsp;de&nbsp;Pago</td>
+															<td width="150"><select name="select_comp_metodo_pago" style="width:150px;" title="Meodo de Pago"></select></td>
+															<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_compmetodopago"></div></td>
+														</tr>
+														<tr><td colspan="12" height="5"></td></tr>
+														<tr>
+															<td width="10"></td>
+															<td width="80">Moneda</td>
+															<td width="120"><select name="select_comp_moneda" style="width:120px;" title="Moneda"></select></td>
+															<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_compmoneda"></div></td>
+															<td width="80">Tipo&nbsp;de&nbsp;Cambio</td>
+															<td width="100"><input type="text" name="comp_tc" value="" style="width:100px;"></td>
+															<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_comptc"></div></td>
+															<td width="200" colspan="3" align="right">N&uacute;mero&nbsp;de&nbsp;Cuenta&nbsp;de&nbsp;Pago</td>
+															<td width="150"><input type="text" name="comp_no_cuenta" value="" style="width:150px;"></td>
+															<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_compnocuenta"></div></td>
+														</tr>
+														<tr><td colspan="12" height="5"></td></tr>
+														<tr>
+															<td width="10"></td>
+															<td width="80">*Fecha&nbsp;de&nbsp;Pago</td>
+															<td width="120"><input type="text" name="fecha_pago" value="" style="width:120px;" title="Fecha de Pago"></select></td>
+															<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_compfechapago"></div></td>
+															<td width="80">Periodicidad</td>
+															<td width="100">
+																<select name="select_comp_periodicidad" style="width:100px;" title="Periodicidad del Pago"></select>
+																<input type="hidden" name="periodicidad_selec" value="0">
+															</td>
+															<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_compperiodicidad"></div></td>
+															<td width="80">No.&nbsp;de&nbsp;Periodo</td>
+															<td width="270" colspan="3">
+																<select name="select_no_periodo" style="width:270px;" title="Numero de Periodo segun la Periodicidad de Pago"><option value="0">[-Seleccionar-]</option></select>
+																<input type="hidden" name="no_periodo_selec" value="0">
+															</td>
+															<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_compnoperiodo"></div></td>
+														</tr>
+														<tr><td colspan="12" height="5"></td></tr>
+														<tr>
+															<td width="10">&nbsp;</td>
+															<td width="80"></td>
+															<td width="120"></td>
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="100"></td>
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="150" align="right">
+																<input type="button" id="genera_nomina" value="Generar N&oacute;mina" style="width:120px; font-weight: bold;">
+																<input type="hidden" name="generar">
+																<input type="hidden" name="id_generar">
+															</td>
+															<td width="40"></td>
+														</tr>
+													</table>
+												</td>
+											</tr>
+											<!--
+												25
+												20
+												20
+												20
+											-->
+											<tr>
+												<td colspan="4" class="header_grid" style="border-top: 1px solid #C1DAD7; border-bottom: 1px solid #C1DAD7; border-left: 1px solid #FFFFFF; border-right: 1px solid #FFFFFF;">
+													<table class="tabla_header_grid">
+														<thead>
+															<tr>
+																<td class="grid_head" width="40" id="td_ocultar">&nbsp;#</td>
+																<td class="grid_head" width="50">&nbsp;#</td>
+																<td class="grid_head" width="300">&nbsp;Nombre&nbsp;del&nbsp;Empleado</td>
+																<td class="grid_head" width="95">&nbsp;Total&nbsp;Percepciones</td>
+																<td class="grid_head" width="95">&nbsp;Total&nbsp;Deducciones</td>
+																<td class="grid_head" width="85">&nbsp;Neto&nbsp;a&nbsp;Pagar</td>
+																<td class="grid_head" width="40">&nbsp;</td>
+																<td class="grid_head" width="40">&nbsp;</td>
+																<td class="grid_head" width="78">&nbsp;</td>
+															</tr>
+														</thead>
+													</table>
+													
+													<div class="contenedor_grid" style="overflow:scroll; overflow-x:hidden; overflow-y:auto; width:870; height:160px; border:1px solid #C1DAD7 !important;">	
+														<table>
+															<tbody style="background-color:#FFFFFF;" valign="top" id="grid_empleados">
+																
+															</tbody>
+														</table>
+													</div>
+													
+												</td>
+											</tr>
+											
+											<tr>
+												<td colspan="4" style="color:red;">* Campos obligatorios</td>
+											</tr>
+											<tr>
+												<td width="520"></td>
+												<td width="10"></td>
+												<td width="90"></td>
+												<td width="250"></td>
+											</tr>
+										</table>
+										
+                                    </div><!--tabx-1-->
+                                    
+									
+                                </div>
+                            </div>
+							
+							
+                            <div class="fixed column" id="div_botones" style="width:886px; background:; text-align:right; padding-left:; position:absolute; margin-top:4px;">
+								<table border="0" class="tabla_botones">
+									<tr>
+										<td width="786" class="td_left"></td>
+										<td>
+											<input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+										</td>
+										<td width="30"></td>
+										<td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+									</tr>
+								</table>
+                                
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+        </form>
+        
+        
+        
+        #include("${layoutfooter}")
+        
+        
+
+		<div class="nominaempleado" style="display:none;">
+			<table width="100%" border="0" class="formaNominaEmpleado">
+				<tr>
+					<td>
+						<div class="div_dos_nominaempleado">
+							<table border="0">
+								<thead>
+									<tr>
+										<td>
+											<div  class="titulo_nominaempleado">
+												<div class="fixed column"  style="width:619px; padding-left:6px;"><strong>N&oacute;mina de Empleado</strong></div>
+												<div class="fixed column" style="width:20px; height:25px;">
+													<div id="cierra_forma_nominaempleado" style="height:25px;background-image:url('../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+												</div>
+											</div>
+										</td>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td  style="background:#e9e9e9;"  width="600">
+
+											<div title="" class="div_uno_nominaempleado">
+												<div class="columns" >
+													<div class=" fixed column">
+														<ul class="pestanas">
+															<li><a href="#tabx-1"><strong>Empleado</strong></a></li>
+														</ul>
+													</div>
+												</div>
+
+												<div class="columns" style="background:#731F6C;">
+													<div class="container" style="background:white;">
+														<div class="fixed column" class="content_x" >
+															
+															<input type="hidden" name="id_nom_det" value="0">
+															
+															<div id="tabx-1" class="contenidoPes">
+																
+																<table border="0" class="gral">
+																	<tr>
+																		<td width="140" height="10">*No.&nbsp;de&nbsp;Empleado</td>
+																		<td width="50">
+																			<input type="hidden" name="id_empleado" value="0">
+																			<input type="text" name="no_empleado" value="" style="width:50px;">
+																		</td>
+																		<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_noempleado"></div></td>
+																		<td width="40">*RFC</td>
+																		<td width="120"><input type="text" name="rfc_empleado" value="" style="width:120px;"></td>
+																		<td width="40"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_rfcempleado"></div></td>
+																		
+																		<td width="70">Nombre</td>
+																		<td width="310"><input type="text" name="nombre_empleado" value="" style="width:310px;"></td>
+																		<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_nombreempleado"></div></td>
+																	</tr>
+																	
+																	<tr>
+																		<td colspan="9" height="3"></td>
+																	</tr>
+																	<tr>
+																		<td colspan="9" height="15">
+																			<div style="border:1px solid #81BEF7; height:450px; overflow:scroll; overflow-x:hidden; overflow-y:auto; width:860px;">
+																				
+																					<table border="0" class="gral">
+																						<tr>
+																							<td width="120" height="2"></td>
+																							<td width="150"></td>
+																							<td width="25"></td>
+																							<td width="60"></td>
+																							<td width="30"></td>
+																							<td width="25"></td>
+																							<td width="75"></td>
+																							<td width="25"></td>
+																							<td width="85"></td>
+																							<td width="150"></td>
+																							<td width="25"></td>
+																						</tr>
+																						<tr>
+																							<td width="120" height="10">Departamento</td>
+																							<td width="235" colspan="3"><select name="select_departamento" style="width:235px;"></select></td>
+																							<td width="30"></td>
+																							<td width="25" colspan></td>
+																							<td width="75">Puesto</td>
+																							<td width="260" colspan="3"><select name="select_puesto" style="width:260px;"></select></td>
+																							<td width="25"></td>
+																						</tr>
+																						<tr>
+																							<td height="10" colspan="11"></td>
+																						</tr>
+																						<tr>
+																							<td width="120" height="10">Fecha&nbsp;de&nbsp;Contrataci&oacute;n&nbsp;</td>
+																							<td width="150"><input type="text" name="fecha_contrato" value="" style="width:150px;"></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_fechacontrato"></div></td>
+																							<td width="90" colspan="2">Antig&uuml;edad</td>
+																							<td width="25"><input type="text" name="antiguedad" value="" style="width:25px;"></td>
+																							<td width="75">&nbsp;Semanas</td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_antiguedad"></div></td>
+																							<td width="85">*CURP</td>
+																							<td width="150"><input type="text" name="curp" value="" style="width:150px;"></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_curp"></div></td>
+																						</tr>
+																						<tr>
+																							<td height="10" colspan="11"></td>
+																						</tr>
+																						
+																						
+																						<tr>
+																							<td width="120" height="10">*Regimen&nbsp;de&nbsp;Contrataci&oacute;n&nbsp;</td>
+																							<td width="150"><select name="select_reg_contratacion" style="width:150px;"></select></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_regimencontratacio"></div></td>
+																							<td width="90" colspan="2">Tipo&nbsp;de&nbsp;Contrato&nbsp;</td>
+																							<td width="100" colspan="2"><select name="select_tipo_contrato" style="width:100px;"></select></td>
+																							<td width="25"></td>
+																							<td width="85">Tipo&nbsp;de&nbsp;Jornada</td>
+																							<td width="150"><select name="select_tipo_jornada" style="width:150px;"></select></td>
+																							<td width="25"></td>
+																						</tr>
+																						<tr>
+																							<td width="120" height="10"></td>
+																							<td width="150"></td>
+																							<td width="25"></td>
+																							<td width="60"></td>
+																							<td width="30"></td>
+																							<td width="25"></td>
+																							<td width="75"></td>
+																							<td width="25"></td>
+																							<td width="85"></td>
+																							<td width="150"></td>
+																							<td width="25"></td>
+																						</tr>
+																						<tr>
+																							<td width="120" height="10">*Periodicidad&nbsp;del&nbsp;Pago</td>
+																							<td width="150"><select name="select_preriodo_pago" style="width:150px;"></select></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_periodicidadpago"></div></td>
+																							<td width="90" colspan="2">CLABE</td>
+																							<td width="100" colspan="2"><input type="text" name="clabe" value="" style="width:100px;"></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_clabe"></div></td>
+																							<td width="85">Banco</td>
+																							<td width="150"><select name="select_banco" style="width:150px;"></select></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_banco"></div></td>
+																						</tr>
+																						<tr>
+																							<td height="10" colspan="11"></td>
+																						</tr>
+																						<tr>
+																							<td width="120" height="10">Riesgo&nbsp;de&nbsp;Puesto</td>
+																							<td width="150"><select name="select_riesgo_puesto" style="width:150px;"></select></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_riesgopuesto"></div></td>
+																							<td width="90" colspan="2">No.&nbsp;IMSS</td>
+																							<td width="100" colspan="2"><input type="text" name="imss" value="" style="width:100px;"></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_imss"></div></td>
+																							<td width="85">Registro&nbsp;Patronal&nbsp;</td>
+																							<td width="150"><input type="text" name="reg_patronal" value="" style="width:150px;"></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_regpatronal"></div></td>
+																						</tr>
+																						
+																						<tr>
+																							<td height="10" colspan="11"></td>
+																						</tr>
+																						
+																						<tr>
+																							<td width="120" height="10">Salario&nbsp;Base&nbsp;Cotizaci&oacute;n</td>
+																							<td width="150"><input type="text" name="salario_base" style="width:150px;"></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_salariobase"></div></td>
+																							<td width="115" colspan="3">*Fecha&nbsp;Inicial&nbsp;Pago&nbsp;</td>
+																							<td width="75"><input type="text" name="fecha_ini_pago" style="width:75px;"></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_fechainipago"></div></td>
+																							<td width="85">*Fecha&nbsp;Final&nbsp;Pago&nbsp;</td>
+																							<td width="150"><input type="text" name="fecha_fin_pago" style="width:150px;"></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_fechafinpago"></div></td>
+																						</tr>
+																						<tr>
+																							<td height="10" colspan="11"></td>
+																						</tr>
+																						
+																						<tr>
+																							<td width="120" height="10">Salario&nbsp;Diario&nbsp;Integrado</td>
+																							<td width="150"><input type="text" name="salario_integrado" style="width:150px;"></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_salariointegrado"></div></td>
+																							<td width="115" colspan="3">*No.&nbsp;de&nbsp;d&iacute;as pagados</td>
+																							<td width="75"><input type="text" name="no_dias_pago" style="width:75px;"></td>
+																							<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_nodiaspago"></div></td>
+																							<td width="85"></td>
+																							<td width="150"></td>
+																							<td width="25"></td>
+																						</tr>
+																						
+																						<tr>
+																							<td width="120" height="10"></td>
+																							<td width="150"></td>
+																							<td width="25"></td>
+																							<td width="60"></td>
+																							
+																							<td width="30"></td>												
+																							<td width="25"></td>
+																							
+																							<td width="75"></td>
+																							<td width="25"></td>
+																							<td width="85"></td>
+																							<td width="150"></td>
+																							<td width="25"></td>
+																						</tr>
+																						<tr>
+																							<td colspan="10" class="td_etiqueta_titulo"><strong>Conceptos</strong></td>
+																							<td width="25"></td>
+																						</td>
+																						<tr>
+																							<td colspan="11" class="header_grid">
+																								<table class="tabla_header_grid">
+																									<thead>
+																										<tr>
+																											<td class="grid_head" width="380">&nbsp;*Concepto para el Comprobante</td>
+																											<td class="grid_head" width="110">&nbsp;*Unidad</td>
+																											<td class="grid_head" width="90">&nbsp;*Cantidad</td>
+																											<td class="grid_head" width="100">&nbsp;*Valor&nbsp;Unitario</td>
+																											<td class="grid_head" width="110">&nbsp;*Importe</td>
+																										</tr>
+																									</thead>
+																									<tbody style="background-color: #FFFFFF;" valign="top" id="grid_conceptos">
+																										<tr>
+																											<td class="grid1" style="border:1px solid #C1DAD7 !important;" width="380">
+																												<input type="text" name="concepto_descripcion" value="" style="width:376px;">
+																											</td>
+																											<td class="grid1" style="border:1px solid #C1DAD7 !important;" width="110">
+																												<input type="text" name="concepto_unidad" value="" style="width:106px;">
+																											</td>
+																											<td class="grid1" style="border:1px solid #C1DAD7 !important;" width="90">
+																												<input type="text" name="concepto_cantidad" value="" style="width:86px;">
+																											</td>
+																											<td class="grid1" style="border:1px solid #C1DAD7 !important;" width="100">
+																												<input type="text" name="concepto_valor_unitario" value="" style="width:96px;">
+																											</td>
+																											<td class="grid1" style="border:1px solid #C1DAD7 !important;" width="110">
+																												<input type="text" name="concepto_importe" value="" style="width:106px;">
+																											</td>
+																										</tr>
+																									</tbody>
+																								</table>
+																							</td>
+																						</tr>
+																						<tr>
+																							<td colspan="7" valign="top">
+																								<!--style="border-top: 1px solid #C1DAD7; border-bottom: 1px solid #C1DAD7; border-left: 1px solid #FFFFFF; border-right: 1px solid #FFFFFF;"-->
+																								<table style="margin:0; padding:0;">
+																									<tr>
+																										<td height="10" colspan="7" class="td_etiqueta_titulo"><strong>Descuento&nbsp;Aplicable</strong></td>
+																									</tr>
+																									<tr>
+																										<td width="10"></td>
+																										<td width="60">Monto</td>
+																										<td width="90"><input type="text" name="descuento" value="" style="width:90px;"></td>
+																										<td width="25"></td>
+																										<td width="130" colspan="2">Motivo&nbsp;del&nbsp;Descuento</td>
+																										<td width="200"><input type="text" name="motivo_descuento" value="" style="width:200px;"></td>
+																									</tr>
+																									<tr>
+																										<td height="10" colspan="7"></td>
+																									</tr>
+																									<tr>
+																										<td height="10" colspan="7" class="td_etiqueta_titulo"><strong>Impuestos&nbsp;Retenidos</strong></td>
+																									</tr>
+																									<tr>
+																										<td width="10"></td>
+																										<td width="60">*Impuesto</td>
+																										<td width="90"><select name="select_impuesto_retencion" style="width:90px;"></select></td>
+																										<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_selectimpuestoret"></div></td>
+																										<td width="65">*Importe</td>
+																										<td width="65"><input type="text" name="importe_retencion" value="" style="width:65px;"></td>
+																										<td width="200"><div class="interrogacion"><img src="../../img/help-16x16.png" align="top" rel="warning_importeisr"></div></td>
+																									</tr>
+																								</table>
+																								
+																							</td>
+																							<td width="25"></td>
+																							<td colspan="2" style="border:1px solid #C1DAD7 !important;">
+																								<table>
+																									<tr>
+																										<td height="10" colspan="3"></td>
+																									</tr>
+																									<tr>
+																										<td width="10"></td>
+																										<td width="140">Subtotal</td>
+																										<td width="100"><input type="text" name="comp_subtotal" value="" style="width:100px; text-align:right; font-weight:bold;"></td>
+																									</tr>
+																									<tr>
+																										<td width="10"></td>
+																										<td width="140">Descuento</td>
+																										<td width="100"><input type="text" name="comp_descuento" value="" style="width:100px; text-align:right; font-weight:bold;"></td>
+																									</tr>
+																									<tr>
+																										<td width="10"></td>
+																										<td width="140">Total Impuesto Retenido</td>
+																										<td width="100"><input type="text" name="comp_retencion" value="" style="width:100px; text-align:right; font-weight:bold;"></td>
+																									</tr>
+																									<tr>
+																										<td width="10"></td>
+																										<td width="140">Total</td>
+																										<td width="100"><input type="text" name="comp_total" value="" style="width:100px; text-align:right; font-weight:bold;"></td>
+																									</tr>
+																								</table>
+																							</td>
+																							<td width="25"></td>
+																						</tr>
+																						
+																						<tr>
+																							<td colspan="11" height="10"></td>
+																						</td>
+																						<tr>
+																							<td colspan="10" class="td_etiqueta_titulo">Percepciones</td>
+																							<td width="25"></td>
+																						</td>
+																						<tr>
+																							<td colspan="11" height="5"></td>
+																						</td>
+																						<tr>
+																							<td width="120" height="10">Concepto o Descripci&oacute;n</td>
+																							<td width="150" colspan="4"><select name="select_lista_percepciones" style="width:265px;"></select></td>
+																							<td width="25"></td>
+																							<td width="185" colspan="3"><input type="button" id="agregar_percepcion" value="Agregar Percepci&oacute;n" style="width:120px;"></td>
+																							<td width="150"></td>
+																							<td width="25"></td>
+																						</tr>
+																						<tr>
+																							<td colspan="11" height="5"></td>
+																						</td>
+																						<tr>
+																							<td colspan="11" class="header_grid">
+																								<table class="tabla_header_grid">
+																									<thead>
+																										<tr>
+																											<td class="grid_head" width="60">&nbsp;#</td>
+																											<td class="grid_head" width="200">&nbsp;*Tipo agrupador</td>
+																											<td class="grid_head" width="300">&nbsp;*Concepto o Descripci&oacute;n</td>
+																											<td class="grid_head" width="110">&nbsp;*Monto Gravado</td>
+																											<td class="grid_head" width="120">&nbsp;*Monto Excento</td>
+																										</tr>
+																									</thead>
+																									<tbody style="background-color:#FFFFFF;" valign="top" id="grid_percepciones">
+																										
+																									</tbody>
+																									<tfoot>
+																										<tr>
+																											<td width="60"></td>
+																											<td width="200"></td>
+																											<td width="300" align="right"><strong>*Total&nbsp;</strong></td>
+																											<td class="grid3" width="110"><input type="text" name="percep_total_gravado" value="0.00" style="width:106px; text-align:right; font-weight:bold;"></td>
+																											<td class="grid3" width="120"><input type="text" name="percep_total_excento" value="0.00" style="width:116px; text-align:right; font-weight:bold;"></td>
+																										</tr>
+																									</tfoot>
+																								</table>
+																							</td>
+																						</tr>
+																						
+																						
+																						
+																						
+																						<tr>
+																							<td colspan="11" height="10"></td>
+																						</td>
+																						<tr>
+																							<td colspan="10" class="td_etiqueta_titulo">Deducciones</td>
+																							<td width="25"></td>
+																						</td>
+																						
+																						<tr>
+																							<td colspan="11" height="5"></td>
+																						</td>
+																						<tr>
+																							<td width="120" height="10">Concepto o Descripci&oacute;n</td>
+																							<td width="150" colspan="4"><select name="select_lista_deducciones" style="width:265px;"></select></td>
+																							<td width="25"></td>
+																							<td width="185" colspan="3"><input type="button" id="agregar_deduccion" value="Agregar Deducci&oacute;n" style="width:120px;"></td>
+																							<td width="150"></td>
+																							<td width="25"></td>
+																						</tr>
+																						<tr>
+																							<td colspan="11" height="5"></td>
+																						</td>
+																						
+																						<tr>
+																							<td colspan="11" class="header_grid">
+																								<table class="tabla_header_grid">
+																									<thead>
+																										<tr>
+																											<td class="grid_head" width="60">&nbsp;#</td>
+																											<td class="grid_head" width="200">&nbsp;*Tipo&nbsp;Agrupador</td>
+																											<td class="grid_head" width="300">&nbsp;*Concepto&nbsp;o&nbsp;Descripci&oacute;n</td>
+																											<td class="grid_head" width="110">&nbsp;*Monto&nbsp;Gravado</td>
+																											<td class="grid_head" width="120">&nbsp;*Monto&nbsp;Excento</td>
+																										</tr>
+																									</thead>
+																									<tbody style="background-color:#FFFFFF;" valign="top" id="grid_deducciones">
+																										
+																									</tbody>
+																									<tfoot>
+																										<tr>
+																											<td width="60">&nbsp;</td>
+																											<td width="200"></td>
+																											<td width="300" align="right"><strong>*Total&nbsp;</strong></td>
+																											<td class="grid3" width="110"><input type="text" name="deduc_total_gravado" value="0.00" style="width:106px; text-align:right; font-weight:bold;"></td>
+																											<td class="grid3" width="120"><input type="text" name="deduc_total_excento" value="0.00" style="width:116px; text-align:right; font-weight:bold;"></td>
+																										</tr>
+																									</tfoot>
+																								</table>
+																							</td>
+																						</tr>
+																						
+																						
+																						<tr>
+																							<td colspan="11" height="10"></td>
+																						</td>
+																						<tr>
+																							<td colspan="10" class="td_etiqueta_titulo">Horas&nbsp;Extra</td>
+																							<td width="25"></td>
+																						</td>
+																						<tr>
+																							<td colspan="11" class="header_grid">
+																								<table class="tabla_header_grid">
+																									<thead>
+																										<tr>
+																											<td class="grid_head" width="60">&nbsp;#</td>
+																											<td class="grid_head" width="150">&nbsp;Tipo</td>
+																											<td class="grid_head" width="110">&nbsp;No.&nbsp;de&nbsp;D&iacute;as</td>
+																											<td class="grid_head" width="110">&nbsp;No.&nbsp;de&nbsp;Horas</td>
+																											<td class="grid_head" width="110">&nbsp;Importe&nbsp;Pagado</td>
+																											<td width="240" align="center"><input type="button" id="agregar_hora_extra" value="Agregar Hora Extra" style="width:120px;"></td>
+																										</tr>
+																									</thead>
+																										<tbody style="background-color:#FFFFFF;" valign="top" id="grid_horas_extras">
+																											<!--
+																											<tr>
+																												<td class="grid3" width="60">&nbsp;</td>
+																												<td class="grid3" width="150"></td>
+																												<td class="grid3" width="110"></td>
+																												<td class="grid3" width="110"></td>
+																												<td class="grid3" width="110"></td>
+																												<td width="240"></td>
+																											</tr>
+																											-->
+																										</tbody>
+																								</table>
+																							</td>
+																						</tr>
+																						
+																						
+																						
+																						<tr>
+																							<td colspan="11" height="10"></td>
+																						</td>
+																						<tr>
+																							<td colspan="10" class="td_etiqueta_titulo">Incapacidades</td>
+																							<td width="25"></td>
+																						</td>
+																						<tr>
+																							<td colspan="11" class="header_grid">
+																								<table class="tabla_header_grid">
+																									<thead>
+																										<tr>
+																											<td class="grid_head" width="60">&nbsp;#</td>
+																											<td class="grid_head" width="200">&nbsp;Tipo</td>
+																											<td class="grid_head" width="140">&nbsp;No.&nbsp;de&nbsp;D&iacute;as</td>
+																											<td class="grid_head" width="150">&nbsp;Monto&nbsp;del&nbsp;Descuento</td>
+																											<td width="240" align="center"><input type="button" id="agregar_incapacidad" value="Agregar Incapacidad" style="width:120px;"></td>
+																										</tr>
+																									</thead>
+																										<tbody style="background-color:#FFFFFF;" valign="top" id="grid_incapacidades">
+																											<!--
+																											<tr>
+																												<td class="grid3" width="60">&nbsp;</td>
+																												<td class="grid3" width="200"></td>
+																												<td class="grid3" width="140"></td>
+																												<td class="grid3" width="150"></td>
+																												<td width="240"></td>
+																											</tr>
+																											-->
+																										</tbody>
+																								</table>
+																							</td>
+																						</tr>
+																					</table>
+																									
+
+																			</div>
+																		</td>
+																	</tr>
+																	<!--
+																	<tr>
+																		<td colspan="9" height="15">* Campos obligatorios</td>
+																	</tr>
+																	-->
+																</table>
+																
+																
+																
+																
+															</div>
+														</div>
+													</div>
+													<div class="fixed column" id="botones" style="width:840px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+															<!--<input type="image" src="../../img/modalbox/btn1.png" id="boton_actualizar_forma_nominaempleado"/>-->
+															<div id="boton_cancelar_forma_nominaempleado" style="width:95px; height:34px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div>
+															<div id="boton_actualizar_forma_nominaempleado" style="width:95px; height:34px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn1.png'); background-repeat:no-repeat;"></div>
+													</div>
+													
+								
+												</div>
+											</div>
+											
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						
+					</td>
+					
+				</tr>
+			</table>
+		</div>
+		
+		        
+    </body>
+</html>	

@@ -1,0 +1,51 @@
+	<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+	<link rel="stylesheet" href="../../css/base.css" type="text/css" >
+	<link rel="stylesheet" href="../../css/elastic.css" type="text/css" >
+	<link rel="stylesheet" href="../../css/components/menu/welErp.css" type="text/css"/>
+	<link rel="stylesheet" href="../../css/components/menu/menu.css" type="text/css"/>
+	<link rel="stylesheet" href="../../css/components/tooltip/jquery.tooltip.css" type="text/css"/>
+	<link rel="stylesheet" href="../../css/components/grid/theme.css" type="text/css"  />
+	<link rel="stylesheet" href="../../css/components/grid/paginator.css" type="text/css"  />
+	<link rel="stylesheet" href="../../css/components/jquery-alerts/jquery-alerts.css" type="text/css">
+	<link rel="stylesheet" href="../../css/components/Datepicker/datepicker.css" type="text/css">
+	<link rel="stylesheet" href="../../css/components/tablescroll/jquery.tablescroll.css" type="text/css">
+	<link rel="stylesheet" href="../../css/components/tablescroll/tablescrollv2.css" type="text/css">
+	
+	<!--Multiselect-->
+	<link rel="stylesheet" href="../../css/components/jquery-ui/jquery-ui.css" type="text/css">
+	<link rel="stylesheet" href="../../css/components/MultiSelect/jquery.multiselect.css" type="text/css">
+	
+	<script type="text/javascript" src="../../js/jquery.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../js/elastic.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../js/waiting.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../js/components/Datepicker/datepicker.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../js/components/menu/menu.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../js/components/menu/oculta_menu.js"></script>
+	<script type="text/javascript" src="../../js/components/jquery-BlockUI/jquery-blockui.js" charset="utf-8"></script>
+	
+	<script type="text/javascript" src="../../js/components/Hourpicker/mousewheel.js"></script>
+	<script type="text/javascript" src="../../js/components/Hourpicker/timepickerinputmask.js"></script>
+	<script type="text/javascript" src="../../js/components/Hourpicker/timepickerinputmask.min.js"></script>
+	
+	<script type="text/javascript" src="../../js/components/InputMask/jquery.mask.min.js"></script>
+    
+	<script type="text/javascript" src="../../js/components/easy-tool-tip/easy-tool-tip.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../js/components/datagrid00/jquery.tablesorter.js"></script>
+	<script type="text/javascript" src="../../js/components/jquery-alerts/jquery-alerts.js"></script>
+	<script type="text/javascript" src="../../js/components/paginate/jquery.paginate.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../js/components/datagrid00/datagrid00.js"></script>
+	<script type="text/javascript" src="../../js/components/datagrid00/datagrid00Carteras.js"></script>
+	<script type="text/javascript" src="../../js/components/datagrid00/datagrid00Prefacturas.js"></script>
+	<script type="text/javascript" src="../../js/components/datagrid00/datagrid00Edit.js"></script>
+	
+	<script type="text/javascript" src="../../js/components/tablescroll/jquery.tablescroll.js"></script>
+	<script type="text/javascript" src="../../js/components/menu/jquery.bgiframe.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../js/components/menu/jquery.dimensions.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../js/components/menu/jquery.jdMenu.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../js/components/menu/jquery.positionBy.js" charset="utf-8"></script>
+	
+	<!--Multiselect-->
+	<script type="text/javascript" src="../../js/components/jquery-ui/jquery-ui.min.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../js/components/MultiSelect/jquery.multiselect.js" charset="utf-8"></script>
+	
+	<script type="text/javascript" src="../../js/components/aplicaEvento/aplica_evento.js"></script>

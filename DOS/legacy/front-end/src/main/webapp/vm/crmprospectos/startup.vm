@@ -1,0 +1,398 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+		
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/crmprospectos/formaCrmProspectos.css" type="text/css" />
+        
+
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/crmprospectos/modalbox.js"></script>
+        
+        <script type="text/javascript" src="../../js/implements/crmprospectos/index.js" ></script>
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        <!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+			<tr>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="new_item" class="tooltip"><img src="../../img/catalogo/crear.png" border=0 ><span>Registrar nuevo Cliente</span></a></td>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="visualiza_buscador" class="tooltip"><img src="../../img/catalogo/buscar.png" border=0 ><span>Busqueda</span></a>  </td>
+			</tr>
+		</table>
+        
+        <!--Esta tabla va  en la barra de buscador -->
+		<table border="0" class="tabla_buscador" style="display:none">
+			<tr>
+				<td colspan="13">&nbsp;&nbsp;</td>
+			</tr>
+			<tr>
+				<td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>Buscar</td>
+				<td width=10>&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="text" name="cadena_buscar" style="width:200px;"></td>
+				<td width=10>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>Filtro por</td>
+				<td width=10>&nbsp;&nbsp;</td>
+				<td>
+					<SELECT NAME="filtropor" style="width:150px;">
+						<!--
+						<option value="0">[-- Opcion busqueda --]</option>
+						<option value="1">No. de control</option>
+						<option value="2">RFC</option>
+						<option value="3">Razon social</option>
+						<option value="4">CURP</option>
+						-->
+					</SELECT>
+				</td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="button" value="Buscar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td ><INPUT TYPE="button" value="Limpiar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+		</table>
+        
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+
+        <!--form for crmprospectos -->
+        <form id="formaCrmProspectos" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal prospectos_div_one"  style="display:none;" title="">
+                
+                <input type="hidden" name="identificador_prospecto">
+                <!--<input type="hidden" name="total_tr">-->
+                
+					
+                    <div id="div_two" title="" class="prospectos_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" id="cierra" style="width:765px; padding-left:6px;"><strong>Prospectos</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="div_three" title="" class="prospectos_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Datos</strong></a></li>
+                                    <li><a href="#tabx-2"><strong>Extras</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+                                    <div id="tabx-1" class="contenidoPes" >
+                                        <table border="0" >
+                                            <tr>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="75">Razon&nbsp;Social</td>
+                                                <td width="5">&nbsp;</td>
+                                                <td colspan="8"><INPUT TYPE="text" name="prospecto"  style="width:400px;"></td><!--readOnly="true"-->
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_razonsocial"></div></td>
+                                                <td width="75">Estatus</td>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="150"><SELECT NAME="status" style="width:150px;"></SELECT></td>
+                                                <td width="25 "><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_status"></div></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="16">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5"  >&nbsp;</td>
+                                                <td width="75" >Rfc</td>
+                                                <td width="5"  >&nbsp;</td>
+                                                <td width="5"  ><input type="text" name="rfc" style="width:150px;"></td>
+                                                <td width="5"  ><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_rfc"></div></td>
+                                                <td width="5"  >&nbsp;</td>
+                                                <td width="5"  ></td>
+                                                <td width="5"  >&nbsp;</td>
+                                                <td width="75" >Etapa</td>
+                                                <td width="5" >&nbsp;</td>
+                                                <td width="5"  ><SELECT NAME="estatus" style="width:150px;"></SELECT></td>
+                                                <td width="25 "><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tipoestatus"></td>
+                                                <td width="5"  >Tipo&nbsp;prospecto</td>
+                                                <td width="5"  >&nbsp;</td>
+                                                <td width="150"><SELECT NAME="tipoprospecto" style="width:150px;"></SELECT></td>
+                                                <td width="25 "><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tipoprospecto"></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="16">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="75">Calle</td>
+                                                <td width="5">&nbsp;</td>
+                                                <td colspan="8"><INPUT TYPE="text" name="calle" style="width:400px;"></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_calle"></td>
+                                                <td width="5">No.&nbsp;Interior</td>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="5"  ><INPUT TYPE="text" name="numero_int" style="width:150px;"></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_numeroint"></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="16">&nbsp;</td>
+                                            </tr>
+                                            
+                                            
+                                            <tr>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="75">Entre&nbsp;calles</td>
+                                                <td width="5"></td>
+                                                <td colspan="8"><INPUT TYPE="text" name="entrecalles" style="width:400px;"></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_entrecalles"></div></td>
+                                                <td width="5">No&nbsp;Exterior</td>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="5"><INPUT TYPE="text" name="numero_ext" style="width:150px;"></td>
+                                                <td width="5"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_numeroext"></td>
+                                                
+                                            </tr>
+                                            <tr>
+                                                <td colspan="16">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="75">Colonia</td>
+                                                <td width="5"></td>
+                                                <td colspan="8"><INPUT TYPE="text" name="colonia" style="width:400px;"></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_colonia"></div></td>
+                                                <td width="25">C.P.</td>
+                                                <td width="5"></td>
+                                                <td width="5"><INPUT TYPE="text" name="cp" style="width:150px;"></td>
+                                                <td width="5"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_cp"></div></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="16">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5"></td>
+                                                <td width="75">Pa&iacute;s</td>
+                                                <td width="5"></td>
+                                                <td colspan="2"><SELECT NAME="pais" style="width:150px;"></SELECT></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_pais"></div></td>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="5"  >&nbsp;</td>
+                                                <td width="75">Estado</td>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="150"><SELECT NAME="estado" style="width:150px;"></SELECT></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_estado"></div></td>
+                                                <td width="75">Municipio</td>
+                                                <td width="5"></td>
+                                                <td width="150"><SELECT NAME="municipio" style="width:150px;"></SELECT></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_municipio"></div></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="16">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="75">Loc.&nbsp;alternativa</td>
+                                                <td width="5"></td>
+                                                <td colspan="8"><INPUT TYPE="text" name="loc_alternativa" style="width:400px;"></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_localternativa"></div></td>
+                                                <td width="25">E-mail</td>
+                                                <td width="5"></td>
+                                                <td width="5"><INPUT TYPE="text" name="email" style="width:150px;"></td>
+                                                <td width="5"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_email"></div></td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5" height="7" colspan="16">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5"></td>
+                                                <td width="75">Tel&eacute;fono&nbsp;1</td>
+                                                <td width="5"></td>
+                                                <td colspan="2"><INPUT TYPE="text" name="tel1" style="width:150px;"></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tel1"></div></td>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="5"  >&nbsp;</td>
+                                                <td width="75">Extensi&oacute;n&nbsp;1</td>
+                                                <td width="5"></td>
+                                                <td width="150"><INPUT TYPE="text" name="ext1" style="width:150px;"></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_ext1"></div></td>
+                                                <td width="75">Fax</td>
+                                                <td width="5"></td>
+                                                <td width="150"><INPUT TYPE="text" name="fax" style="width:150px;"></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_fax"></div></td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5" height="7" colspan="16">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5"></td>
+                                                <td width="75">Tel&eacute;fono&nbsp;2</td>
+                                                <td width="5"></td>
+                                                <td colspan="2"><INPUT TYPE="text" name="tel2" style="width:150px;"></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tel2"></div></td>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="5"  >&nbsp;</td>
+                                                <td width="75">Extensi&oacute;n&nbsp;2</td>
+                                                <td width="5"></td>
+                                                <td width="150"><INPUT TYPE="text" name="ext2" style="width:150px;"></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_ext2"></div></td>
+                                                <td width="5"></td>
+                                                <td width="5"></td>
+                                                <td width="5"  >&nbsp;</td>
+                                                <td width="5"  >&nbsp;</td>
+                                                </tr>
+                                            <tr>
+                                                <td width="5" height="7" colspan="16">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="75">Contacto</td>
+                                                <td width="5">&nbsp;</td>
+                                                <td colspan="12"><INPUT TYPE="text" name="contacto" style="width:400px;"></td>
+                                                <td width="13"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_contacto"></div></td>
+                                            </tr>
+                                            
+                                        </table>
+                                    </div>			
+                                    <div id="tabx-2" class="contenidoPes" >
+                                        <table border="0">
+                                            <tr>
+                                                <td width="5" height="7" colspan="17">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5"></td>
+                                                <td width="75">Clasificacion</td>
+                                                <td width="5"></td>
+                                                <td><SELECT NAME="clasificacion" style="width:160px;"></SELECT></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_clasificacion"></div></td>
+                                                <td width="5"></td>
+                                                <td width="75" align="center">Tipo&nbsp;Industria</td>
+                                                <td width="5"></td>
+                                                <td width="150"><SELECT NAME="tipoindustria" style="width:150px;"></SELECT></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tipoindustria"></div></td>
+                                                <td width="25">&nbsp;</td>
+                                                <td width="75" align="center"><!--Tipo&nbsp;Industria--></td>
+                                                <td width="5"></td>
+                                                <td width="150"><!--<SELECT NAME="tipoindustria" style="width:150px;"></SELECT>--></td>
+                                                <td width="25"><!--<div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tipoindustria">--></div></td>
+                                                
+                                            </tr>
+                                            <tr>
+                                                <td width="5" height="7">&nbsp;</td>
+                                                <td width="75"></td>
+                                                <td width="5"></td>
+                                                <td width="150"></td>
+                                                <td width="25"></td>
+                                                <td width="5"></td>
+                                                <td ></td>
+                                                <td width="5"></td>
+                                                <td></td>
+                                                <td width="25"></td>
+                                                <td width="5"></td>
+                                                <td ></td>
+                                                <td width="5"></td>
+                                                
+                                            </tr>
+                                            <tr>
+                                                <td width="5" height="7">&nbsp;</td>
+                                                <td width="75"></td>
+                                                <td width="5"></td>
+                                                <td width="150"></td>
+                                                <td width="25"></td>
+                                                <td width="5"></td>
+                                                <td ></td>
+                                                <td width="5"></td>
+                                                <td></td>
+                                                <td width="25"></td>
+                                                <td width="5"></td>
+                                                <td ></td>
+                                                <td width="5"></td>
+                                                
+                                            </tr>
+                                            <tr>
+                                                <td width="5" height="7" colspan="17">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5" height="7">&nbsp;</td>
+                                                <td width="75">Observaciones</td>
+                                                <td width="5"></td>
+                                                <td width="150" colspan="14"><textarea name="observaciones" rows="4" cols="160" style="width:350px; resize: none;"></textarea></td>
+                                                
+                                            </tr>
+                                            <tr>
+                                                <td width="5" height="7" colspan="17">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5" height="7" colspan="17">&nbsp;</td>
+                                            </tr>
+                                            
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="fixed column" id="botones" style="width:790px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+                                <table border="0">
+                                        <tr>
+                                                <td width="590"></td>
+                                                <td>
+                                                        <input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+                                                </td>
+                                                <td width="30"></td>
+                                                <td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+                                        </tr>
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </form>
+        
+        #include("${layoutfooter}")
+        
+    </body>
+</html>	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,56 @@
+#forma-buscacontactos-overlay {
+	position: fixed;
+	z-index:100;
+	top: 0px;
+	left: 0px;
+	height:100%;
+	width:100%;
+	/*background: #000;*/
+	display: none;
+}
+#forma-buscacontactos-window {
+	position: fixed;
+	z-index: 102;
+	/*display:block;*/
+	top:40%;
+	left:40%;
+	height:0px;
+	width:0x;
+	background: white;
+}
+
+/*
+.buscador_proveedores{
+    background-color:#D1D2D4;
+	border-radius:10px;
+	border:2px solid #313E74;
+	z-index:2;
+	box-shadow:3px 5px 10px -3px;
+}
+*/
+
+.div_dos_buscacontactos{
+    border-radius:10px;
+    background-color:#e9e9e9;
+    border:3px solid #454442;
+    z-index:2;
+    box-shadow:3px 5px 10px -3px;
+}
+
+.titulo_buscacontactos{
+    /*font-family:tahoma;*/
+    font-size:15px;
+    background-color:#454442;
+    height:28px;
+    color:white;
+    padding-top:10px;
+    padding-left:10px;
+    border-radius:6px 6px 0px 0px;
+    z-index:1;
+}
+
+.contenidobusqueda{
+    background:white;
+    /*padding: 10px;*/
+    font-size: 11px; 
+}

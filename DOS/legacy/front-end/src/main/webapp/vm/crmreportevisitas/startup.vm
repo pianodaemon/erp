@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+
+        #include("${layoutheader}")
+        
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/implements/crmreportevisitas/index.js" ></script>
+        <script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+
+        <!--  otra parte -->
+        <table class="acciones" border="0" >
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td>&nbsp;&nbsp;</td>
+            </tr>
+           <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    <div class="repvisitas" >
+                        <table id="filtros" border="0" style="background-color:#ffffff;" >
+                            <tr>
+                                <td colspan="15">&nbsp;&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td >&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                <td width="60">Agente</td>
+                                <td width="270">					
+									<select name="select_agente" style="width:270px;">
+										<option value="0" >[-- Selecionar Agente --]</option>
+									</select>
+								</td>
+                                <td width="20">&nbsp;&nbsp;&nbsp;</td>
+                                <td width="80">Fecha&nbsp;inicial</td>
+                                <td width="100"><INPUT TYPE="text" name="fecha_inicial" style="width:100px;"></td>
+                                <td width="20">&nbsp;&nbsp;&nbsp;</td>
+                                <td width="80" align="right">Fecha&nbsp;final&nbsp;&nbsp;</td>
+                                <td width="100"><INPUT TYPE="text" name="fecha_final" style="width:100px;"></td>
+                                <td width="20"></td>
+                                <td width="100"><INPUT TYPE="button"  value="Buscar"></td>
+                                <td ></td>
+                                <td width="170"><INPUT TYPE="button"  value="Generar_PDF"></td>
+                                <td >&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                <td >&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td colspan="15">&nbsp;&nbsp;</td>
+                            </tr>
+
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+				<td>
+					<div id="tablaresultadosvisitas">
+						<!--Aqui se agrega desde el js los trs de el reultado de  la consulta-->
+					</div>
+				</td>
+            </tr>
+        </table>
+
+        #include("${layoutfooter}")
+
+
+    </body>
+</html>
+
+

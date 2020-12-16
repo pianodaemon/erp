@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+		
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/invrepexis/formaRepinvexis.css" type="text/css" />
+		
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/implements/invrepexis/index.js" ></script>
+        <script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+					<div >
+						<table border="0" style="display:block">
+							<tr class="rep_inv_exis">
+								<td colspan="17" height="8"></td>
+							</tr>
+							<tr class="rep_inv_exis">
+								<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								<td width="130">Opciones</td>
+								<td width="20"></td>
+								<td width="130">Tipo de Costo</td>
+								<td width="20"></td>
+								<td width="180">Almacen</td>
+								<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								<td width="90">C&oacute;digo&nbsp;producto</td>
+								<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								<td width="180">Descripci&oacute;n</td>
+								<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								<td width="130">Tipo de Producto</td>
+								<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								
+								<td width="50"></td>
+								<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								<td width="50"></td>
+								<td width="20">&nbsp;&nbsp;</td>
+							</tr>
+							
+							
+							<tr class="rep_inv_exis">
+								<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								<td width="130"><select name="opciones" style="width:130px;" title="Filtros para el reporte de Existencias en Inventario"></select></td>
+								<td width="20"></td>
+								<td width="120">
+									<select name="select_tipo_costo" style="width:120px;"></select>
+								</td>
+								<td width="20"></td>
+								<td width="180">
+									<select name="select_almacen" style="width:180px;">
+										<option value="0" selected="yes">[--Seleccionar Almacen--]</option>
+									</select>
+								</td>
+								<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								<td width="90"><INPUT TYPE="text" name="codigo" style="width:90px;"></td>
+								<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								<td width="180"><INPUT TYPE="text" name="descripcion" style="width:180px;"></td>
+								<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								<td width="120"><select name="select_tipo_prod" style="width:120px;" title="Filtro por Tipo de Producto"></select></td>
+								<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								
+								<td width="50"><INPUT TYPE="button" id="boton_buscador" value="Buscar" style="width:50px;"></td>
+								<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								<td width="50"><INPUT TYPE="button" id="genera_reporte_exis" value="PDF" style="width:50px;"></td>
+								<td width="20">&nbsp;&nbsp;</td>
+							</tr>
+							<tr class="rep_inv_exis">
+								<td colspan="17"  height="8"></td>
+							</tr>
+							<tr>
+								<td colspan="17">&nbsp;&nbsp;</td>
+							</tr>
+							<tr>
+								<td colspan="17">
+										<div id="table_exis">
+										
+										</div>
+								</td>
+							</tr>
+						</table>
+					</div>
+                </td>
+            </tr>
+        </table>
+		
+        
+        
+        #include("${layoutfooter}")
+        
+        
+    </body>
+</html>	
+
+

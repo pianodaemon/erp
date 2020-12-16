@@ -1,0 +1,4 @@
+#!/bin/sh -e
+
+RDBMS_CONTAINER="rdbms_staging"
+docker exec -it $RDBMS_CONTAINER /scripts/manage_rdbms.sh

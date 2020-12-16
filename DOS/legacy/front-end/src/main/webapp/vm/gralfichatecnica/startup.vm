@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+	
+        <!--  css for this catalogo -->
+        <!--<link rel="stylesheet" href="../../css/modalbox/graldocs/formaGralDocs.css" type="text/css" />-->
+	
+        <!--  js for this catalogo -->
+        <!--<script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/graldocs/modalboxGralDocs.js"></script> -->
+        <script type="text/javascript" src="../../js/implements/gralfichatecnica/index.js" ></script>
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        <!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+			<tr>
+			<td width="15" height="30"></td>
+			<!--<td height="30"><a href="new_item" class="tooltip"><div class="onmouseOutNewItem" id="nItem"></div><span>Registrar nuevo</span></a></td>-->
+			<td width="15" height="30"></td>
+			<td height="30"><a href="visualiza_buscador" class="tooltip"><div class="onmouseOutVisualizaBuscador" id="vbuscador"></div><span>Busqueda</span></a>  </td>
+			</tr>
+		</table>
+        
+        <!--Esta tabla va  en la barra de buscador -->
+		<table border="0" class="tabla_buscador" style="display:none">
+			<tr>
+			   <td colspan="13">&nbsp;&nbsp;</td>
+			</tr>
+			
+			<tr>
+                            <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                            <td>C&oadute;digo</td>
+                            <td width="10">&nbsp;&nbsp;</td>
+                            <td><INPUT TYPE="text" name="busqueda_codigo" style="width:100px;"></td>
+                            <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                            <td>Titulo</td>
+                            <td width="10">&nbsp;&nbsp;</td>
+                            <td><INPUT TYPE="text" name="busqueda_descripcion" style="width:250px;"></td>
+                            <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                            <td><INPUT TYPE="button" value="Buscar"></td>
+                            <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                            <td ><INPUT TYPE="button" value="Limpiar"></td>
+                            <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+			<tr>
+                            <td colspan="13">&nbsp;&nbsp;</td>
+			</tr>
+		</table>
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+        
+        <!--form for inventario de puestos -->
+        <form id="formaGralDocs" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal graldocs_div_one"  style="display:none;" title="">
+                <input type="hidden" name="identificador">
+				<div id="div_two" title="" class="graldocs_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" id="cierra" style="width:329px; padding-left:6px;"><strong>Edici&oacute;n Codigo ISO</strong></div>
+                            <div class="fixed column" style="width:30px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>    
+                      <div id="div_three" title="" class="graldocs_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Codigo ISO</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+									
+                                    <div id="tabx-1" class="contenidoPes" >
+                                        <table border="0">
+                                            <tr>
+                                                <td width="5"></td>
+                                                <td width="120">Titulo</td>
+                                                <td width="220"><INPUT TYPE="text" name="titulo" style="width:220px;" readOnly="true"></td>
+                                                
+                                                <td width="25"></td>
+                                                <td width="5"></td>
+                                            </tr>
+                                             <tr>
+                                               <td colspan="5">&nbsp;</td>
+                                               
+                                            </tr>
+                                            <tr>
+                                                <td width="5"></td>
+                                                <td width="120">CODIGO001</td>
+                                                <td width="220"><INPUT TYPE="text" name="codigo001" style="width:220px;"></td>
+                                                
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_codigo"></div></td>
+                                                <td width="5"></td>
+                                            </tr>
+                                            <tr>
+                                               <td colspan="5">&nbsp;</td>
+                                               
+                                            </tr>
+                                            <tr>
+                                                <td colspan="5"><input type="hidden"></td>
+                                            </tr>
+                                        
+                                            <tr>
+                                                <td width="5"></td>
+                                                <td width="120">CODIGO002</td>
+                                                <td width="220"><INPUT TYPE="text" name="codigo002" style="width:220px;"></td>
+                                                <td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_codigo"></div></td>
+                                                <td width="5"></td>
+                                            </tr>
+                                            <tr>
+                                                <td width="5">&nbsp;</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fixed column" id="botones" style="width:359px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+                                <table border="0">
+                                        <tr><td colspan="4" height="7"></td></tr>
+                                        <tr>
+                                            <td width="559"></td>
+                                            <td>
+                                               <input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+                                            </td>
+                                            <td width="30"></td>
+                                            <td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+                                        </tr>
+                                </table>      
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </form>
+        #include("${layoutfooter}")
+    </body>
+</html>	
+
+

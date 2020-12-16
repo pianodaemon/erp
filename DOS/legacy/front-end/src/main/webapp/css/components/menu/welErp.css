@@ -1,0 +1,333 @@
+#header{
+    /*background-color:#ffffff;*/
+    background-image:url(../../../img/back.png);
+    width:100%;
+    height:55px;
+}
+#header1{
+    width:100%;
+    height:55px;
+}
+#logo{
+    background-image:url(../../../img/logo_erp.png);
+    background-repeat:no-repeat;
+    background-position:left;
+}
+#opcHeader{
+	text-align:center;
+	color:#1E582C;
+	cursor:pointer;
+}
+#menu{
+    /*background-image:url(../../../img/menuF.png);*/
+    background-image:url(../../../img/menu/header.png);
+    /*background-image:url(../../../img/barra_nav.png);*/
+    background-repeat:repeat-x;
+    width:100%;
+    height:26px;
+}
+#menu1{
+    /*background-image:url(../../../img/barra_menu_erp.png);*/
+    background-repeat:no-repeat;
+    width:100%;
+    height:26px;
+}
+#opcMenu{
+    width:100%;
+    height:26px;
+}
+
+/*
+#barra{
+    background-color:#2F3D73;
+    width:100%;
+    height:30px;
+}
+#barra1{
+    background-color:#2F3D73;
+    width:580px;
+    height:30px;
+}
+*/
+
+#barra_acciones{
+    background-color:#969696;
+    background-image:url(../../../img/icon_bar.png);
+    background-repeat:repeat-x;
+    text-align:left;
+    width:100%;
+    height:30px;
+}
+
+.onmouseOverNewItem {
+	background-image: url(../../../img/catalogo/crear_over.png);
+	width:22px;
+    height:22px;
+}
+.onmouseOutNewItem {
+	background-image: url(../../../img/catalogo/crear.png);
+	width:22px;
+    height:22px;
+}
+
+
+.onmouseOverDescargarPdf {
+	background-image: url(../../../img/catalogo/pdf_over.png);
+	width:22px;
+    height:22px;
+}
+.onmouseOutDescargarPdf {
+	background-image: url(../../../img/catalogo/pdf.png);
+	width:22px;
+    height:22px;
+}
+
+.onmouseOverDescargarXml {
+	background-image: url(../../../img/catalogo/xml_over.png);
+	width:22px;
+    height:22px;
+}
+.onmouseOutDescargarXml {
+	background-image: url(../../../img/catalogo/xml.png);
+	width:22px;
+    height:22px;
+}
+
+.onmouseOverGeneraInforme {
+	background-image: url(../../../img/catalogo/reporte_over.png);
+	width:22px;
+    height:22px;
+}
+.onmouseOutGeneraInforme {
+	background-image: url(../../../img/catalogo/reporte.png);
+	width:22px;
+    height:22px;
+}
+
+
+
+.onmouseOverVisualizaBuscador {
+	background-image: url(../../../img/catalogo/buscar_over.png);
+	width:22px;
+    height:22px;
+}
+
+.onmouseOutVisualizaBuscador {
+	background-image: url(../../../img/catalogo/buscar.png);
+	width:22px;
+    height:22px;
+}
+
+
+
+
+
+#barra1{
+    background-color:#969696;
+    width:580px;
+    height:30px;
+}
+
+#cuerpo{
+    width:100%;
+    height:100%;
+    background-image:url(../../../img/back.png);
+    background-repeat:repeat-x;
+    overflow:auto;
+    position:fixed;
+}
+
+#footer{
+    width:100%;
+    height:30px;
+    position:fixed;
+    bottom:0;
+
+    background-color:#738a8a;
+}
+
+#barra_titulo{
+    /*background-image:url(../../../img/menu/header.png);*/
+    background-image:url(../../../img/barra_nav.png);
+    background-repeat:repeat-x;
+    width:100%;
+    height:26px;
+	/*text-align:centerline;*/
+	text-align:left;
+    font:14px Verdana,Arial;
+}
+
+#barra_buscador{
+    /*background-color:#C0C0C0;*/
+    background-image:url(../../../img/barra_estado.png);
+    background-repeat:repeat-x;
+    text-align:left;
+    width:100%;
+    height:0px;
+    font-size:13px;
+}
+
+#barra_descarga_xml{
+    /*background-color:#C0C0C0;*/
+    background-image:url(../../../img/barra_estado.png);
+    background-repeat:repeat-x;
+    width:100%;
+    height:0px;
+    font-size:13px;
+}
+
+#barra_descarga_pdf {
+    /*background-color:#C0C0C0;*/
+    background-image:url(../../../img/barra_estado.png);
+    background-repeat:repeat-x;
+    width:100%;
+    height:0px;
+    font-size:13px;
+}
+
+#barra_genera_informe{
+    /*background-color:#C0C0C0;*/
+    background-image:url(../../../img/barra_estado.png);
+    background-repeat:repeat-x;
+    width:100%;
+    height:0px;
+    font-size:13px;
+}
+
+
+.onmouseOverBuscar {
+	background-image: url(../../../img/catalogo/btn_buscar_over.png);
+	background-repeat: no-repeat;
+    width:58px;
+    height:18px;
+}
+
+.onmouseOutBuscar {
+	background-image: url(../../../img/catalogo/btn_buscar.png);
+	background-repeat: no-repeat;
+    width:58px;
+    height:18px;
+}
+
+.onmouseOverLimpiar {
+	background-image: url(../../../img/catalogo/btn_limpiar_over.png);
+	background-repeat: no-repeat;
+    width:58px;
+    height:18px;
+}
+
+.onmouseOutLimpiar {
+	background-image: url(../../../img/catalogo/btn_limpiar.png);
+	background-repeat: no-repeat;
+    width:58px;
+    height:18px;
+}
+
+.onmouseOutCancelar {
+	background-image: url(../../../img/catalogo/btn_cancelar.png);
+	background-repeat: no-repeat;
+    width:58px;
+    height:20px;
+}
+
+.onmouseOverCancelar {
+	background-image: url(../../../img/catalogo/btn_cancelar_over.png);
+	background-repeat: no-repeat;
+    width:58px;
+    height:20px;
+}
+
+
+.onmouseOutEliminar {
+	background-image: url(../../../img/borrar.png);
+	background-repeat: no-repeat;
+    width:16px;
+    height:16px;
+}
+
+.onmouseOverEliminar {
+	background-image: url(../../../img/borrar1.png);
+	background-repeat: no-repeat;
+    width:16px;
+    height:16px;
+}
+
+
+.onmouseOutEditar {
+	background-image: url(../../../img/editar.png);
+	background-repeat: no-repeat;
+    width:16px;
+    height:15px;
+}
+
+.onmouseOverEditar {
+	background-image: url(../../../img/editar1.png);
+	background-repeat: no-repeat;
+    width:16px;
+    height:15px;
+}
+
+.onmouseOutFind {
+	background-image: url(../../../img/search.png);
+	background-repeat: no-repeat;
+    width:16px;
+    height:15px;
+}
+
+.onmouseOverFind {
+	background-image: url(../../../img/search1.png);
+	background-repeat: no-repeat;
+    width:16px;
+    height:15px;
+}
+
+
+
+
+
+table tr td.grid_head {
+	font-size: 11px;
+	font-weight: bold;
+	background: #fff;
+	text-align: center;
+	vertical-align: centerline;
+	background-color:#dddddd;
+	border-top:0px solid #ccc !important;
+	border-bottom:0px solid #ccc !important;
+	border-right:1px solid #ccc !important;
+	border-left:1px solid #ccc !important;
+	background-image: url("../../../img/datagrid00/bar_table.png");
+	height:18px;
+
+}
+
+table tr#tr_totales{
+	font-weight: bold;
+}
+
+table tr td.grid_datos {
+	/*font: 12px normL Tahoma,Geneva,"Helvetica Neue",Helvetica,Arial,sans-serif;*/
+	background: #FFFFFF ;
+	vertical-align: top;
+	background-color:#FFFFFF ;
+	border:1px solid #ccc !important;
+	border-right: 1px solid #ccc !important;
+}
+
+
+tfoot tr td.grid_foot {
+	font-size: 12px;
+	font-weight: bold;
+	background: #fff;
+	vertical-align: centerline;
+	background-color:#dddddd;
+	border-top:0px solid #ccc !important;
+	border-bottom:0px solid #ccc !important;
+	border-right:1px solid #ccc !important;
+	border-left:1px solid #ccc !important;
+	background-image: url("../../../img/datagrid00/bar_table.png");
+	height:18px;
+
+}
+
+

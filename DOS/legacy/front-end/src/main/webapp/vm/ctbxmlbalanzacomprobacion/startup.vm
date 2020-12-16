@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+		
+        <!--  css for this catalogo -->
+		
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        <script type="text/javascript" src="../../js/implements/ctbxmlbalanzacomprobacion/index.js" ></script>
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td width="10" height="10"></td>
+                <td ></td>
+            </tr>
+            <tr>
+                <td width="10"></td>
+                <td style="background-color:#ffffff;" >
+					<div id="div_busqueda">
+						<table id="busqueda" border="0">
+							<tr>
+								<td height="12"></td>
+							</tr>
+							<tr>
+								<td width="30"></td>
+								<td width="150">Tipo&nbsp;de&nbsp;env&iacute;o</td>
+								<td width="30"></td>
+								<td width="110">Mes</td>
+								<td width="30"></td>
+								<td width="80">A&ntilde;o</td>
+								<td width="30"></td>
+								<td width="150"></td>
+								<td width="30"></td>
+							</tr>
+							<tr>
+								<td width="30"></td>
+								<td width="150"><select name="select_tipo_envio" style="width:150px;"><option value="BN" selected="yes">Normal</option><option value="BC">Complementaria</option></select></td>
+								<td width="30"></td>
+								<td width="110"><select name="select_mes" style="width:110px;"></select></td>
+								<td width="30"></td>
+								<td width="80"><select name="select_ano" style="width:80px;"></select></td>
+								<td width="40"></td>
+								<td width="150"><input type="button" id="xml" value="Descargar XML" style="width:150px;"></td>
+								<td width="30"></td>
+							</tr>
+						</table>
+					</div>
+                </td>
+            </tr>
+            <tr>
+                <td height="8"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td height="10"></td>
+                <td><div id="div_rep"> </div></td>
+            </tr>
+        </table>
+        
+        #include("${layoutfooter}")
+        
+    </body>
+</html>	
+
+

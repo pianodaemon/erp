@@ -1,0 +1,409 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+
+        #include("${layoutheader}")
+
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"  ></script>
+        <link rel="stylesheet" href="../../css/modalbox/carteras/formaBuscaclientes.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/cotizaciones/formaBuscaproducto.css" type="text/css" />
+        <script type="text/javascript" src="../../js/implements/repventasnetasproductofactura/index.js" ></script>
+        <script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/carteras/modalboxBuscacliente.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/cotizaciones/modalboxBuscaproducto.js"></script>
+        #include("${layoutmenu}")
+
+
+
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+
+
+        <!--  otra parte -->
+        <table class="acciones" >
+            <tr>
+                <td width="10">&nbsp;</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td width="10"></td>
+                <td >
+                    <div class="repventasnetasproductofactura" >
+						<table id="fechas" border="0" style="margin:0; padding:0; background-color:#fff;">
+							 <tr>
+								<td height="5" colspan="18"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="120">Tipo&nbsp;de&nbsp;reporte</td>
+								<td width="20"></td>
+								<td width="180">Nombre&nbsp;del&nbsp;producto</td>
+								<td width="50"></td>
+								<td width="20"></td>
+								<td width="150">Segmento</td>
+								<td width="20"></td>
+								<td width="150">Linea</td>
+								<td width="20"></td>
+								<td width="150">Marca</td>
+								<td width="20"></td>
+								<td width="165" colspan="3">Fecha&nbsp;de&nbsp;ventas</td>
+								<td width="20"></td>
+								<td width="70"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="120">
+									<SELECT NAME="ventas" style="width:120px;">
+										<option value="1" selected="yes">Por cliente</option>
+										<option value="2" >Por  producto</option>
+										<option value="3" > + Producto</option>
+										<option value="4" > + Cliente</option>
+									</SELECT>
+								</td>
+								<td width="20"></td>
+								<td width="180"><INPUT TYPE="text" name="nombreproducto" style="width:180px;"></td>
+								<td width="50"><a href="busca_producto" style="font-size:13px;">(Buscar)</a></td>
+								<td width="20"></td>
+								<td width="150">
+									<SELECT NAME="segmento" style="width:150px;">
+										<option value="0" selected="yes">[-- Seleccionar --]</option>
+									</SELECT>
+								</td>
+								<td width="20"></td>
+								<td width="150">
+									<SELECT NAME="linea" style="width:150px;">
+										<option value="0" selected="yes">[-- Seleccionar --]</option>
+									</SELECT>
+								</td>
+								<td width="20"></td>
+								<td width="150">
+									<SELECT NAME="marca" style="width:150px;">
+									  <option value="0" selected="yes">[-- Seleccionar --]</option>
+									</SELECT>
+								</td>
+								<td width="20"></td>
+								<td width="75"><INPUT TYPE="text" name="fecha_inicial" style="width:75px;"></td>
+								<td width="15" align="center"> al </td>
+								<td width="75"><INPUT TYPE="text" name="fecha_final" style="width:75px;"></td>
+								<td width="20"></td>
+								<td width="70"><INPUT TYPE="button"  value="Buscar" style="width:70px;"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="120">Tipo&nbsp;de&nbsp;costo</td>
+								<td width="20"></td>
+								<td width="180">Nombre&nbsp;de&nbsp;cliente</td>
+								<td width="50"></td>
+								<td width="20"></td>
+								<td width="150">Mercado</td>
+								<td width="20"></td>
+								<td width="150">Familia</td>
+								<td width="20"></td>
+								<td width="150">Subfamilia</td>
+								<td width="20"></td>
+								<td width="165" colspan="3">Agente</td>
+								<td width="20"></td>
+								<td width="70"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="120">
+									<SELECT NAME="costo" style="width:120px;">
+										<option value="1" selected="yes">Costo Promedio</option>
+										<option value="2" >Costo Referencia</option>
+									</SELECT>
+								</td>
+								<td width="20"></td>
+								<td width="180"><INPUT TYPE="text" name="nombrecliente" style="width:180px;"></td>
+								<td width="50"><a href="busca_cliente" style="font-size:13px;">(Buscar)</a></td>
+								<td width="20"></td>
+								<td width="150">
+									<SELECT NAME="mercado" style="width:150px;">
+										<option value="0" selected="yes">[-- Seleccionar --]</option>
+									</SELECT>
+								</td>
+								<td width="20"></td>
+								<td width="150">
+									<SELECT NAME="familia" style="width:150px;">
+										<option value="0" selected="yes">[-- Seleccionar --]</option>
+									</SELECT>
+								</td>
+								<td width="20"></td>
+								<td width="150">
+								   <SELECT NAME="subfamilia" style="width:150px;">
+										<option value="0" selected="yes">[-- Seleccionar --]</option>
+									</SELECT>
+								</td>
+								<td width="20"></td>
+								<td width="165" colspan ="3"><select name="select_agente"  style="width:165px;" title="Seleccione Agente de Ventas"></select></td>
+								<td width="20"></td>
+								<td width="70"><INPUT TYPE="button"  value="PDF" style="width:70px;"></td>
+								<td width="10"></td>
+							</tr>
+							<tr><td height="5" colspan="18"></td></tr>
+						</table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+
+
+
+        <table  width="1330px">
+            <tr>
+                <td >&nbsp;&nbsp;</td>
+                <td >
+                    <div id="ventasnetasproductofactura" width="1300" > </div>
+                </td>
+            </tr>
+
+        </table>
+
+
+
+
+
+<div class="buscador_clientes" style="display:none;">
+        <table width="100%" border="0" class="formaBusqueda_clientes">
+                <tr>
+                    <td>
+                        <div class="div_dos_clientes">
+                            <table width="100%" border="0">
+                                <thead>
+                                        <tr>
+                                                <td colspan="8" height="50" valign="top"><div class="titulo_clientes" width="100%"><strong>Buscador de clientes</strong></div></td>
+                                        </tr>
+                                </thead>
+
+                                    <tbody>
+                                        <tr>
+                                            <td width="10"></td>
+                                            <td width="10" style="background:#ffffff;"></td>
+                                            <td colspan="3" style="background:#ffffff;" width="600">
+
+                                                <table id="tabla_busqueda" border="0"  class="contenidobusqueda">
+                                                        <tr>
+                                                                <td colspan="7" width="600" height="10"></td>
+                                                        </tr>
+
+                                                        <tr>
+                                                                <td width="50">Buscar</td>
+                                                                <td width="245"><INPUT TYPE="text" name="cadena_buscar" style="width:245px;"></td>
+                                                                <td width="25"></td>
+                                                                <td width="60">Filtro por</td>
+                                                                <td width="150"><SELECT NAME="filtropor" style="width:150px;"></SELECT></td>
+                                                                <td width="70" align="right">
+                                                                <INPUT TYPE="button" id="busca_cliente_modalbox" class="onmouseOutBuscar">
+                                                                </td>
+                                                        </tr>
+                                                </table>
+
+                                            </td>
+                                            <td width="10" style="background:#ffffff"></td>
+                                            <td width="10"></td>
+                                        </tr>
+
+                                        <tr style="font-size:13px;">
+                                                <td width="10"></td>
+                                                <td width="10" style="background:#ffffff"></td>
+
+                                                <td width="80"  style="background:#A8A9AB;">No.&nbsp;control</td>
+                                                <td width="140"  style="background:#A8A9AB;">RFC</td>
+                                                <td width="380"  style="background:#A8A9AB;">Razon&nbsp;social</td>
+
+                                                <td width="10" style="background:#ffffff"></td>
+                                                <td width="10"></td>
+                                        </tr>
+
+
+                                        <tr>
+                                                <td width="10"></td>
+                                                <td width="10" style="background:#ffffff"></td>
+                                                <td style="background:#ffffff; border: solid 1px #454442;" colspan="3" width="600">
+                                                    <div style="overflow:scroll; overflow-x:auto; overflow-y:auto; width:600px; height:120px; align=top;">
+                                                            <table  border="0" id="tabla_resultado" width="580">
+                                                                    <!--aqui van los resultados de la busqueda-->
+                                                                    <!--
+                                                                            <tr>
+                                                                                    <td width="80">No. control</td>
+                                                                                    <td width="145">RFC</td>
+                                                                                    <td width="375">Razon social</td>
+                                                                            </tr>
+                                                                    -->
+                                                            </table>
+                                                    </div>
+                                                </td>
+                                                <td width="10" style="background:#ffffff"></td>
+                                                <td width="10"></td>
+                                        </tr>
+                                        <tr>
+                                                <td width="10"></td>
+                                                <td width="10" colspan="5" height="3" style="background:#ffffff"></td>
+                                                <td width="10"></td>
+                                        </tr>
+                                        <tr>
+                                                <td width="10"></td>
+                                                <td width="10" style="background:#ffffff"></td>
+
+                                                <td width="80" style="background:#ffffff"></td>
+                                                <td width="140" style="background:#ffffff"></td>
+                                                <td width="380" style="background:#ffffff" align="right">
+                                                        <INPUT TYPE="button" id="cencela" class="onmouseOutCancelar">
+                                                </td>
+
+                                                <td width="10" style="background:#ffffff"></td>
+                                                <td width="10"></td>
+                                        </tr>
+                                        <tr>
+                                                <td width="10"></td>
+                                                <td width="10" colspan="5" height="6" style="background:#ffffff"></td>
+                                                <td width="10"></td>
+                                        </tr>
+                                </tbody>
+
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+        </table>
+</div>
+
+<div class="buscador_productos" style="display:none;">
+        <table width="100%" border="0" class="formaBusqueda_productos">
+                <tr>
+                        <td>
+                                <div class="div_dos_productos">
+                                        <table width="100%" border="0">
+                                                <thead>
+                                                        <tr>
+                                                                <td colspan="8" height="50" valign="top"><div class="titulo_productos" width="100%"><strong>Buscador de productos</strong></div></td>
+                                                        </tr>
+                                                </thead>
+
+                                                <tbody>
+                                                        <tr>
+                                                                <td width="10"></td>
+                                                                <td width="10" style="background:#ffffff;"></td>
+                                                                <td colspan="4" style="background:#ffffff;" width="600">
+
+                                                                        <table id="tabla_busqueda" border="0"  class="contenidobusqueda">
+                                                                                <tr>
+                                                                                        <td colspan="7" width="600" height="10"></td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                        <td width="70">C&oacute;digo&nbsp;</td>
+                                                                                        <td width="120"><INPUT TYPE="text" name="campo_sku" style="width:120px;"></td>
+                                                                                        <td width="25"></td>
+                                                                                        <td width="90">Tipo&nbsp;de&nbsp;Producto</td>
+                                                                                        <td width="200">
+                                                                                                <SELECT NAME="tipo_producto" style="width:180px;">
+                                                                                                        <OPTION value="0" selected="yes">[--Seleccionar Tipo--]</OPTION>
+                                                                                                </SELECT>
+                                                                                        </td>
+                                                                                        <td width="25"></td>
+                                                                                        <td width="90"></td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                        <td colspan="7" width="600" height="10"></td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                        <td width="70">Descripci&oacute;n</td>
+                                                                                        <td width="400" colspan="4"><INPUT TYPE="text" name="campo_descripcion" style="width:415px;"></td>
+                                                                                        <td width="25"></td>
+                                                                                        <td width="90" align="right">
+                                                                                                <INPUT TYPE="button" id="busca_producto_modalbox" class="onmouseOutBuscar">
+                                                                                        </td>
+                                                                                </tr>
+                                                                        </table>
+
+                                                                </td>
+                                                                <td width="10" style="background:#ffffff"></td>
+                                                                <td width="10"></td>
+                                                        </tr>
+                                                        <tr style="font-size:13px;">
+                                                                <td width="10"></td>
+                                                                <td width="10" style="background:#ffffff"></td>
+
+                                                                <td width="120" style="background:#A8A9AB;">C&oacute;digo&nbsp;</td>
+                                                                <td width="280" style="background:#A8A9AB;">Nombre</td>
+                                                                <td width="90" style="background:#A8A9AB;">Unidad</td>
+                                                                <td width="110" style="background:#A8A9AB;">Tipo</td>
+
+                                                                <td width="10" style="background:#ffffff"></td>
+                                                                <td width="10"></td>
+                                                        </tr>
+
+                                                        <tr>
+                                                                <td width="10"></td>
+                                                                <td width="10" style="background:#ffffff"></td>
+                                                                <td style="background:#ffffff; border: solid 1px #313E74;" colspan="4" width="600">
+                                                                        <div style="overflow:scroll; overflow-x:auto; overflow-y:auto; width:600px; height:120px; align=top;">
+                                                                                <table  border="0" id="tabla_resultado" width="580">
+                                                                                        <!--aqui van los resultados de la busqueda-->
+                                                                                        <!--
+                                                                                                <tr>
+                                                                                                        <td width="70">Lote</td>
+                                                                                                        <td width="140">Sku</td>
+                                                                                                        <td width="300">Nombre</td>
+                                                                                                        <td width="70">Disponible</td>
+                                                                                                </tr>
+                                                                                        -->
+                                                                                </table>
+                                                                        </div>
+                                                                </td>
+                                                                <td width="10" style="background:#ffffff"></td>
+                                                                <td width="10"></td>
+                                                        </tr>
+                                                        <tr>
+                                                                <td width="10"></td>
+                                                                <td width="10" colspan="6" height="4" style="background:#ffffff"></td>
+                                                                <td width="10"></td>
+                                                        </tr>
+                                                        <tr>
+                                                                <td width="10"></td>
+                                                                <td width="10" style="background:#ffffff"></td>
+
+                                                                <td width="120"  style="background:#ffffff"></td>
+                                                                <td width="280" style="background:#ffffff"></td>
+                                                                <td width="90" style="background:#ffffff"></td>
+                                                                <td width="110" style="background:#ffffff" align="right">
+                                                                        <INPUT TYPE="button" id="cencela" class="onmouseOutCancelar">
+                                                                </td>
+
+                                                                <td width="10" style="background:#ffffff"></td>
+                                                                <td width="10"></td>
+                                                        </tr>
+                                                        <tr>
+                                                                <td width="10"></td>
+                                                                <td width="10" colspan="6" height="6" style="background:#ffffff"></td>
+                                                                <td width="10"></td>
+                                                        </tr>
+                                                </tbody>
+
+                                        </table>
+                                </div>
+                        </td>
+                </tr>
+        </table>
+</div>
+
+
+
+
+
+
+        #include("${layoutfooter}")
+
+
+    </body>
+</html>
+

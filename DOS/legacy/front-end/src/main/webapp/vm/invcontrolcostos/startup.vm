@@ -1,0 +1,787 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+        
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/invcontrolcostos/formaInvControlCosto.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/invcontrolcostos/formaBuscaproducto.css" type="text/css" />
+        
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/invcontrolcostos/modalboxInvControlCosto.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/invcontrolcostos/modalboxBuscaproducto.js"></script>
+        <script type="text/javascript" src="../../js/implements/invcontrolcostos/index.js" ></script>
+		
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+		<input type="hidden" name="user" value="$username">
+		<input type="hidden" name="emp" value="$empresa">
+		<input type="hidden" name="iu" value="$iu">
+		<input type="hidden" name="suc" value="$sucursal">
+		
+        <!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+			<tr>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="new_item" class="tooltip"><img src="../../img/catalogo/crear.png" border=0 ><span>Nuevo Calculo de Costo</span></a></td>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="visualiza_buscador" class="tooltip"><img src="../../img/catalogo/buscar.png" border=0 ><span>Busqueda</span></a>  </td>
+			</tr>
+		</table>
+        
+		
+		
+        <!--Esta tabla va  en la barra de buscador -->
+		<table border="0" class="tabla_buscador" style="display:none">
+			<tr>
+				<td colspan="24">&nbsp;&nbsp;</td>
+			</tr>
+			<tr>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td width="130">Tipo&nbsp;Producto</td>
+				<td width="10"></td>
+				<td width="100">Familia</td>
+				<td width="10"></td>
+				<td width="100">Subfamilia</td>
+				<td width="10">&nbsp;</td>
+				<td width="100">Marca</td>
+				<td width="10">&nbsp;</td>
+				<td width="105">Presentaci&oacute;n</td>
+				<td width="10"></td>
+				<td width="110">C&oacute;digo</td>
+				<td width="10"></td>
+				<td width="150">Producto</td>
+				<td width="10"></td>
+				<td width="55">A&ntilde;o</td>
+				<td width="10"></td>
+				<td width="90">Mes</td>
+				
+				<td></td>
+				<td width="25"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;</td>
+				<td ></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+			<tr>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td width="130">
+					<select name="busqueda_select_tipo_prod" style="width:130px;">
+						<option value="1" selected="yes">-Prod. Terminado -</option>
+					</select>
+				</td>
+				
+				<td width="10"></td>
+				<td width="100">
+					<select name="busqueda_select_familia" style="width:100px;">
+						<option value="0" selected="yes">[-- --]</option>
+					</select>
+				</td>
+				<td width="10"></td>
+				<td width="100">
+					<select name="busqueda_select_subfamilia" style="width:100px;">
+						<option value="0" selected="yes">[-- --]</option>
+					</select>
+				</td>
+				
+				<td width="10"></td>
+				<td width="100">
+					<select name="busqueda_select_marca" style="width:100px;">
+						<option value="0" selected="yes">[-- --]</option>
+					</select>
+				</td>
+				
+				<td width="10"></td>
+				<td width="105">
+					<select name="busqueda_select_presentacion" style="width:105px;">
+						<option value="1" selected="yes">[-- --]</option>
+					</select>
+				</td>
+				<td width="10">&nbsp;</td>
+				<td width="110"><input type="text" name="busqueda_codigo" style="width:110px;"></td>
+				
+				<td width="10">&nbsp;</td>
+				<td width="150"><input type="text" name="busqueda_producto" style="width:150px;"></td>
+				
+				<td width="10"></td>
+				<td width="55">
+					<select name="busqueda_select_ano" style="width:55px;">
+						<option value="0" selected="yes">[-- --]</option>
+					</select>
+				</td>
+				
+				<td width="10"></td>
+				<td width="90">
+					<select name="busqueda_select_mes" style="width:90px;">
+						<option value="0" selected="yes">[-- --]</option>
+					</select>
+				</td>
+				
+				<td width="20">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><input type="button" id="boton_buscador" class="onmouseOutBuscar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td ><input type="button" id="boton_limpiar" class="onmouseOutLimpiar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+		</table>
+		
+		
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+		
+		
+		
+        <!--form for invcontrolcostos -->
+        <form id="formainvcontrolcostos00" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal invcontrolcostos_div_one"  style="display:none;" title="">
+                    <input type="hidden" name="identificador" value="0">
+                    <input type="hidden" name="calculo_simulacion" value="0">
+                    
+                    <div id="div_two" title="" class="invcontrolcostos_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" style="width:1188px; padding-left:6px;"><strong>Control de Costos</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="div_three" title="" class="invcontrolcostos_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Costo</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+									
+                                    <div id="tabx-1" class="contenidoPes" >
+										
+										<table border="0" style="margin:0; padding:0;">
+											
+											<tr>
+												<td width="795" valign="top" colspan="6">
+													<table border="0" class="gral">
+														<tr>
+															<td width="10"></td>
+															<td width="80">Tipo&nbsp;producto</td>
+															<td width="200" colspan="2"><select name="select_tipo_prod" style="width:200px;"></select></td>
+															<td width="25"></td>
+															<td width="80"></td>
+															<td width="80">Marca</td>
+															<td width="200" colspan="3"><select name="select_marca" style="width:200px;"></select></td>
+															<td width="25"></td>
+														</tr>
+														<tr>
+															<td width="10" height="10"></td>
+															<td width="80"></td>
+															<td width="200" colspan="2"></td>
+															<td width="25"></td>
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="75"></td>
+															<td width="25"></td>
+															<td width="100"></td>
+															<td width="25"></td>
+														</tr>
+														<tr>
+															<td width="10"></td>
+															<td width="80">Familia</td>
+															<td width="200" colspan="2"><select name="select_familia" style="width:200px;"></select></td>
+															<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_familia"></div></td>
+															<td width="40"></td>
+															<td width="80">SubFamilia</td>
+															<td width="200" colspan="3"><select name="select_subfamilia" style="width:200px;"></select></td>
+															<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_subfamilia"></div></td>
+														</tr>
+														
+														<tr>
+															<td width="10" height="10"></td>
+															<td width="80"></td>
+															<td width="150"></td>
+															<td width="50"></td>
+															<td width="25"></td>
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="75"></td>
+															<td width="25"></td>
+															<td width="100"></td>
+															<td width="25"></td>
+														</tr>
+														
+														<tr>
+															<td width="10"></td>
+															<td width="80">C&oacute;digo</td>
+															<td width="150"><input type="text" name="codigo" style="width:150px;"></td>
+															<td width="50"><a  href="busca_producto" id="buscar_producto">&nbsp;(Buscar)</a></td>
+															<td width="25"></td>
+															<td width="40"></td>
+															<td width="80">Producto</td>
+															<td width="200" colspan="3">
+																<input type="hidden" name="id_producto" value="0">
+																<input type="text" name="producto" style="width:200px;">
+															</td>
+															<td width="25"></td>
+														</tr>
+														
+														<tr>
+															<td width="10" height="10"></td>
+															<td width="80"></td>
+															<td width="200" colspan="2"></td>
+															<td width="25"></td>
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="75"></td>
+															<td width="25"></td>
+															<td width="100"></td>
+															<td width="25"></td>
+														</tr>
+														
+														<tr>
+															<td width="10" height="10"></td>
+															<td width="305" colspan="4" valign="top" rowspan="4">
+																
+																<fieldset style="border: solid 1px #313E74;" class="gral">
+																	<legend>&nbsp;C&aacute;lculo&nbsp;a&nbsp;partir&nbsp;de</legend> 
+																	<ol valign="top">
+																		<table border="0">
+																			<tr>
+																				<td width="70">&Uacute;ltimo&nbsp;Costo</td>
+																				<td width="25">
+																					<input type="radio" name="tipo_costo" value="1" class="radio_costo_ultimo">
+																					<!--<input type="checkbox" name="check_costo_ultimo" class="tipo_costo" >-->
+																				</td>
+																				<td width="40"></td>
+																				<td width="80">Costo&nbsp;Promedio</td>
+																				<td width="25">
+																					<input type="radio" name="tipo_costo" value="2" class="radio_costo_promedio">
+																					<!--<input type="checkbox" name="check_costo_promedio" class="tipo_costo">-->
+																				</td>
+																			</tr>
+																			
+																		</table>
+																	</ol>
+																</fieldset>
+															</td>
+															<!--
+															<td width="80"></td>
+															<td width="200"></td>
+															<td width="25"></td>
+															-->
+															<td width="40"></td>
+															<td width="80">Presentaci&oacute;n</td>
+															<td width="200" colspan="3"><select name="select_presentacion" style="width:200px;"></select></td>
+															<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_presentacion"></div></td>
+														</tr>
+														<tr>
+															<td width="10" height="10"></td>
+															<!--
+															<td width="80"></td>
+															<td width="200"></td>
+															<td width="25"></td>
+															-->
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="75"></td>
+															<td width="25"></td>
+															<td width="100"></td>
+															<td width="25"></td>
+														</tr>
+														<tr>
+															<td width="10"></td>
+															<!--
+															<td width="80"></td>
+															<td width="200"></td>
+															<td width="25"></td>
+															-->
+															<td width="40"></td>
+															<td width="80">Tipo&nbsp;de&nbsp;Cambio</td>
+															<td width="75"><input type="text" name="tipo_cambio" style="width:75px; text-align:right"></td>
+															<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tipocambio"></div></td>
+															<td width="100"><input type="button" id="busqueda" value="Busqueda" style="width:100px; font-weight: bold;"></td>
+															<td width="25"></td>
+														</tr>
+														<tr>
+															<td width="10" height="10"></td>
+															<!--
+															<td width="80"></td>
+															<td width="200"></td>
+															<td width="25"></td>
+															-->
+															<td width="40"></td>
+															<td width="80"></td>
+															<td width="75"></td>
+															<td width="25"></td>
+															<td width="100"></td>
+															<td width="25"></td>
+														</tr>
+														
+													</table>
+												</td>
+												<td width="10"></td>
+												<td width="300" colspan="2" style="border: solid 1px #313E74;" valign="top">
+													<table border="0">
+														<tr>
+															<td width="50" height="5"></td>
+															<td width="90"></td>
+															<td width="20"></td>
+															<td width="20"></td>
+															<td width="60"></td>
+															<td width="5"></td>
+															<td width="30"></td>
+														</tr>
+														<tr>
+															<td width="50"></td>
+															<td width="110" colspan="2">I.G.I</td>
+															<td width="80" colspan="2"><input type="text" name="costo_importacion" style="width:80px; text-align:right"></td>
+															<td width="5">%</td>
+															<td width="30"></td>
+														</tr>
+														<!--
+														<tr>
+															<td width="255" colspan="6" height="10"></td>
+														</tr>
+														-->
+														<tr>
+															<td width="50"></td>
+															<td width="110" colspan="2">G.I.</td>
+															<td width="80" colspan="2"><input type="text" name="costo_directo" style="width:80px; text-align:right"></td>
+															<td width="5">%</td>
+															<td width="30"></td>
+														</tr>
+														<!--
+														<tr>
+															<td width="255" colspan="6" height="10"></td>
+														</tr>
+														-->
+														<tr>
+															<td width="50"></td>
+															<td width="110" colspan="2">Costo&nbsp;Adicional</td>
+															<td width="80" colspan="2"><input type="text" name="costo_adic" style="width:80px; text-align:right"></td>
+															<td width="5"></td>
+															<td width="30"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_costoadic"></div></td>
+														</tr>
+														<!--
+														<tr>
+															<td width="255" colspan="6" height="10"></td>
+														</tr>
+														-->
+														<tr>
+															<td width="50"></td>
+															<td width="110" colspan="2">Margen&nbsp;Precio&nbsp;M&iacute;nimo</td>
+															<td width="80" colspan="2"><input type="text" name="precio_minimo" style="width:80px; text-align:right"></td>
+															<td width="5">%</td>
+															<td width="30"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_preciominimo"></div></td>
+														</tr>
+														
+														<tr>
+															<td width="255" colspan="7" height="8"></td>
+														</tr>
+														
+														<tr>
+															<td width="50"></td>
+															<td width="90">Simulaci&oacute;n</td>
+															<td width="20"><input type="checkbox" name="check_simulacion"></td>
+															<td width="80" colspan="2"><input type="button" id="aplicar" value="Aplicar" style="width:80px; font-weight: bold;"></td>
+															<td width="5"></td>
+															<td width="30"></td>
+														</tr>
+														
+														<tr>
+															<td width="255" colspan="6" height="8"></td>
+														</tr>
+														<tr>
+															<td width="50"></td>
+															<td width="110" colspan="2"></td>
+															<td width="80" colspan="2"><input type="button" id="pdf" value="PDF" style="width:80px; font-weight:bold;"></td>
+															<td width="5"></td>
+															<td width="30"></td>
+														</tr>
+														<!--
+														<tr>
+															<td width="50"></td>
+															<td width="110"><input type="button" id="pdf" value="PDF" style="width:80px; font-weight: bold;"></td>
+															<td width="80" colspan="3" align="right"><input type="button" id="excel" value="EXCEL" style="width:80px; font-weight: bold;"></td>
+															<!--<td width="5"></td>-->
+															<!--<td width="30"></td>
+														</tr>
+														-->
+													</table>
+												</td>
+											</tr>
+											<tr>
+												<td colspan="9" height="10"></td>
+											</tr>
+											
+											<tr>
+												<td colspan="9" style="border-top: 1px solid #C1DAD7; border-bottom: 1px solid #C1DAD7; border-left: 1px solid #FFFFFF; border-right: 1px solid #FFFFFF;">
+													<table >
+														<thead>
+															<tr>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="80">&nbsp;C&oacute;digo</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="150">&nbsp;Descripci&oacute;n</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="70">&nbsp;Unidad</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="80">&nbsp;Presentaci&oacute;n</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="70">&nbsp;O.&nbsp;C.</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="70">&nbsp;Fac.&nbsp;Prov.</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="45">&nbsp;Moneda</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="60">&nbsp;T.&nbsp;C.</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="60">&nbsp;<span id="tipo_costo">C.&nbsp;U.</span></td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="60">&nbsp;I.&nbsp;G.&nbsp;I.</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="60">&nbsp;G.&nbsp;I.</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="60">&nbsp;C.&nbsp;A.</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="60">&nbsp;C.&nbsp;I.&nbsp;T.</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="80">&nbsp;P.M.</td>
+																<td class="grid" style="background-color: rgb(180, 180, 180);" width="65">&nbsp;Moneda&nbsp;P.M.</td>
+															</tr>
+														</thead>
+													</table>
+													<div style="overflow:scroll; overflow-x: hidden; overflow-y: auto;  width:1145; height: 180px; border:1px solid #C1DAD7 !important;">	
+														<table>
+															<tbody style="background-color: #FFFFFF;" valign="top" id="grid_productos" class="gral">
+																
+															</tbody>
+														</table>
+													</div>
+													
+												</td>
+											</tr>
+											
+											<tr>
+												<td width="30">O.C.:</td>
+												<td width="200">&nbsp;N&Uacute;mero&nbsp;de&nbsp;Orden&nbsp;de&nbsp;Compra</td>
+												<td width="30">C.U.:</td>
+												<td width="200">Costo&nbsp;Ultima&nbsp;Compra</td>
+												<td width="30">I.G.I.:</td>
+												<td>Impuesto General de Importaci&oacute;n</td>
+												<td></td>
+												<td width="30">C.I.T.:</td>
+												<td>Costo Integrado Total</td>
+											</tr>
+											<tr>
+												<td width="30">Moneda:</td>
+												<td width="200">&nbsp;Moneda&nbsp;de&nbsp;la&nbsp;Factura&nbsp;de&nbsp;Compra</td>
+												<td width="30">C.P.:</td>
+												<td width="200">Costo&nbsp;Promedio</td>
+												<td width="30">G.I.:</td>
+												<td>Gastos de Importaci&oacute;n</td>
+												<td></td>
+												<td width="30">P.M.:</td>
+												<td>Precio&nbsp;Minimo&nbsp;de&nbsp;Venta</td>
+											</tr>
+											<tr>
+												<td width="30">T.C.:</td>
+												<td width="200">&nbsp;Tipo de Cambio</td>
+												<td width="30">C.A.</td>
+												<td width="200">Costo Adicional</td>
+												<td width="30" colspan="5"><!--Los valores para los campos T.C., C.U., I.G.I., G.I., C.I.T., P.M. son en M.N.--></td>
+												<!--
+												<td></td>
+												<td></td>
+												<td width="30"></td>
+												<td></td>
+												-->
+											</tr>
+
+											
+											
+										</table>
+										
+                                    </div>
+
+                                </div>
+                            </div>
+							
+							
+                            <div class="fixed column" style="width:1205px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+								<table border="0">
+									<tr>
+										<td width="1105"></td>
+										<td>
+											<input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+										</td>
+										<td width="30"></td>
+										<td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+									</tr>
+								</table>
+                                
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+        </form>
+        
+        
+        
+        
+        
+        
+        
+        
+        #include("${layoutfooter}")
+        
+        
+    </body>
+</html>	
+
+
+
+
+
+
+
+
+<div class="buscador_proveedores" style="display:none;">	
+	<table width="100%" border="0" class="formaBusqueda_proveedores">
+		<tr>
+			<td>
+				<div class="div_dos_proveedores">
+					<table border="0">
+						<thead>
+							<tr>
+								<td colspan="7" height="50" valign="top"><div class="titulo_proveedores" width="100%"><strong>Buscador de proveedores</strong></div></td>
+							</tr>
+						</thead>
+						
+						<tbody>
+							<tr style="font-size:13px;">
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff;"></td>
+								<td colspan="3" style="background:#ffffff;" width="650">
+									
+									<table id="tabla_busqueda" border="0"  class="contenidobusqueda">
+										<tr>
+											<td colspan="11">&nbsp;</td>
+										</tr>
+										<tr>
+											<td width="10"></td>
+											<td width="45">RFC</td>
+											<td width="150"><input type="text" name="campo_rfc" style="width:150px;"></td>
+											<td width="25"></td>
+											<td width="45">E-mail</td>
+											<td width="200"><input type="text" name="campo_email" style="width:200px;"></td>
+											<td width="120"></td>
+											<td></td>
+										</tr>
+										<tr>
+											<td colspan="11">&nbsp;</td>
+										</tr>
+										<tr>
+											<td width="10"></td>
+											<td width="45">Nombre</td>
+											<td colspan="4"><input type="text" name="campo_nombre" style="width:420px;"></td>
+											<td width="120"></td>
+											<td>
+												<input type="button" id="busca_proveedor_modalbox" class="onmouseOutBuscar">
+											</td>
+										</tr>
+									</table>
+									
+									
+								</td>
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr style="font-size:13px;">
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff"></td>
+								
+								<td width="120" style="background:#A8A9AB;">RFC</td>
+								<td width="250" style="background:#A8A9AB;">Razon social</td>
+								<td width="250" style="background:#A8A9AB;">Direccion</td>
+								
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							
+							<tr>
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff"></td>
+								<td style="background:#ffffff; border: solid 1px #313E74;" colspan="3" width="650">
+									<div style="overflow:scroll; overflow-x:auto; overflow-y:auto; width:650px; height:120px; align=top;">
+										<table  border="0" id="tabla_resultado" width="650">
+											<!--aqui van los resultados de la busqueda-->
+										
+										</table>
+									</div>
+								</td>
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="10" colspan="5" height="4" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff"></td>
+								
+								<td width="120"  style="background:#ffffff"></td>
+								<td width="250" style="background:#ffffff"></td>
+								<td width="250" style="background:#ffffff" align="right">
+									<input type="button" id="cencela" class="onmouseOutCancelar">
+								</td>
+								
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="10" colspan="5" height="6" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+						</tbody>
+						
+					</table>
+				</div>
+			</td>
+		</tr>
+	</table>
+</div>
+
+
+
+
+<div class="buscador_productos" style="display:none;">	
+	<table width="100%" border="0" class="formaBusqueda_productos">
+		<tr>
+			<td>
+				<div class="div_dos_productos">
+					<table width="100%" border="0">
+						<thead>
+							<tr>
+								<td colspan="8" height="50" valign="top"><div class="titulo_productos" width="100%"><strong>Buscador de productos</strong></div></td>
+							</tr>
+						</thead>
+						
+						<tbody>
+							<tr>
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff;"></td>
+								<td colspan="4" style="background:#ffffff;" width="600">
+									
+									<table id="tabla_busqueda" border="0"  class="contenidobusqueda">
+										<tr>
+											<td colspan="7" width="600" height="10"></td>
+										</tr>
+										<tr>
+											<td width="70">C&oacute;digo&nbsp;</td>
+											<td width="120"><input type="text" name="campo_sku" style="width:120px;"></td>
+											<td width="25"></td>
+											<td width="90"><!--Tipo&nbsp;de&nbsp;Producto--></td>
+											<td width="200">
+												<!--
+												<select name="tipo_producto" style="width:180px;">
+													<option value="0" selected="yes">[--Seleccionar Tipo--]</option>
+												</select>
+												-->
+											</td>
+											<td width="25"></td>
+											<td width="90"></td>
+										</tr>
+										<tr>
+											<td colspan="7" width="600" height="10"></td>
+										</tr>
+										<tr>
+											<td width="70">Descripci&oacute;n</td>
+											<td width="400" colspan="4"><input type="text" name="campo_descripcion" style="width:415px;"></td>
+											<td width="25"></td>
+											<td width="90" align="right">
+												<input type="button" id="busca_producto_modalbox" class="onmouseOutBuscar">
+											</td>
+										</tr>
+										
+									</table>
+									
+								</td>
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr style="font-size:13px;">
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff"></td>
+								
+								<td width="110" style="background:#A8A9AB;">C&oacute;digo&nbsp;</td>
+								<td width="280" style="background:#A8A9AB;">Nombre</td>
+								<td width="90" style="background:#A8A9AB;">Unidad</td>
+								<td width="120" style="background:#A8A9AB;">Tipo</td>
+								
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							
+							<tr>
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff"></td>
+								<td style="background:#ffffff; border: solid 1px #313E74;" colspan="4" width="600">
+									<div style="overflow:scroll; overflow-x:auto; overflow-y:auto; width:600px; height:120px; align=top;">
+										<table  border="0" id="tabla_resultado" width="580" style="font-size:12px;">
+											<!--aqui van los resultados de la busqueda-->
+											<!--
+												<tr>
+													<td width="70">Lote</td>
+													<td width="140">Sku</td>
+													<td width="300">Nombre</td>
+													<td width="70">Disponible</td>
+												</tr>
+											-->
+										</table>
+									</div>
+								</td>
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="10" colspan="6" height="4" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="10" style="background:#ffffff"></td>
+								<td width="120"  style="background:#ffffff"></td>
+								<td width="280" style="background:#ffffff"></td>
+								<td width="90" style="background:#ffffff"></td>
+								<td width="110" style="background:#ffffff" align="right">
+									<input type="button" id="cencela" class="onmouseOutCancelar">
+								</td>
+								
+								<td width="10" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+							<tr>
+								<td width="10"></td>
+								<td width="10" colspan="6" height="6" style="background:#ffffff"></td>
+								<td width="10"></td>
+							</tr>
+						</tbody>
+						
+					</table>
+				</div>
+			</td>
+		</tr>
+	</table>
+</div>
+
+

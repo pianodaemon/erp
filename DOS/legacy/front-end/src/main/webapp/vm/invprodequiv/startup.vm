@@ -1,0 +1,344 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+        
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/invprodequiv/formaInvProdEquiv.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/cotizaciones/formaBuscaproducto.css" type="text/css" />
+        <script type="text/javascript" src="../../js/components/modalbox/cotizaciones/modalboxBuscaproducto.js"></script>
+        
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/invprodequiv/modalboxInvProdEquiv.js"></script>
+        <script type="text/javascript" src="../../js/implements/invprodequiv/index.js" ></script>
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        <!--Esta tabla va  en la barra de acciones -->
+        <table class="table_acciones" style="display:none" border="0">
+            <tr>
+                <td width="15" height="30"></td>
+                <td height="30"><a href="new_item" class="tooltip"><div class="onmouseOutNewItem" id="nItem"></div><span>Registrar nuevo</span></a></td>
+                <td width="15" height="30"></td>
+                <td height="30"><a href="visualiza_buscador" class="tooltip"><div class="onmouseOutVisualizaBuscador" id="vbuscador"></div><span>Busqueda</span></a>  </td>
+            </tr>
+        </table>
+        
+                <!--Esta tabla va  en la barra de buscador -->
+        <table border="0" class="tabla_buscador" style="display:none">
+            <tr>
+                <td colspan="9">&nbsp;&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td>C&oacute;digo</td>
+                <td width="10">&nbsp;&nbsp;</td>
+                <td><INPUT TYPE="text" name="busqueda_codigo" style="width:150px;"></td>
+                <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td>Descripcion</td>
+                <td width="10">&nbsp;&nbsp;</td>
+                <td><INPUT TYPE="text" name="busqueda_descripcion" style="width:150px;"></td>
+                <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>                                
+                <td><INPUT TYPE="button" value="Buscar"></td>
+                <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td ><INPUT TYPE="button" value="Limpiar"></td>
+                <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+            </tr>
+            <tr>
+                <td colspan="9">&nbsp;&nbsp;</td>
+            </tr>
+
+        </table>
+        
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+        
+        <!--form formulario de prod eq -->
+        <form id="formaInvProdEquiv" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal invprodequiv_div_one"  style="display:none;" title="">
+                    
+                    <input type="hidden" name="identificador">
+                    <input type="hidden" name="id_prod">
+                    <input type="hidden" name="id_tipo_producto">
+                    <input type="hidden" name="id_prod_entrante">
+                    <input type="hidden" name="total_tr">
+                    
+                    <div id="div_two" title="" class="invprodequiv_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" id="cierra" style="width:730px; padding-left:6px;"><strong>Cat&aacute;logo productos equivalentes</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="div_three" title="" class="invprodequiv_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Productos Equivalentes</strong></a></li>
+                                </ul>
+						</div>
+					</div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+                                    
+                                    <div id="tabx-1" class="contenidoPes" >
+                                        <table border="0" bordercolor = "green"  width="715px" height="130px"class="gral">
+                                            <tr>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="5">Producto:&nbsp;</td>
+                                                <td width="7">&nbsp;</td>
+                                                <td width="5"><INPUT TYPE="text" name="codigo" style="width:100px;"></td>
+                                                <td width="50">
+                                                    <div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_codigo">
+                                                    </div></td>
+                                                <td width="25">&nbsp;</td>
+                                                <td width="200" colspan="3"><INPUT TYPE="text" name="descripcion" style="width:200px;"></td>
+                                                <td width="5">&nbsp;</td>
+                                                <td width="5"></td>
+                                                <td width="200"><a href="buscar_producto" style="font-size:13px;">(Buscar)</a></td>
+                                               
+                                                
+											</tr>
+
+                                            <tr>
+                                               
+                                                <td width="5" ><INPUT TYPE="hidden" name="tipo_id" style="width:100px;"></td>
+                                            </tr>
+                                            <tr>
+                                                    <td width="5" colspan="13">&nbsp;</td>
+                                            </tr>
+                                            
+                                            
+                                            <tr class="grid_formulaciones">
+                                                <td width="5">&nbsp;</td>
+                                                    <td colspan="12">
+                                                        <div style="height:150px;" class="contenedor_grid_productos">
+                                                        <!--display:none;-->
+                                                            <!-- Buscador para el minigrid-->
+                                                            <div width="100%">
+                                                                <table border="0" width="735px" height="100px"> <!-- El ancho del grid-->
+                                                                    <tr style="background-color:#e7e8ea; font-size:12px;">
+                                                                        <td>&nbsp;&nbsp;</td>
+                                                                        <td colspan="10">Productos Equivalentes</td>
+                                                                        
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td colspan="13" height="5" style="background-color:#e7e8ea;"></td>
+                                                                    </tr>
+                                                                    <tr style="background-color:#e7e8ea;">
+                                                                        <td>&nbsp;&nbsp;</td>
+                                                                        <td>Producto&nbsp;&nbsp;</td>
+                                                                        <td><INPUT TYPE="text" name="codigo_producto_minigrid" style="width:100px;"></td>
+                                                                        <td></td>
+                                                                        <td>&nbsp;&nbsp;&nbsp;<a  href="busca_producto_equivalente">(Buscar)</a></td>
+                                                                        <td width=65px></td>
+                                                                        <td>Descripcion&nbsp;&nbsp;</td>
+                                                                        <td><INPUT TYPE="text" name="descr_producto_minigrid" style="width:250px;"></td>
+                                                                        <td></td>
+                                                                        <td>&nbsp;&nbsp;&nbsp;<a href="agregar_producto_minigrid">(Agregar)</a></td>
+                                                                        
+                                                                    </tr>
+
+                                                                    <tr>
+                                                                        <td colspan="13" height="5"></td>
+                                                                    </tr>
+
+                                                                    <tr>
+                                                                        <td colspan="12"  style="border: solid 1px #313E74;">
+                                                                            <div class="div_formulaciones" style="height:120px;overflow:scroll;overflow-x:hidden;overflow-y:auto;" WIDTH="100%">
+                                                                                <table class="table_formulaciones gral"  id= "minigrid" WIDTH="100%"  border="0">
+                                                                                    <thead class="theader_lines !important" >
+                                                                                        <tr style="background-color:#A8A9AB; font-weight: bold; border:solid 1px #313E74;">
+                                                                                            <td width="12%"># &nbsp;&nbsp;</td>
+                                                                                            <td width="30%">C&oacute;digo&nbsp;&nbsp;</td>
+                                                                                            <td width="42%">Descripci&oacute;n</td>
+                                                                                            <td width="20%">Observaciones</td>
+                                                                                        </tr>
+                                                                                    </thead>
+                                                                                    <tbody>
+
+                                                                                    </tbody>
+                                                                                </table>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+
+                                                                </table>
+                                                            </div>
+														</div>
+                                                    </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+
+                            <div class="fixed column" id="botones" style="width:100%; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+                                <table border="0">
+                                    <tr><td colspan="4" height="7"></td></tr>
+                                    <tr>
+                                        <td width="559"></td>
+                                        <td>
+                                            <input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+                                        </td>
+                                        <td width="30"></td>
+                                        <td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+                                    </tr>
+                                </table>
+                                
+                            </div>
+                            
+                            
+                            
+                        </div>
+                    </div>
+                </div>
+        </form>
+
+
+
+        <div class="buscador_productos" style="display:none;">  
+            <table width="100%" border="0" class="formaBusqueda_productos">
+                <tr>
+                    <td>
+                        <div class="div_dos_productos">
+                            <table width="100%" border="0">
+                                <thead>
+                                    <tr>
+                                        <td colspan="8" height="50" valign="top"><div class="titulo_productos" width="100%"><strong>Buscador de productos</strong></div></td>
+                                    </tr>
+                                </thead>
+                                
+                                <tbody>
+                                    <tr>
+                                        <td width="10"></td>
+                                        <td width="10" style="background:#ffffff;"></td>
+                                        <td colspan="4" style="background:#ffffff;" width="600">
+                                            
+                                            <table id="tabla_busqueda" border="0"  class="contenidobusqueda">
+                                                <tr>
+                                                    <td colspan="7" width="600" height="10"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="70">C&oacute;digo&nbsp;</td>
+                                                    <td width="120"><INPUT TYPE="text" name="campo_sku" style="width:120px;"></td>
+                                                    <td width="25"></td>
+                                                    <td width="90">Tipo&nbsp;de&nbsp;Producto</td>
+                                                    <td width="200">
+                                                        <SELECT NAME="tipo_producto" style="width:180px;">
+                                                            <OPTION value="0" selected="yes">[--Seleccionar Tipo--]</OPTION>
+                                                        </SELECT>
+                                                    </td>
+                                                    <td width="25"></td>
+                                                    <td width="90"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="7" width="600" height="10"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="70">Descripci&oacute;n</td>
+                                                    <td width="400" colspan="4"><INPUT TYPE="text" name="campo_descripcion" style="width:415px;"></td>
+                                                    <td width="25"></td>
+                                                    <td width="90" align="right">
+                                                        <INPUT TYPE="button" id="busca_producto_modalbox" class="onmouseOutBuscar">
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                        </td>
+                                        <td width="10" style="background:#ffffff"></td>
+                                        <td width="10"></td>
+                                    </tr>
+                                    
+                                    <tr  style="font-size:13px;">
+                                        <td width="10"></td>
+                                        <td width="10" style="background:#ffffff"></td>
+                                        
+                                        <td width="120" style="background:#A8A9AB;">C&oacute;digo&nbsp;</td>
+                                        <td width="280" style="background:#A8A9AB;">Nombre</td>
+                                        <td width="90" style="background:#A8A9AB;">Unidad</td>
+                                        <td width="110" style="background:#A8A9AB;">Tipo</td>
+                                        
+                                        <td width="10" style="background:#ffffff"></td>
+                                        <td width="10"></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td width="10"></td>
+                                        <td width="10" style="background:#ffffff"></td>
+                                        <td style="background:#ffffff; border: solid 1px #313E74;" colspan="4" width="600">
+                                            <div style="overflow:scroll; overflow-x:auto; overflow-y:auto; width:600px; height:120px; align=top;">
+                                                <table  border="0" id="tabla_resultado" width="580">
+                                                   
+                                                </table>
+                                            </div>
+                                        </td>
+                                        <td width="10" style="background:#ffffff"></td>
+                                        <td width="10"></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="10"></td>
+                                        <td width="10" colspan="6" height="4" style="background:#ffffff"></td>
+                                        <td width="10"></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="10"></td>
+                                        <td width="10" style="background:#ffffff"></td>
+                                        
+                                        <td width="120"  style="background:#ffffff"></td>
+                                        <td width="280" style="background:#ffffff"></td>
+                                        <td width="90" style="background:#ffffff"></td>
+                                        <td width="110" style="background:#ffffff" align="right">
+                                            <INPUT TYPE="button" id="cencela" class="onmouseOutCancelar">
+                                        </td> 
+                                        
+                                        <td width="10" style="background:#ffffff"></td>
+                                        <td width="10"></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="10"></td>
+                                        <td width="10" colspan="6" height="6" style="background:#ffffff"></td>
+                                        <td width="10"></td>
+                                    </tr>
+                                </tbody>
+                                
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        #include("${layoutfooter}")
+        
+        
+    </body>
+</html>

@@ -1,0 +1,71 @@
+/* 
+    Document   : login
+    Created on : 13/02/2012, 01:24:18 PM
+    Author     : agnux
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+/* 
+   TODO customize this sample style
+   Syntax recommendation http://www.w3.org/TR/REC-CSS2/
+*/
+
+root { 
+    display: block;
+}
+
+body {
+	background-image: url(../img/login/back.png);
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	background-repeat: no-repeat;
+	background-position: center top;
+	text-align: center;
+	font-family: Geneva, Arial, Helvetica, sans-serif;
+	font-size: 14px;
+	color: #333333;
+}
+
+contenedor {
+	height: auto;
+	width: 100%;
+	margin-top: 0;
+	margin-right: auto;
+	margin-bottom: 0;
+	margin-left: auto;
+	padding-top: 250;
+	padding-right: 0;
+	padding-bottom: 0;
+	padding-left: 0;
+	text-align: center;
+}
+
+.tabla {
+	height: 300px;
+	float: none;
+	padding-right: 25%;
+	padding-left: 25%;
+	background-image: url(../img/login/login.png);
+	background-repeat: no-repeat;
+	background-position: center 150px;
+	padding-top: 150px;
+}
+
+.error_box{
+	color: #D8000C;
+	background-color: #FFBABA;
+	width: 400px;
+	background-image: url(../img/login/error_nav.png);
+	background-repeat: no-repeat;
+	background-position: 5px;
+	height: 20px;
+	font-family: Calibri;
+	font-size: 16px;
+	padding-top: 10px;
+	padding-right: 0px;
+	padding-bottom: 10px;
+	padding-left: 45px;
+}

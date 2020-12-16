@@ -1,0 +1,435 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+        
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/cuentascontables/formaCuentasContables.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/cuentascontables/formaBuscaCuentaSat.css" type="text/css" />
+		
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/cuentascontables/modalboxCuentasContables.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/cuentascontables/modalboxBuscaCuentaSat.js"></script>
+        <script type="text/javascript" src="../../js/implements/cuentascontables/index.js" ></script>
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+		<input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        <!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+			<tr>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="new_item" class="tooltip"><div class="onmouseOutNewItem" id="nItem"></div><span>Registrar nuevo</span></a></td>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="visualiza_buscador" class="tooltip"><div class="onmouseOutVisualizaBuscador" id="vbuscador"></div><span>Busqueda</span></a>  </td>
+			</tr>
+		</table>
+        
+        <!--Esta tabla va  en la barra de buscador -->
+		<table border="0" class="tabla_buscador" style="display:none">
+			<tr>
+				<td colspan="13">&nbsp;</td>
+			</tr>
+			<tr>
+				<td width="10">&nbsp;</td>
+				<td width="150">Sucursal</td>
+				<td width="10">&nbsp;</td>
+				<td>Cuenta&nbsp;de&nbsp;Mayor</td>
+				<td width="10">&nbsp;</td>
+				<td>Descripci&oacute;n</td>
+				<td width="10">&nbsp;</td>
+				<td></td>
+				<td width="10">&nbsp;</td>
+				<td></td>
+				<td width="10">&nbsp;</td>
+			</tr>
+			
+			<tr>
+				<td width="10">&nbsp;</td>
+				<td width="150"><select name="busqueda_select_sucursal" style="width:150px;"><option value="0" selected="yes">[-- --]</option></select></td>
+				<td width="10">&nbsp;</td>
+				<td width="200"><select name="busqueda_select_cuenta_mayor" style="width:200px;"><option value="0" selected="yes">[-- --]</option></select></td>
+				<td width="10">&nbsp;</td>
+				<td width="280"><input type="text" name="busqueda_descripcion" style="width:280px;"></td>
+				<td width="10">&nbsp;</td>
+				<td><input type="button" value="Buscar"></td>
+				<td width="10">&nbsp;</td>
+				<td ><input type="button" value="Limpiar"></td>
+				<td width="10">&nbsp;</td>
+			</tr>
+		</table>
+        
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+		
+        
+        <!--form for conceptos contables -->
+        <form id="formaCuentasContables00" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal cuentascontables_div_one"  style="display:none;" title="">
+                
+                <input type="hidden" name="identificador">
+					
+                    <div id="div_two" title="" class="cuentascontables_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" id="cierra" style="width:700px; padding-left:6px;"><strong>Cuentas Contables</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="div_three" title="" class="cuentascontables_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Cuenta</strong></a></li>
+                                    <li><a href="#tabx-2"><strong>Descripci&oacute;n</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+									
+                                    <div id="tabx-1" class="contenidoPes" >
+                                        <table border="0" class="gral">
+											<tr>
+												<td width="80">Sucursal</td>
+												<td colspan="9" width="290"><select name="select_sucursal" style="width:290px;"></select></td>
+												<td width="40"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_suc"></div></td>
+												<td width="90"></td>
+												<td width="180"></td>
+												<td width="25"></td>
+											</tr>
+											<tr>
+												<td colspan="14">&nbsp;</td>
+											</tr>
+											<tr>
+												<td width="80">Cuenta</td>
+												<td width="50">
+													<!--<select name="select_cuenta" style="width:70px;"></select>-->
+													<input type="text"name="cuenta" style="width:50px;" maxlength="4">
+												</td>
+												<td width="10"></td>
+												<td width="50">
+													<!--<select name="select_subcuenta" style="width:70px;"></select>-->
+													<input type="text"name="scuenta" style="width:50px;" maxlength="4">
+												</td>
+												<td width="10"></td>
+												<td width="50">
+													<!--<select name="select_subsubcuenta" style="width:70px;"></select>-->
+													<input type="text"name="sscuenta" style="width:50px;" maxlength="4">
+												</td>
+												<td width="10"></td>
+												<td width="50">
+													<!--<select name="select_subsubsubcuenta" style="width:70px;"></select>-->
+													<input type="text"name="ssscuenta" style="width:50px;" maxlength="4">
+												</td>
+												<td width="10"></td>
+												<td width="50">
+													<!--<select name="select_subsubsubsubcuenta" style="width:70px;"></select>-->
+													<input type="text"name="sssscuenta" style="width:50px;" maxlength="4">
+												</td>
+												<td width="40"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_cta"></div></td>
+												<td width="90">Cta.&nbsp;Mayor</td>
+												<td width="180"><select name="select_cuenta_mayor" style="width:180px;"></select></td>
+												<td width="25"></td>
+											</tr>
+											<tr>
+												<td colspan="14">&nbsp;</td>
+											</tr>
+											<tr>
+												<td width="80">Descripci&oacute;n</td>
+												<td colspan="9" width="290"><input type="text"name="descripcion" style="width:290px;" maxlength="60"></td>
+												<td width="40"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_descripcion"></div></td>
+												<td width="90">Centro&nbsp;de&nbsp;Costo</td>
+												<td width="180"><select name="select_centro_costo" style="width:180px;"></select></td>
+												<td width="25"></td>
+											</tr>
+											<tr>
+												<td colspan="14">&nbsp;</td>
+											</tr>
+											<tr>
+												<td width="80">Nivel&nbsp;de&nbsp;la&nbsp;Cta.</td>
+												<td width="110" colspan="3"><select name="select_nivel" style="width:110px;"></select></td>
+												<!--
+												<td width="10"></td>
+												<td width="70"><select name="select_subcuenta" style="width:70px;"></select></td>
+												-->
+												<td width="10"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_nivelcta"></div></td>
+												<td width="50">Naturaleza</td>
+												<td width="10"></td>
+												<td width="110" colspan="3"><select name="select_naturaleza" style="width:110px;"></select></td>
+												<!--
+												<td width="10"></td>
+												<td width="50"></td>
+												-->
+												<td width="40"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_natcta"></div></td>
+												<td width="90">Tipo&nbsp;de&nbsp;Cuenta</td>
+												<td width="180"><select name="select_tipo_cta" style="width:180px;"></select></td>
+												<td width="25"><div class="interrogacion"><IMG SRC="../../img/help-16x16.png" ALIGN="top" rel="warning_tipocta"></div></td>
+											</tr>
+											<tr>
+												<td colspan="14">&nbsp;</td>
+											</tr>
+											<tr>
+												<td width="80">Estatus</td>
+												<td width="110" colspan="3"><select name="select_estatus" style="width:110px;"></select></td>
+												<!--
+												<td width="10"></td>
+												<td width="70"><select name="select_subcuenta" style="width:70px;"></select></td>
+												-->
+												<td width="10"></td>
+												<td width="50">Agrupador</td>
+												<td width="10"></td>
+												<td width="110" colspan="3"><select name="select_agrupador" style="width:110px;"></select></td>
+												<!--
+												<td width="10"></td>
+												<td width="50"></td>
+												-->
+												<td width="40"></td>
+												<td width="90">Cuenta&nbsp;de&nbsp;Detalle</td>
+												<td width="180"><input type="checkbox" name="chk_cta_detalle"></td>
+												<td width="25"></td>
+											</tr>
+											
+											<tr>
+												<td colspan="14">&nbsp;</td>
+											</tr>
+											<tr>
+												<td colspan="14" style="background-color:rgb(180,180,180);">Cuenta agrupadora del SAT</td>
+											</tr>
+											<tr>
+												<td colspan="14" height="5"></td>
+											</tr>
+											<tr>
+												<td width="80">C&oacute;digo</td>
+												<td width="60" colspan="2">
+													<input type="text"name="cta_sat" style="width:60px;" maxlength="10">
+													<input type="hidden" name="ctasat_id" value="0">
+												</td>
+												<!--<td width="10"></td>-->
+												
+												<td width="50"></td>
+												<td width="10"></td>
+												<td width="50">Nombre</td>
+												<td width="10"></td>
+												<td width="240" colspan="5"><input type="text"name="desc_cta_sat" style="width:240px;" maxlength="400"></td>
+												<!--
+												<td width="50"></td>
+												<td width="10"></td>
+												<td width="50"></td>
+												<td width="40"></td>
+												<td width="90"></td>
+												-->
+												<td width="180"><a href="busca_codigo_sat">&nbsp;(Buscar)</a></td>
+												<td width="25"></td>
+											</tr>
+                                        </table>
+                                    </div>
+									<div id="tabx-2" class="contenidoPes" >
+                                        <table border="0" class="gral">
+											<tr>
+												<td width="5"></td>
+												<td width="120">Descripci&oacute;n&nbsp;Espa&ntilde;ol</td>
+												<td width="400"><input type="text"name="descripcion_es" style="width:400px;" maxlength="60"></td>
+												<td width="25"></td>
+											</tr>
+											<tr>
+												<td colspan="4">&nbsp;</td>
+											</tr>
+											<tr>
+												<td width="5"></td>
+												<td width="120">Descripci&oacute;n&nbsp;Ingles</td>
+												<td width="400"><input type="text"name="descripcion_in" style="width:400px;" maxlength="60"></td>
+												<td width="25"></td>
+											</tr>
+											<tr>
+												<td colspan="4">&nbsp;</td>
+											</tr>
+											<tr>
+												<td width="5"></td>
+												<td width="120">Descripci&oacute;n&nbsp;Otro</td>
+												<td width="400"><input type="text"name="descripcion_otro" style="width:400px;" maxlength="60"></td>
+												<td width="25"></td>
+											</tr>
+                                        </table>
+                                    </div>
+									
+                                </div>
+                            </div>
+
+
+                            <div class="fixed column" id="botones" style="width:713px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+								<table border="0">
+									<tr><td colspan="4" height="7"></td></tr>
+									<tr>
+										<td width="613"></td>
+										<td>
+											<input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+										</td>
+										<td width="30"></td>
+										<td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+									</tr>
+								</table>
+                                
+                            </div>
+                            
+                            
+                            
+                        </div>
+                    </div>
+                </div>
+        </form>
+        
+        
+        
+        
+        #include("${layoutfooter}")
+        
+        
+        
+
+
+
+		<div class="buscador_cuentasat" style="display:none;">	
+			<table width="100%" border="0" class="formaBusqueda_cuentasat">
+				<tr>
+					<td>
+						<div class="div_dos_cuentasat">
+							<table width="100%" border="0">
+								<thead>
+									<tr>
+										<td colspan="8" height="50" valign="top"><div class="titulo_cuentasat" width="100%"><strong>Buscador de Cuentas del SAT</strong></div></td>
+									</tr>
+								</thead>
+								
+								<tbody>
+									<tr>
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff;"></td>
+										<td colspan="3" style="background:#ffffff;" width="600">
+											
+											<table id="tabla_busqueda" border="0"  class="contenidobusqueda">
+												<tr>
+													<td colspan="7" width="600" height="10"></td>
+												</tr>
+												<tr>
+													<td width="70">C&oacute;digo&nbsp;</td>
+													<td width="120"><input type="text" name="campo_codigo_sat" style="width:120px;"></td>
+													<td width="25"></td>
+													<td width="90"></td>
+													<td width="200"></td>
+													<td width="25"></td>
+													<td width="90"></td>
+												</tr>
+												<tr>
+													<td colspan="7" width="600" height="10"></td>
+												</tr>
+												<tr>
+													<td width="70">Descripci&oacute;n</td>
+													<td width="400" colspan="4"><input type="text" name="campo_descripcion_sat" style="width:415px;"></td>
+													<td width="25"></td>
+													<td width="90" align="right">
+														<input type="button" id="busca_producto_modalbox" class="onmouseOutBuscar">
+													</td>
+												</tr>
+											</table>
+											
+										</td>
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									
+									<tr style="font-size:13px;">
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff"></td>
+										
+										<td width="70" style="background:#A8A9AB;">Nivel</td>
+										<td width="140" style="background:#A8A9AB;">C&oacute;digo&nbsp;agrupador</td>
+										<td width="390" style="background:#A8A9AB;">Nombre de la cuenta y/o subcuenta</td>
+										
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									
+									<tr>
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff"></td>
+										<td style="background:#ffffff; border: solid 1px #454442;" colspan="3" width="600">
+											<div style="overflow:scroll; overflow-x:auto; overflow-y:auto; width:600px; height:120px; align=top;">
+												<table  border="0" id="tabla_resultado" width="580">
+													<!--aqui van los resultados de la busqueda-->
+													<!--
+														<tr>
+															<td width="70">Lote</td>
+															<td width="140">Sku</td>
+															<td width="300">Nombre</td>
+															<td width="70">Disponible</td>
+														</tr>
+													-->
+												</table>
+											</div>
+										</td>
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									<tr>
+										<td width="10"></td>
+										<td width="10" colspan="5" height="4" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									<tr>
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff"></td>
+										
+										<td width="90" style="background:#ffffff"></td>
+										<td width="120"  style="background:#ffffff"></td>
+										<td width="390" style="background:#ffffff" align="right">
+											<input type="button" id="cencela" class="onmouseOutCancelar">
+										</td>
+										
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									<tr>
+										<td width="10"></td>
+										<td width="10" colspan="5" height="6" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+								</tbody>
+								
+							</table>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+		
+    </body>
+</html>	
+
+
+
+

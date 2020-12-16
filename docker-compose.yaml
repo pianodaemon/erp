@@ -1,0 +1,51 @@
+version: '3.6'
+
+x-shared-environment: &commonEnv
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_PORT: 5432
+    POSTGRES_HOST: "rdbms_dos"
+    POSTGRES_DB: "erp"
+    MYSQL_ROOT_PASSWORD: "mysql"
+    MYSQL_DATABASE: "dwh"
+
+services:
+    rdbms_dos:
+        container_name: 'rdbms_dos'
+        image: 'debezium/postgres'
+        ports:
+          - '5432:5432'
+        environment: *commonEnv
+        volumes:
+          - rdbms_dos_data:/var/lib/postgresql/data
+        networks:
+          - operational_network
+    rdbms_staging:
+        image: 'mysql:5'
+        container_name: 'rdbms_staging'
+        ports:
+          - '3306:3306'
+        environment: *commonEnv
+        volumes:
+          - rdbms_staging_data:/var/lib/mysql
+          - ./DWH/scripts:/scripts
+          - ./DWH/migrations:/migrations
+        networks:
+          - operational_network
+    sales_api:
+        container_name: 'sales_api'
+        build: './DOS/sales-api'
+        ports:
+          - '10090:10090'
+        environment: *commonEnv
+        networks:
+          - operational_network
+
+networks:
+    operational_network:
+        name: operational_network
+        driver: bridge
+
+volumes:
+    rdbms_staging_data:
+    rdbms_dos_data:

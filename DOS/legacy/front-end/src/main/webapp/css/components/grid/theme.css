@@ -1,0 +1,112 @@
+/* tables */
+table.tablesorter {
+	font-family:arial;
+	background-color: #303D74;
+	margin:10px 0pt 0px;
+	font-size: 8pt;
+	width: 100%;
+	text-align: left;
+}
+
+table.tablesorter thead tr th, table.tablesorter tfoot tr th {
+	/*background-color: #2F3D73;*/
+	background-image:url(../../../img/datagrid00/bar_table.png);
+	background-color: #D1D2D4;
+	border: 1px solid #AAA;
+/*	border-left: 2px solid #AAA;*/
+	text-align: left;
+	/*color: #FFFFFF;*/
+	color: #000000;
+	font-size: 8pt;
+	padding: 4px;
+}
+
+table.tablesorter thead tr.backgroundheader{
+	background-image:url(../../../img/datagrid00/bar_table.png);
+}
+
+table.tablesorter thead tr .header {
+	background-image: url(../../../img/datagrid00/bg.gif);
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
+	padding: 4px;
+	vertical-align: center;
+}
+
+table.tablesorter tbody td {
+	color: #3D3D3D;
+	border: 1px solid #AAA;
+	padding: 4px;
+	background-color: #FFF;
+/*	vertical-align: top;*/
+}
+
+/*table.tablesorter tbody  tr.odd td { background-color: #D1D3D4; }*/
+table.tablesorter tbody  tr.odd td { background-color: #FFF; }
+table.tablesorter tbody  tr.even td { background-color: #FFF; }
+
+table.tablesorter thead tr .headerSortUp {
+	background-image: url(../../../img/datagrid00/asc.gif);
+}
+
+table.tablesorter thead tr .headerSortDown {
+	background-image: url(../../../img/datagrid00/desc.gif);
+}
+
+table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
+background-color: #A8EAAE;
+}
+
+table.tablesorter thead tr .headerSortUp {
+	background-image: url(../../../img/datagrid00/asc.gif);
+}
+
+A:link {text-decoration:none;color:#0000cc;}
+
+
+A:visited {text-decoration:none;color:#ffcc33;}
+
+
+A:active {text-decoration:none;color:#ff0000;}
+
+
+A:hover {text-decoration:none;color:#999999;} 
+
+.onmouseOverEdit {
+	background-image: url(../../../img/datagrid00/editar.png);
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
+	padding:3px 1px 3px 1px; 
+	vertical-align: center;
+}
+
+.onmouseOutEdit {
+	background-image: url(../../../img/datagrid00/editar1.png);
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
+	padding:3px 1px 3px 1px; 
+	vertical-align: center;
+}
+
+.onmouseOverDelete {
+	/*border: 1px solid #000;*/
+	background-image: url(../../../img/datagrid00/borrar.png);
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
+	padding:3px 1px 3px 1px; 
+	vertical-align: center;
+}
+
+.onmouseOutDelete {
+	/*border: 1px solid #000;*/
+	background-image: url(../../../img/datagrid00/borrar1.png);
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
+	padding:3px 1px 3px 1px; 
+	vertical-align: center;
+}

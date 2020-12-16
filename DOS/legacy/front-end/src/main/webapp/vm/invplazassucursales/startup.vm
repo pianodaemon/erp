@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")		
+       
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        
+        <script type="text/javascript" src="../../js/implements/invplazassucursales/index.js" ></script>
+        
+        #include("${layoutmenu}")        
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">        
+        <input type="hidden" name="suc" value="$sucursal">
+                
+       <!--  otra parte -->
+        <table class="acciones" >
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    <div class="plazassucursales" >
+                        <table id="opciones" border="0"  style="background-color:#ffffff;">
+                            <tr>
+                                <td colspan="5">&nbsp;&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                <td width="40">Sucursal:</td>
+                                <td width="10">&nbsp;&nbsp;</td>
+                                <td>
+                                    <SELECT NAME="sucursales" style="width:200px;" id="my-select">
+                                      <!--<option value="0" selected>--elige una opcion</option>
+                                        <option value="1">suc 1</option>
+                                        <option value="2" >suc 2</option>-->
+                                    </SELECT>
+                                </td>
+                                <td width="190">&nbsp;&nbsp;&nbsp;&nbsp;</td>                                
+                            </tr>
+                            <tr>
+                                <td colspan="5">&nbsp;&nbsp;</td>
+                            </tr>                            
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table border="0">
+            <tr>
+                <td width="5px"></td>
+                <td >
+                    <div  id="plazassucursales"  >
+                            <table id="plaza"  width="490" border="0">
+                                <tr>
+                                    <td width=5></td>
+                                    <td  colspan="3" align="center" style="background-color:#e7e8ea;" ><font size="2px">Asignaci&oacute;n de Plazas</font></td>
+                                    <td width=5></td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td align="center" style="background-color:#e7e8ea;"><font size="2px">Plaza NO asignada</font></td>
+                                    <td style="background-color:#e7e8ea;"></td>
+                                    <td align="center" style="background-color:#e7e8ea;"><font size="2px">Plaza Asignada</font></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan ="5"> </td>
+                                </tr>
+                                <tr>
+                                    <td width=5></td>
+                                    <td width="90" rowspan="1" valign="top">
+                                        <select name="plazaNoAsignadas" multiple="multiple" style="width: 240px;height:110px;"></select>
+                                        <td width=5></td>
+                                    </td>
+                                    <td width="180" rowspan="1" valign="top">
+                                        <select name="PlazasAsignadas" multiple="multiple" style="width: 240px;height:110px;"></select>
+                                        <input type="hidden" name="pres_on">
+                                    </td>
+                                    <td width=5></td>
+                                 </tr>
+                                 <tr>
+                                    <td width="5"></td>
+                                    <td width="180" align="center"><a  href="agregar_plaza"><font size="2px">Agregar>></font></a></td>
+                                    <td width="15"></td>
+                                    <td width="180" align="center"><a  href="remover_plaza"><font size="2px"> << Remover</font></a></td>
+                                    <td width="5"></td>
+                                 </tr>
+                                
+                            </table>
+                    </div>
+
+                    <div class="fixed column" style="width:750px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+						<table border="0">
+							<tr>
+								<td width=400"></td>
+								<td>
+									<!--<input  id="submit" style="width:77px; height:24px; background-image:url('../../img/modalbox/btn1.png'); background-repeat:no-repeat;">-->
+									<input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>                                                                                         
+								</td>
+								<td width="30"></td>
+							</tr>
+						</table>								
+                    </div>
+                </td>
+                <td width="5px"></td>
+            </tr>
+        </table>        
+        #include("${layoutfooter}")                
+    </body>
+</html>	

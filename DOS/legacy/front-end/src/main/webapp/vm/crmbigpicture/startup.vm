@@ -1,0 +1,440 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+		
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/crmbigpicture/formaCrmConfigConsultas.css" type="text/css" />
+        
+        <!--
+        <link rel="stylesheet" href="../../css/modalbox/crmconsultas/formaCrmRegistroLlamadas.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/crmconsultas/formaCrmRegistroVisitas.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/crmconsultas/formaCrmRegistroCasos.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/crmconsultas/formaCrmRegistroOportunidades.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/crmconsultas/formaCrmRegistroVarios.css" type="text/css" />
+        -->
+
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/crmbigpicture/modalboxCrmConfigConsultas.js"></script>
+        
+        <script type="text/javascript" src="../../js/implements/crmbigpicture/index.js" ></script>
+        <!--
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/crmconsultas/modalboxCasos.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/crmconsultas/modalboxVarios.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/crmconsultas/modalboxLlamadas.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/crmconsultas/modalboxOportunidades.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/crmconsultas/modalboxVisitas.js"></script>
+        -->
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+		
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    <div class="consultas" style="width:750px; display:block; margin:10px; background:#fff; border-radius:4px;">
+                        <table border="0" width="70%" id="consultas">
+                            <tr>
+                                <td colspan="19">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td>Agente</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>Fecha Inicial</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>Fecha Final</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                <td></td>
+                                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                <td></td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td >
+                                    <select name="busqueda_agente" style="width:160px"></select>
+                                </td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td >
+                                    <INPUT TYPE="text" name="fecha_inicial" style="width:100px;">
+                                </td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td >
+                                    <INPUT TYPE="text" name="fecha_final" style="width:100px;">
+                                </td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                <td><input type="button" name="buscar" value="Consultar" style="width:90px; border-radius:5px;"></td>
+                                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                <td><input type="button" name="configurar_consultas" value="Configurar Consultas" style="width:140px; border-radius:5px;"></td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td colspan="19">&nbsp;</td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td>
+                    <div class="content_results" style="display:none;margin:10px; background:#fff; border-radius:4px;">
+                        <table>
+                            <tr>
+                                <td>&nbsp;&nbsp;</td>
+                                <td>
+									<div id="div_contenedor" style="width:750px; overflow:scroll; overflow-x:hidden; overflow-y:auto;">
+										<div id="tablaresultadosvisitas">
+												<!--Aqui se agrega desde el js los trs de el reultado de  la consulta-->
+										</div>
+										<div id="tablaresultadosllamadas">
+												<!--Aqui se agrega desde el js los trs de el reultado de  la consulta-->
+										</div>
+										<div id="tablaresultadoscasos">
+												<!--Aqui se agrega desde el js los trs de el reultado de  la consulta-->
+										</div>
+										<div id="tablaresultadosoportunidades">
+												<!--Aqui se agrega desde el js los trs de el reultado de  la consulta-->
+										</div>
+										<div id="tablaresultadoscotizaciones">
+												<!--Aqui se agrega desde el js los trs de el reultado de  la consulta-->
+										</div>
+									</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        
+        <!--form for crmconfigconsultas -->
+        <form id="formCrmConfigConsultas" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal crmconfigconsultas_div_one"  style="display:none;" title="">
+                
+                <input type="hidden" name="identificador">
+                
+                    
+                    <div id="div_two" title="" class="crmconfigconsultas_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" id="cierra" style="width:735px; padding-left:6px;"><strong>Configuracion de Consultas</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="div_three" title="" class="crmconfigconsultas_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Configuraci&oacute;n de Consultas</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+                                    <div id="tabx-1" class="contenidoPes" >
+                                        <table border="0" width="700px;">
+                                            <tr>
+                                                <td colspan="18">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="18">
+                                                    <fieldset style="border: solid 1px #313E74; groove #fff; background:#FAFAFA; width:100%;" class="gral"><legend><b>Registro de Visitas</b></legend>
+                                                        <ol>
+                                                            <table border="0" width="100%"  class="registro_visitas">
+                                                                
+                                                                <tr>
+                                                                    <td>&nbsp;Metas</td>
+                                                                    <td><input type="checkbox" name="metas_visita" ></td>
+                                                                    <td></td>
+                                                                    <td>Total&nbsp;</td>
+                                                                    <td><input type="checkbox" name="totales_visita" ></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Cumplido&nbsp;</td>
+                                                                    <td><input type="checkbox" name="cumplido_visita"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>Con Exito&nbsp;</td>
+                                                                    <td><input type="checkbox" name="conexito_visita"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>Con Oportunidad&nbsp;</td>
+                                                                    <td><input type="checkbox" name="conoportunidad_visita"></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td colspan="14">&nbsp;</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>&nbsp;Con Seguimiento</td>
+                                                                    <td><input type="checkbox" name="seguimiento_visita" ></td>
+                                                                    <td></td>
+                                                                    <td>% Efectividad&nbsp;</td>
+                                                                    <td><input type="checkbox" name="efectividad_visita" ></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Gesti&oacute;n&nbsp;</td>
+                                                                    <td><input type="checkbox" name="gestion_visita"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Avance&nbsp;</td>
+                                                                    <td><input type="checkbox" name="avance_visita"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td></td>
+                                                                </tr>
+                                                            </table>
+                                                        </ol>
+                                                    </fieldset>
+                                                </td>
+                                                
+                                            </tr>
+                                            <tr>
+                                                <td colspan="18">
+                                                    <fieldset style="border: solid 1px #313E74; groove #fff; background:#FAFAFA; width:100%;" class="gral"><legend><b>Registro de Llamadas</b></legend>
+                                                        <ol>
+                                                            <table border="0" width="100%" class="registro_llamadas">
+                                                                <tr>
+                                                                    <td>&nbsp;Metas</td>
+                                                                    <td><input type="checkbox" name="metas_llamadas" ></td>
+                                                                    <td></td>
+                                                                    <td>Total&nbsp;</td>
+                                                                    <td><input type="checkbox" name="total_llamadas" ></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Cumplido&nbsp;</td>
+                                                                    <td><input type="checkbox" name="cumplido_llamadas"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>Entrantes&nbsp;</td>
+                                                                    <td><input type="checkbox" name="entrantes_llamadas"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>Salientes&nbsp;</td>
+                                                                    <td><input type="checkbox" name="salientes_llamadas"></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td colspan="14">&nbsp;</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>&nbsp;Planeadas</td>
+                                                                    <td><input type="checkbox" name="planeadas_llamadas" ></td>
+                                                                    <td></td>
+                                                                    <td>Con Exito&nbsp;</td>
+                                                                    <td><input type="checkbox" name="con_exito_llamadas" ></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>Con Cita&oacute;n&nbsp;</td>
+                                                                    <td><input type="checkbox" name="con_cita_llamadas"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>Con Seguimiento&nbsp;</td>
+                                                                    <td><input type="checkbox" name="conseguimiento_llamadas"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Efectividad&nbsp;</td>
+                                                                    <td><input type="checkbox" name="efectividad_llamadas"></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td colspan="14">&nbsp;</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>&nbsp;% Gestión</td>
+                                                                    <td><input type="checkbox" name="gestion_llamadas" ></td>
+                                                                    <td></td>
+                                                                    <td>% Avance&nbsp;</td>
+                                                                    <td><input type="checkbox" name="avance_llamadas" ></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Planeaci&oacute;n&nbsp;</td>
+                                                                    <td><input type="checkbox" name="planeacion_llamadas"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td></td>
+                                                                </tr>
+                                                            </table>
+                                                        </ol>
+                                                    </fieldset>
+                                                </td>
+                                                
+                                            </tr>                                           
+                                            <tr>
+                                                <td colspan="18">
+                                                    <fieldset style="border: solid 1px #313E74; groove #fff; background:#FAFAFA; width:100%;" class="gral"><legend><b>Registro de Casos</b></legend>
+                                                        <ol>
+                                                            <table border="0" width="100%" class="registro_casos">
+                                                                
+                                                                <tr>
+                                                                    <td>&nbsp;% Facturaci&oacute;n</td>
+                                                                    <td><input type="checkbox" name="facturacion_casos" ></td>
+                                                                    <td></td>
+                                                                    <td>% Producto&nbsp;</td>
+                                                                    <td><input type="checkbox" name="producto_casos" ></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Garant&iacute;a&nbsp;</td>
+                                                                    <td><input type="checkbox" name="garantia_casos"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Distribuci&oacute;n&nbsp;</td>
+                                                                    <td><input type="checkbox" name="distribucion_casos"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Da&ntilde;os&nbsp;</td>
+                                                                    <td><input type="checkbox" name="danos_casos"></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td colspan="14">&nbsp;</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>&nbsp;% Devoluciones</td>
+                                                                    <td><input type="checkbox" name="devoluciones_casos" ></td>
+                                                                    <td></td>
+                                                                    <td>% Cobranza&nbsp;</td>
+                                                                    <td><input type="checkbox" name="cobranza_casos" ></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Varios&nbsp;</td>
+                                                                    <td><input type="checkbox" name="varios_casos"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td></td>
+                                                                </tr>
+                                                            </table>
+                                                        </ol>
+                                                    </fieldset>
+                                                </td>
+                                                
+                                            </tr>
+                                            
+                                            <tr>
+                                                <td colspan="18">
+                                                    <fieldset style="border: solid 1px #313E74; groove #fff; background:#FAFAFA; width:100%;" class="gral"><legend><b>Registro de Oportunidades</b></legend>
+                                                        <ol>
+                                                            <table border="0" width="100%" class="registro_oportunidades">
+                                                                
+                                                                <tr>
+                                                                    <td>&nbsp;Metas</td>
+                                                                    <td><input type="checkbox" name="metas_oportunidades" ></td>
+                                                                    <td></td>
+                                                                    <td>Total Metas&nbsp;</td>
+                                                                    <td><input type="checkbox" name="total_metas_oportunidades" ></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>Montos Meta&nbsp;</td>
+                                                                    <td><input type="checkbox" name="montos_meta_oportunidades"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>Total Montos&nbsp;</td>
+                                                                    <td><input type="checkbox" name="total_montos_oportunidades"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Metas Cumplidas&nbsp;</td>
+                                                                    <td><input type="checkbox" name="metas_cumplidas_oportunidades"></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td colspan="14">&nbsp;</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>&nbsp;% Montos Cumplidas</td>
+                                                                    <td><input type="checkbox" name="montos_cumplidas_oportunidades" ></td>
+                                                                    <td></td>
+                                                                    <td>% Inicial&nbsp;</td>
+                                                                    <td><input type="checkbox" name="inicial_oportunidades" ></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Seguimiento&nbsp;</td>
+                                                                    <td><input type="checkbox" name="seguimiento_oportunidades"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Visitas&nbsp;</td>
+                                                                    <td><input type="checkbox" name="visitas_oportunidades"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Cotizaci&oacute;n&nbsp;</td>
+                                                                    <td><input type="checkbox" name="cotizacion_oportunidades"></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td colspan="14">&nbsp;</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>&nbsp;% Negociaci&oacute;n</td>
+                                                                    <td><input type="checkbox" name="negociacion_oportunidades" ></td>
+                                                                    <td></td>
+                                                                    <td>% Cierre&nbsp;</td>
+                                                                    <td><input type="checkbox" name="cierre_oportunidades" ></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Ganados&nbsp;</td>
+                                                                    <td><input type="checkbox" name="ganados_oportunidades"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>% Perdidos&nbsp;</td>
+                                                                    <td><input type="checkbox" name="perdidos_oportunidades"></td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td>&nbsp;</td>
+                                                                    <td></td>
+                                                                </tr>
+                                                            </table>
+                                                        </ol>
+                                                    </fieldset>
+                                                </td>
+                                                
+                                            </tr>
+                                            
+                                        </table>
+                                    </div>			                                    
+                                </div>
+                            </div>
+                            
+                            
+                            <div class="fixed column" id="botones" style="width:740px; background:; text-align:right;; position:absolute;margin-top:4px;">
+                                <table border="0">
+                                        <tr><td colspan="10" height="7"></td></tr>
+                                        <tr>
+                                            <td width="559"></td>
+                                            <td>
+                                                <input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+                                            </td>
+                                            <td width="30"></td>
+                                            <td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+                                        </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+               
+        </form>
+        <!-- Registro de Visitas-->
+
+
+        
+        
+        #include("${layoutfooter}")
+        
+    </body>
+</html>	
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

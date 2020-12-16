@@ -1,0 +1,345 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+        
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/ctbgenerapolizas/formaCtbGeneraPoliza.css" type="text/css" />
+        <link rel="stylesheet" href="../../css/modalbox/productos/formaBuscaCuentaContable.css" type="text/css" />
+		
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/ctbgenerapolizas/modalboxCtbGeneraPoliza.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/productos/modalboxBuscaCuentaContable.js"></script>
+        <script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        <script type="text/javascript" src="../../js/implements/ctbgenerapolizas/index.js" ></script>
+        
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+		<input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        <!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+			<tr>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="new_item" class="tooltip"><div class="onmouseOutNewItem" id="nItem"></div><span>Registrar nuevo</span></a></td>
+			</tr>
+		</table>
+		
+        
+        <!--form for definicion de asientos -->
+        <form id="formactbgenerapolizas00" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal ctbgenerapolizas_div_one"  style="display:none;" title="">
+					<input type="hidden" name="identificador">
+                    <div id="div_two" title="" class="ctbgenerapolizas_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" id="cierra" style="width:730px; padding-left:6px;"><strong>${title}</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="div_three" title="" class="ctbgenerapolizas_div_three">
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Movimientos</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+									
+                                    <div id="tabx-1" class="contenidoPes" >
+										
+                                        <table border="0" style="margin:0; padding:0;">
+											<tr>
+												<td width="750"></td>
+											</tr>
+                                            <tr>
+                                                <td height="14" width="750" style="border-top:1px solid #C1DAD7; border-bottom:1px solid #C1DAD7; border-left:1px solid #FFFFFF; border-right:1px solid #FFFFFF; background-color:#D4D3D3;">Busqueda de movimientos</td>
+                                            </tr>
+											<tr>
+												<td valign="top">
+													<table border="0" class="gral">
+														<tr><td height="8" colspan="8"></td></tr>
+														<tr>
+															<td width="10"></td>
+															<td width="100">Fecha&nbsp;inicial</td>
+															<td width="90"><input type="text"name="fecha_ini" style="width:90px;" readOnly></td>
+															<td width="50"></td>
+															<td width="80">Fecha&nbsp;final</td>
+															<td width="90"><input type="text"name="fecha_fin" style="width:90px;" readOnly></td>
+															<td width="40"></td>
+															<td width="80"></td>
+														</tr>
+														<tr><td height="8" colspan="8"></td></tr>
+														<tr>
+															<td width="10"></td>
+															<td width="100">Tipo&nbsp;de&nbsp;Movimiento</td>
+															<td width="310" colspan="4"><select name="select_tipo_mov" style="width:310px;"><option value="0">[--- ---]</option></select></td>
+															<!--
+															<td width="50"></td>
+															<td width="80"></td>
+															<td width="90"></td>
+															-->
+															<td width="40"></td>
+															<td width="80"><a href="#busqueda" id="buscar">(Buscar)</a></td>
+														</tr>
+													</table>
+													
+												</td>
+											</tr>
+											
+											
+											<tr>
+												<td style="border-top: 1px solid #C1DAD7; border-bottom: 1px solid #C1DAD7; border-left: 1px solid #FFFFFF; border-right: 1px solid #FFFFFF;">
+													<table >
+														<thead>
+															<tr>
+																<td class="grid_head" width="70">Fecha</td>
+																<td class="grid_head" width="70">Referencia</td>
+																<td class="grid_head" width="300">Nombre&nbsp;/&nbsp;Descripci&oacute;n</td>
+																<td class="grid_head" width="80">Total</td></td>
+																<td class="grid_head" width="203">Tipo&nbsp;de&nbsp;Movimiento</td>
+															</tr>
+														</thead>
+														<tbody>
+															<tr>
+																<td colspan="5">
+																	<div style="overflow:scroll; overflow-x:hidden; overflow-y:auto; height:185px; border:1px solid #C1DAD7 !important;">	
+																		<table>
+																			<tbody style="background-color: #FFFFFF;" valign="top" id="grid_movs">
+																				
+																			</tbody>
+																		</table>
+																	</div>
+																</td>
+															</tr>
+														</tbody>
+													</table>
+												</td>
+											</tr>
+											
+											<tr>
+												<td  align="left" valign="top">
+													<div id="div_warning_grid" style="display:none;">
+														
+														<table border="0">
+															<tr>
+																<td width="10"></td>
+																<td width="830" colspan="4"><div style="color:#d41000;">&nbsp;&nbsp;Datos&nbsp;no&nbsp;validos</div></td>
+																<td width="10"></td>
+															</tr>
+															<tr>
+																<td width="10"></td>
+																<td width="20" style="background-color:#A8A9AB; font-weight: bold;"></td>
+																<td width="120" style="background-color:#A8A9AB; font-weight: bold;">Cuentan&nbsp;</td>
+																<td width="200" style="background-color:#A8A9AB; font-weight: bold;">Descripci&oacute;n</td>
+																<td width="490" style="background-color:#A8A9AB; font-weight: bold;">Descripci&oacute;n&nbsp;del&nbsp;error</td>
+																<td width="10"></td>
+															</tr>
+															<tr>
+																<td width="10"></td>
+																<td colspan="5"> 
+																	<div align="left" style="width:850px; height:70px; overflow:scroll; overflow-x: auto; overflow-y: auto; color:#d41000;">
+																		<table id="grid_warning" border="0" style="width:830px;"">
+																			<!-- Aqui se muestran los warning
+																			style="background-color:#e7e8ea;"
+																			-->
+																		</table>
+																	</div>
+																</td>
+															</tr>
+														</table>
+													</div>
+												</td>
+											</tr>
+											
+										</table>
+                                    </div>
+									
+                                </div>
+                            </div>
+
+
+                            <div class="fixed column" id="botones" style="width:743px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+								<table border="0">
+									<tr><td colspan="4" height="7"></td></tr>
+									<tr>
+										<td width="643"></td>
+										<td>
+											<input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+										</td>
+										<td width="30"></td>
+										<td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+									</tr>
+								</table>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+        </form>
+        
+        
+        
+        
+        #include("${layoutfooter}")
+        
+        
+        
+		
+		
+		<div class="buscador_cuentas" style="display:none;">	
+			<table width="100%" border="0" class="formaBusqueda_cuentas">
+				<tr>
+					<td>
+						<div class="div_dos_buscactacontable">
+							<table width="100%" border="0">
+								<thead>
+									<tr>
+										<td colspan="10" height="50" valign="top"><div class="titulo_buscactacontable" width="100%"><strong>Buscador de cuentas contables</strong></div></td>
+									</tr>
+								</thead>
+								
+								<tbody>
+									<tr class="gral">
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff;"></td>
+										<td colspan="6" style="background:#ffffff;" width="600">
+											
+											<table id="tabla_busqueda" border="0"  class="contenidobusqueda">
+												<tr>
+													<td colspan="13" width="600" height="10"></td>
+												</tr>
+												
+												<tr>
+													<td width="100">Cuenta&nbsp;de&nbsp;mayor</td>
+													<td width="220" colspan="8">
+														<select name="select_cta_mayor" style="width:220px;">
+															<option value="0" selected="yes">[--  --]</OPTION>
+														</select>
+													</td>
+													<td width="50"></td>
+													<td width="80">Clasificaci&oacute;n</td>
+													<td width="100"><input type="text" name="clasif" style="width:50px;" maxlength="4" ></td>
+													<td width="50"></td>
+												</tr>
+												<tr>
+													<td colspan="13" width="600" height="10"></td>
+												</tr>
+												<tr>
+													<td width="100">Cuenta</td>
+													<td width="50"><input name="cuenta" style="width:50px;" maxlength="4"></td>
+													<td width="5"></td>
+													<td width="50"><input name="scuenta" style="width:50px;" maxlength="4"></td>
+													<td width="5"></td>
+													<td width="50"><input name="sscuenta" style="width:50px;" maxlength="4"></td>
+													<td width="5"></td>
+													<td width="50"><input name="ssscuenta" style="width:50px;" maxlength="4"></td>
+													<td width="5"></td>
+													<td width="50"><input name="sssscuenta" style="width:50px;" maxlength="4"></td>
+													<td width="80"></td>
+													<td width="100"></td>
+													<td width="50"></td>
+												</tr>
+												
+												<tr>
+													<td colspan="13" width="600" height="10"></td>
+												</tr>
+												<tr>
+													<td width="100">Descripci&oacute;n</td>
+													<td width="270" colspan="9"><input type="text" name="campo_descripcion" style="width:270px;"></td>
+													<td width="80"></td>
+													<td width="100"></td>
+													<td width="50" align="right"><input type="button" id="boton_busca" class="onmouseOutBuscar" style="height:20px;" ></td>
+												</tr>
+												
+											</table>
+											
+										</td>
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									
+									<tr style="font-size:13px;">
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff"></td>
+										
+										<td width="30" style="background:#A8A9AB;">M&nbsp;</td>
+										<td width="30" style="background:#A8A9AB;">C&nbsp;</td>
+										<td width="170" style="background:#A8A9AB;">Cuenta&nbsp;</td>
+										<td width="230" style="background:#A8A9AB;">Descripci&oacute;n</td>
+										<td width="70" style="background:#A8A9AB;">Detalle</td>
+										<td width="70" style="background:#A8A9AB;">Nivel Cta.</td>
+										
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									
+									<tr>
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff"></td>
+										<td style="background:#ffffff; border: solid 1px #454442;" colspan="6" width="600">
+											<div style="overflow:scroll; overflow-x:auto; overflow-y:auto; width:600px; height:120px; align=top;">
+												<table  border="0" id="tabla_resultado" width="580">
+													<!--aqui van los resultados de la busqueda-->
+												</table>
+											</div>
+										</td>
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									<tr>
+										<td width="10"></td>
+										<td width="10" colspan="8" height="4" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									<tr>
+										<td width="10"></td>
+										<td width="10" style="background:#ffffff"></td>
+										
+										<td width="30"  style="background:#ffffff"></td>
+										<td width="30"  style="background:#ffffff"></td>
+										<td width="170"  style="background:#ffffff"></td>
+										<td width="230" style="background:#ffffff"></td>
+										<td width="70" style="background:#ffffff"></td>
+										<td width="70" style="background:#ffffff" align="right">
+											<input type="button" id="boton_cencela" class="onmouseOutCancelar">
+										</td>
+										
+										<td width="10" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+									<tr>
+										<td width="10"></td>
+										<td width="10" colspan="8" height="6" style="background:#ffffff"></td>
+										<td width="10"></td>
+									</tr>
+								</tbody>
+								
+							</table>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+
+
+    </body>
+</html>	
+
+
+
+

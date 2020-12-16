@@ -1,0 +1,299 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+		
+        <!--  css for this catalogo -->
+        <link rel="stylesheet" href="../../css/modalbox/logasignarutas/formaLogAsignaRutas.css" type="text/css" />
+        
+        <!--  js for this catalogo -->
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/components/modalbox/logasignarutas/modalboxLogAsignaRutas.js"></script>
+        <script type="text/javascript" src="../../js/implements/logasignarutas/index.js" ></script>
+        <script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        #include("${layoutmenu}")
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        
+		<!--Esta tabla va  en la barra de acciones -->
+		<table class="table_acciones" style="display:none" border="0">
+			<tr>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="new_item" class="tooltip"><div class="onmouseOutNewItem" id="nItem"></div><span>Registrar nuevo Asignacion de Ruta</span></a></td>
+				<td width="15" height="30"></td>
+				<td height="30"><a href="visualiza_buscador" class="tooltip"><div class="onmouseOutVisualizaBuscador" id="vbuscador"></div><span>Busqueda</span></a>  </td>
+			</tr>
+		</table>
+        
+        <!--Esta tabla va  en la barra de buscador -->
+		<table border="0" class="tabla_buscador" style="display:none">
+			<tr>
+				<td colspan="13">&nbsp;&nbsp;</td>
+			</tr>
+			<tr>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>Folio&nbsp;de&nbsp;Ruta</td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>Marca</td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>Chofer</td>
+				<td>&nbsp;</td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>&nbsp;</td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td>&nbsp;</td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+			
+			<tr>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="text" name="ruta" style="width:80px;"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="text" name="marca" style="width:230px;"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="text" name="chofer" style="width:230px;"></td>
+                    <td>	</td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                    <td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td><INPUT TYPE="button" value="Buscar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td ><INPUT TYPE="button" value="Limpiar"></td>
+				<td width="10">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			</tr>
+		</table>
+        
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    ${grid}
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+        </table>
+		
+        
+        
+		
+        
+        
+		
+        
+        
+        <!--form for Rutas -->
+        <form id="formalogasignarutas" action="edit.json" method="POST" >
+        <!--clase la quite por causar problemas      tabulador -->
+                <div id="div_one" class="panelcito_modal logasignarutas_div_one"  style="display:none;" title="">
+                
+                <input type="hidden" name="identificador">
+                <input type="hidden" name="total_tr" value="0">
+                <input type="hidden" name="tipo_busqueda" value="0">
+                <input type="hidden" name="accion_proceso">
+					
+                    <div id="div_two" title="" class="logasignarutas_div_two">
+                        <div class="columns on-2">
+                            <div class="fixed column" id="cierra" style="width:845px; padding-left:6px;"><strong>Asignaci&oacute;n de Rutas</strong></div>
+                            <div class="fixed column" style="width:20px; height:25px;">
+                                <div id="close" style="height:25px;background-image:url('../../img/modalbox/close.png'); background-color:; background-position:top; cursor:pointer; background-repeat:no-repeat;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="div_three" title="" class="logasignarutas_div_three"  >
+                        <div class="columns" >
+                            <div class=" fixed column">
+                                <ul class="pestanas">
+                                    <li><a href="#tabx-1"><strong>Asignaci&oacute;n Rutas</strong></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="columns" style="background:#731F6C;">
+                            <div class="container" style="background:white;">
+                                <div class="fixed column" class="content_x" >
+									
+                                    <div id="tabx-1" class="contenidoPes">
+                                        <table border="0"  >
+											 <tr>
+												<td width="870px" colspan="3">
+													<table  border="0" class="gral">
+
+														  <tr >
+															   <td width="5">&nbsp;</td>
+															   <td width="70">Folio Ruta</td>
+															   <td width="90"><input type="text" name="numero_ruta" style="width:90px;"></td>
+															   <td width="20">&nbsp;</td>
+															   <td width="70">Chofer</td>
+															   <td width="200" colspan="3"><select name="select_chofer" style="width:200px;"></select></td>
+															   <td width="25">&nbsp;</td>
+															   <td width="60">Unidad</td>
+															   <td width="200" colspan="2"><select name="select_unidad" style="width:200px;"></select></td>
+															   <td width="25"></td>
+														  </tr>
+														  <tr>
+															   <td width="14" height="7"></td>
+														  </tr>
+														  
+														  <tr class="gral">
+															   <td width="5">&nbsp;</td>
+															   <td width="70">Fecha&nbsp;Inicial</td>
+															   <td width="90"><input type="text" name="fecha_inicial" style="width:90px;"></td>
+															   <td width="20">&nbsp;</td>
+															   <td width="70">Fecha&nbsp;Final</td>
+															   <td width="90"><input type="text" name="fecha_final" style="width:90px;"></td>
+															   <td width="10">&nbsp;</td>
+															   <td width="100"><a href="busca_facturas">&nbsp;(&nbsp;Ver&nbsp;facturas&nbsp;)</a></td>
+															   <td width="25"></td>
+															   <td width="60"></td>
+															   <td width="90"></td>
+															   <td width="110" align="right"><input type="button" id="confirmar" value="Confirmar" style="width:90px;"></td>
+															   <td width="25"></td>
+														  <tr>
+															
+														  <tr>
+															   <td width="14" height="7"></td>
+														  </tr>
+														  
+														  <tr class="gral">
+															   <td width="5">&nbsp;</td>
+															   <td width="70">Factura</td>
+															   <td width="90"><input type="text" name="factura" style="width:90px;"></td>
+															   <td width="20" colspan="2"><a href="agregar" id="agregar_factura">&nbsp;(&nbsp;Agregar&nbsp;)</a></td>
+															   <!--<td width="70"></td>-->
+															   <td width="90"></td>
+															   <td width="10">&nbsp;</td>
+															   <td width="100"></td>
+															   <td width="25"></td>
+															   <td width="60"></td>
+															   <td width="90"></td>
+															   <td width="110" align="right"><input type="button" id="genera_pdf" value="Generar PDF" style="width:90px;"></td>
+															   <td width="25"></td>
+														  <tr>
+															  
+													 </table>
+												</td>
+											 </tr>
+											 
+											 <tr>
+												   <td colspan="3" style="border:1px solid #C1DAD7; border-right: 1px solid #FFFFFF; border-left: 1px solid #FFFFFF; font-size: 11px;">Relaci&oacute;n de Facturas</td>
+											 </tr>
+												
+											 <tr>
+												   <td colspan="3"  style="border-top: 1px solid #FFFFFF; border-bottom: 1px solid #FFFFFF; border-left: 1px solid #FFFFFF; border-right: 1px solid #FFFFFF;">
+														<table border="1"  bordercolor="red">
+															 <thead>
+																  <tr class="registros_pagos">
+																	   <td class="grid" style="background-color: rgb(180, 180, 180); border-botton: 0px none;" align="center" width="30">#</td>
+																	   <td class="grid" style="background-color: rgb(180, 180, 180); border-botton: 0px none;" align="center" width="70">Factura</td>
+																	   <td class="grid" style="background-color: rgb(180, 180, 180);" align="center"  width="70">Fecha</td>
+																	   <td class="grid" style="background-color: rgb(180, 180, 180);" align="left" width="275">Cliente</td>
+																	   <td class="grid" style="background-color: rgb(180, 180, 180);" align="center" width="65">Producto</td>
+																	   <td class="grid" style="background-color: rgb(180, 180, 180);" align="center" width="57">Cantidad</td>
+																	   <td class="grid" style="background-color: rgb(180, 180, 180);" align="left"width="120">Descripci&oacute;n</td>
+																	   <td class="grid" style="background-color: rgb(180, 180, 180);" align="center" width="80">Importe</td>
+																	   <td class="grid" style="background-color: rgb(180, 180, 180);" align="center" width=="66">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Envase&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+
+																  </tr>
+															 </thead>
+														</table>
+														<div style="overflow:scroll; overflow-x: hidden; overflow-y: auto;  width: 100%; height: 120px; border:1px solid #C1DAD7 !important;">	
+															 <table class="tabla_facturas">
+																  <tbody style="background-color: #FFFFFF;" valign="top" class="contenido_facturas">
+																	   
+																  </tbody>
+															 </table>
+														</div>
+												   </td>
+											 </tr>
+											 
+											 <tr>
+												   <td width="13" colspan="3">&nbsp;</td>
+											 </tr>
+											 
+											 <tr class="gral">
+												   <td width="95">Folio&nbsp;programaci&oacute;n&nbsp;Ruta:</td>
+												   <td width="80"><INPUT TYPE="text" name="folio_fac_rev_cobro" style="width:80px;"></SELECT></td>
+												   <td width="733" >&nbsp;&nbsp;<a href="#" id="agregar_folio">(Agregar)</a></td>
+											 </tr>
+											 
+											 <tr>
+												   <td width="13" colspan="3" height="6"></td>
+											 </tr>
+											 
+											 <tr>
+												   <td colspan="3" style="border:1px solid #C1DAD7; border-right: 1px solid #FFFFFF; border-left: 1px solid #FFFFFF; font-size: 11px;">Relaci&oacute;n de Facturas para Revisi&oacute;n y Cobro</td>
+											 </tr>
+											 
+											 <tr>
+												   <td width="880"  colspan="3">
+														<table  border="0" >
+															 <thead>
+																  <tr>
+																  <td class="grid" style="background-color: rgb(180, 180, 180); border-botton: 0px none;" width="20">#</td>
+																  <td class="grid" style="background-color: rgb(180, 180, 180);"  width="60">Folio&nbsp;Prog.</td>
+																  <td class="grid" style="background-color: rgb(180, 180, 180);"  width="60">Eliminar</td>
+																  <td class="grid" style="background-color: rgb(180, 180, 180);"  width="70">Factura</td>
+																  <td class="grid" style="background-color: rgb(180, 180, 180); border-botton: 0px none;" width="70">Fecha</td>
+																  <td class="grid1" style="background-color: rgb(180, 180, 180);" width="350">Cliente</td>
+																  <td class="grid" style="background-color: rgb(180, 180, 180);" width="100">Tipo</td>
+																  <td class="grid" style="background-color: rgb(180, 180, 180);" align="right"; width="123">Saldo factura</td>
+																  </tr>
+															 </thead>
+														</table>
+														<div style="overflow:scroll; overflow-x: hidden; overflow-y: auto;  width: 100%; height: 100px; border:1px solid #C1DAD7 !important;"> 
+															 <table class="gral">
+																  <tbody style="background-color: #FFFFFF;" valign="top" class="facturas_revision">
+																		
+																  </tbody>
+															 </table>
+														</div>
+												   </td>
+											 </tr>   
+
+                                        </table>
+                                    </div>
+									
+                                </div>
+                            </div>
+
+
+                            <div class="fixed column" id="botones" style="width:870px; background:; text-align:right; padding-left:; position:absolute;margin-top:4px;">
+								<table border="0">
+									<tr><td colspan="4" height="7"></td></tr>
+									<tr>
+										<td width="870px"></td>
+										<td>
+											<input type="image" src="../../img/modalbox/btn1.png" id="submit" style="width:77px; height:24px;"/>
+										</td>
+										<td width="30"></td>
+										<td><div id="boton_cancelar" style="width:77px; height:24px; float:right; cursor:pointer; background-image:url('../../img/modalbox/btn2.png'); background-repeat:no-repeat;"></div></td>
+									</tr>
+								</table>
+                                
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+        </form>
+        
+        
+        
+        
+        #include("${layoutfooter}")
+        
+        
+    </body>
+</html>	

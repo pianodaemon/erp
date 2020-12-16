@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>${title}</title>
+        
+        #include("${layoutheader}")
+		
+        <!--  css for this catalogo -->
+        <!--<link rel="stylesheet" href="../../css/modalbox/repinvexis/formaRepinvexis.css" type="text/css" />-->
+
+        <!--  js for this catalogo -->
+
+        <script type="text/javascript" src="../../js/components/jquery-form/jquery-form.js"></script>
+        <script type="text/javascript" src="../../js/implements/repinvkits/index.js" ></script>
+        <script type="text/javascript" src="../../js/components/formatearnumeros/agrega_comas.js"></script>
+        #include("${layoutmenu}")
+        
+        
+        <input type="hidden" name="contextpath" value="$url">
+        <input type="hidden" name="user" value="$username">
+        <input type="hidden" name="iu" value="$iu">
+        <input type="hidden" name="emp" value="$empresa">
+        <input type="hidden" name="suc" value="$sucursal">
+        
+        <!--  otra parte -->
+        <table class="acciones">
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ></td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td >
+                    <div class="repkits" >
+                        <table id="filtros" border="0" style="background-color:#ffffff;" >
+                            <tr>
+                                <td colspan="11">&nbsp;&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td >&nbsp;</td>
+                                <td width="40">codigo:</td>
+                                <td width="100"><INPUT TYPE="text" name="codigo" style="width:100px;"></td>
+                                <td width="20">&nbsp;</td>
+                                <td width="50">Descripcion</td>
+                                <td width="100"><INPUT TYPE="text" name="descripcion" style="width:100px;"></td>
+                                <td width="20" >&nbsp;</td>
+                                <td width="80"><INPUT TYPE="button"  value="Buscar"></td>
+                                <td ></td>
+                                <td width="70"><INPUT TYPE="button"  value="Generar_PDF"></td>
+                                <td >&nbsp;&nbsp;</td>
+                                
+                            </tr>
+                            <tr>
+                                <td colspan="11">&nbsp;&nbsp;</td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;</td>
+                <td ><div id="kits_que_se_pueden_formar"> </div></td>
+            </tr>
+        </table>
+	
+        <table>
+            <tr>
+                <td >&nbsp;&nbsp;</td>
+                <td>
+                    
+                </td>
+            </tr>
+            
+        </table>
+		
+        #include("${layoutfooter}")
+        
+        
+    </body>
+</html>	
+
+
