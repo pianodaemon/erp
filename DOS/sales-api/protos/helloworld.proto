@@ -25,6 +25,7 @@ service Greeter {
   // Sends a greeting
   rpc SayHello (HelloRequest) returns (HelloReply) {}
   rpc EditCot (CotRequest) returns (CotResponse) {}
+  rpc ValCustOrder (ValCustOrderRequest) returns (ValCustOrderResponse) {}
 }
 
 // The request message containing the user's name.
@@ -77,5 +78,20 @@ message CotRequest {
 
 // The response message containing the quotation's create/edit operation results
 message CotResponse {
+  string valorRetorno = 1;
+}
+
+// The request message containing params for validation of customer order
+message ValCustOrderRequest {
+  int32 usrId = 1;
+  string currVal = 2;
+  string dateLim = 3;
+  int32 payMet = 4;
+  string account = 5;
+  repeated string matrix = 6;
+}
+
+// The response message containing results of customer order's validation
+message ValCustOrderResponse {
   string valorRetorno = 1;
 }

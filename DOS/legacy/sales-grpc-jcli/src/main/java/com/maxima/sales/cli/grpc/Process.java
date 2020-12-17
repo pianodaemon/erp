@@ -72,7 +72,7 @@ public class Process {
         .addExtraData(
           CotRequest.GridRenglonCot.newBuilder()
             .setRemovido(1)
-            .setIdDetalle(1)
+            .setIdDetalle(0)
             .setIdProducto(45)
             .setIdPresentacion(9)
             .setCantidad(15.11)
@@ -89,8 +89,8 @@ public class Process {
             .setSalvarRegistro("salvado el record"))
         .addExtraData(
           CotRequest.GridRenglonCot.newBuilder()
-            .setRemovido(0)
-            .setIdDetalle(2)
+            .setRemovido(1)
+            .setIdDetalle(0)
             .setIdProducto(47)
             .setIdPresentacion(11)
             .setCantidad(62.5)
@@ -115,6 +115,26 @@ public class Process {
       return;
     }
     logger.info("(java client) Cot Response valorRetorno: " + cotResponse.getValorRetorno());
+
+    ValCustOrderRequest valCustOrderRequest =
+      ValCustOrderRequest.newBuilder()
+        .setUsrId(2)
+        .setCurrVal("20.1411")
+        .setDateLim("2020-12-15")
+        .setPayMet(2)
+        .setAccount("8147")
+        .addMatrix("1___1___25___2___15.44___notr1___0___3")
+        .addMatrix("1___2___5___2___1.00___notr2___0___2")
+        .build();
+    ValCustOrderResponse valCustOrderResponse;
+
+    try {
+      valCustOrderResponse = blockingStub.valCustOrder(valCustOrderRequest);
+    } catch (StatusRuntimeException e) {
+      logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
+      return;
+    }
+    logger.info("(java client) ValCustOrder Response valorRetorno: " + valCustOrderResponse.getValorRetorno());
   }
 
   /**

@@ -1,6 +1,5 @@
 from dal.helper import run_stored_procedure
 
-
 def edit_cot(usuario_id, identificador, select_tipo_cotizacion, id_cliente_o_prospecto,
     check_descripcion_larga, observaciones, tipo_cambio, moneda_id, fecha, agente_id,
     vigencia, incluye_iva, tc_usd, extra_data):
