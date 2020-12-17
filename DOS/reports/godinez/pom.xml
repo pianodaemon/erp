@@ -8,6 +8,6 @@
   <name>godinez</name>
     <modules>
        <module>../builders</module>
-       <module>../service</module>
+       <module>../cli</module>
     </modules>
 </project>
