@@ -528,7 +528,7 @@ BEGIN
 
     IF valor_retorno = '' THEN
         valor_retorno := 'true';
-	RETURN valor_retorno;
+        RETURN valor_retorno;
     ELSE
         RETURN valor_retorno;
     END IF;

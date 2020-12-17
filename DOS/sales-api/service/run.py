@@ -6,6 +6,7 @@ import helloworld_pb2
 import helloworld_pb2_grpc
 
 from dal import cotizacion
+from dal import pedido_cliente
 
 class Greeter(helloworld_pb2_grpc.GreeterServicer):
 
@@ -32,6 +33,21 @@ class Greeter(helloworld_pb2_grpc.GreeterServicer):
             request.extraData
         )
         return helloworld_pb2.CotResponse(
+            valorRetorno='(python server) valorRetorno: {}'.format(valor_retorno)
+        )
+
+    def ValCustOrder(self, request, context):
+        print(request)
+
+        valor_retorno = pedido_cliente.val_cust_order(
+            request.usrId,
+            request.currVal,
+            request.dateLim,
+            request.payMet,
+            request.account,
+            request.matrix
+        )
+        return helloworld_pb2.ValCustOrderResponse(
             valorRetorno='(python server) valorRetorno: {}'.format(valor_retorno)
         )
 
