@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CFDIENGINE_HOME=$HOME/cfdiengine
+CFDIENGINE_HOME=$ERP_ROOT/cfdiengine
 STARTUP_SCRIPT='run.py -d'
 START_OUT=$CFDIENGINE_HOME/resources/logs/start.out
 
