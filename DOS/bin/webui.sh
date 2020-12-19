@@ -7,6 +7,8 @@
 export JAVA_HOME="$ERP_ROOT/jdk-legacy"
 export PATH="$JAVA_HOME/bin:$PATH"
 
+export MS_DBMS_URL="jdbc:postgresql://${MS_DBMS_HOST}:${MS_DBMS_PORT}/${MS_DBMS_DB}"
+
 asadmin="$ERP_ROOT/glassfish3/bin/asadmin"
 
 start() {
