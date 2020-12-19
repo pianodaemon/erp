@@ -6,7 +6,6 @@ import sys
 import traceback
 import argparse
 import logging
-from os.path import expanduser
 from docmaker.pipeline import DocPipeLine
 from custom.profile import ProfileReader
 
@@ -58,7 +57,7 @@ def dmcli(args, logger):
     logging.basicConfig(level=logging.DEBUG if args.dm_debug else logging.INFO)
     logger.debug(args)
 
-    DEFAULT_RESDIR = '{}/resources'.format(expanduser("~"))
+    DEFAULT_RESDIR = '{}/resources'.format(os.environ['ERP_ROOT'])
     DEFAULT_PROFILE = 'default.json'
 
     resdir = args.resdir if args.resdir else DEFAULT_RESDIR

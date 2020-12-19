@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from os.path import expanduser
+import os
 from logging.handlers import TimedRotatingFileHandler
 import multiprocessing
 import traceback
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     args = parse_cmdline()
 
-    RESOURCES_DIR = '{}/resources'.format(expanduser("~"))
+    RESOURCES_DIR = '{}/resources'.format(os.environ['ERP_ROOT'])
     PROFILES_DIR = '{}/profiles'.format(RESOURCES_DIR)
     LOGS_DIR = '{}/logs'.format(RESOURCES_DIR)
     LOG_NAME = 'blcore'
