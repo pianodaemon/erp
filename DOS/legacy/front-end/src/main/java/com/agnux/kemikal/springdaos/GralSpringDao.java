@@ -25,13 +25,13 @@ public class GralSpringDao implements GralInterfaceDao{
     
     @Override
     public String getCfdEmitidosDir() {
-        String cfdemitidosdir = System.getenv("HOME") + "/" + "resources" + "/"+"cfd" + "/"+"emitidos" + "/";
+        String cfdemitidosdir = System.getenv("ERP_ROOT") + "/" + "resources" + "/"+"cfd" + "/"+"emitidos" + "/";
         return cfdemitidosdir;
     }
     
     @Override
     public String getCfdiSolicitudesDir() {
-        String cfdemitidosdir = System.getenv("HOME") + "/" + "resources" + "/"+"cfdi" + "/"+"solicitudes" + "/";
+        String cfdemitidosdir = System.getenv("ERP_ROOT") + "/" + "resources" + "/"+"cfdi" + "/"+"solicitudes" + "/";
         return cfdemitidosdir;
     }
     
@@ -43,37 +43,37 @@ public class GralSpringDao implements GralInterfaceDao{
     
     @Override
     public String getProdImgDir() {
-        String xsldir = System.getenv("HOME") + "/resources/productos/img/";
+        String xsldir = System.getenv("ERP_ROOT") + "/resources/productos/img/";
         return xsldir;
     }
     
     @Override
     public String getProdPdfDir() {
-        String xsldir = System.getenv("HOME") + "/resources/productos/pdf/";
+        String xsldir = System.getenv("ERP_ROOT") + "/resources/productos/pdf/";
         return xsldir;
     }
     
     @Override
     public String getCfdiTimbreEmitidosDir() {
-        String cfditimbreemitidosdir = System.getenv("HOME") + "/" + "resources" + "/"+"cfdi" + "/"+"timbre" + "/" + "emitidos" + "/";
+        String cfditimbreemitidosdir = System.getenv("ERP_ROOT") + "/" + "resources" + "/"+"cfdi" + "/"+"timbre" + "/" + "emitidos" + "/";
         return cfditimbreemitidosdir;
     }
     
     @Override
     public String getCfdiTimbreCanceladosDir() {
-        String cfditimbreemitidosdir = System.getenv("HOME") + "/" + "resources" + "/"+"cfdi" + "/"+"timbre" + "/" + "cancelados" + "/";
+        String cfditimbreemitidosdir = System.getenv("ERP_ROOT") + "/" + "resources" + "/"+"cfdi" + "/"+"timbre" + "/" + "cancelados" + "/";
         return cfditimbreemitidosdir;
     }
     
     @Override
     public String getCfdiTimbreJarWsDir() {
-        String cfditimbrejarwsdir = System.getenv("HOME") + "/" + "resources" + "/"+"cfdi" + "/"+"timbre" + "/" + "jarwscli" + "/";
+        String cfditimbrejarwsdir = System.getenv("ERP_ROOT") + "/" + "resources" + "/"+"cfdi" + "/"+"timbre" + "/" + "jarwscli" + "/";
         return cfditimbrejarwsdir;
     }
     
     @Override
     public String getImagesDir() {
-        String imagesdir = System.getenv("HOME") + "/" + "resources" + "/"+"images" + "/";
+        String imagesdir = System.getenv("ERP_ROOT") + "/" + "resources" + "/"+"images" + "/";
         return imagesdir;
     }
     
@@ -91,31 +91,31 @@ public class GralSpringDao implements GralInterfaceDao{
     
     @Override
     public String getSslDir() {
-        String ssldir = System.getenv("HOME") + "/" + "resources" + "/"+"ssl" + "/";
+        String ssldir = System.getenv("ERP_ROOT") + "/" + "resources" + "/"+"ssl" + "/";
         return ssldir;
     }
     
     @Override
     public String getXslDir() {
-        String xsldir = System.getenv("HOME") + "/" + "resources" +"/"+"schemas" + "/"+"xsl" + "/";
+        String xsldir = System.getenv("ERP_ROOT") + "/" + "resources" +"/"+"schemas" + "/"+"xsl" + "/";
         return xsldir;
     }
     
     @Override
     public String getXsdDir() {
-        String xsddir = System.getenv("HOME") + "/" + "resources" +"/"+"schemas" + "/"+"xsd" + "/";
+        String xsddir = System.getenv("ERP_ROOT") + "/" + "resources" +"/"+"schemas" + "/"+"xsd" + "/";
         return xsddir;
     }
     
     @Override
     public String getTmpDir() {
-        String xsldir = System.getenv("HOME") + "/" + "resources" + "/"+"tmp" + "/";
+        String xsldir = System.getenv("ERP_ROOT") + "/" + "resources" + "/"+"tmp" + "/";
         return xsldir;
     }
     
     @Override
     public String getZebraDir() {
-        String zebradir = System.getenv("HOME") + "/" + "resources" + "/"+"zebra";
+        String zebradir = System.getenv("ERP_ROOT") + "/" + "resources" + "/"+"zebra";
         return zebradir;
     }
     
