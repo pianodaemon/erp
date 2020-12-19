@@ -4,9 +4,10 @@
 #               servidor de aplicaciones Java GlassFish v3.
 #
 
+export JAVA_HOME="$ERP_ROOT/jdk-legacy"
+export PATH="$JAVA_HOME/bin:$PATH"
 
-prog="GlassFish v3"
-asadmin="$HOME/glassfish3/bin/asadmin"
+asadmin="$ERP_ROOT/glassfish3/bin/asadmin"
 
 start() {
         $asadmin start-domain
