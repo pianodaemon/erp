@@ -1,4 +1,6 @@
 #!/bin/bash -eu
 
-docker-compose build
-docker-compose up -d
+DCF="dev-compose.yaml"
+
+docker-compose -f ${DCF} build
+docker-compose -f ${DCF} up -d
