@@ -7,7 +7,7 @@ Some of the elements of this project may be deemed as obsoletes but there is cur
 | DOS/cfdiengine | microservice in charge of issuing cfdi documents |
 | DOS/sales-api | microservice that administers the sale flow |
 | DOS/reports/builders | reports formats library |
-| DOS/reports/service | restful api to render reports from operation |
+| DOS/reports/cli | command line to render reports from operation |
 | DOS/reports/godinez | POM project, usable as a parent for other modules |
 | DOS/legacy/sales-grpc-jcli | java client part of the sales api |
 | DOS/legacy/bbgum-jcli | java client part of bbgum tcp protocol |
