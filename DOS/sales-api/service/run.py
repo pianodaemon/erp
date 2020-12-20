@@ -2,16 +2,13 @@ import sys
 import grpc
 from concurrent import futures
 
-import helloworld_pb2
-import helloworld_pb2_grpc
+import sales_pb2
+import sales_pb2_grpc
 
 from dal import cotizacion
 from dal import pedido_cliente
 
-class Greeter(helloworld_pb2_grpc.GreeterServicer):
-
-    def SayHello(self, request, context):
-        return helloworld_pb2.HelloReply(message='Hello, %s!' % request.name)
+class Sales(sales_pb2_grpc.SalesServicer):
     
     def EditCot(self, request, context):
         print(request)
@@ -32,7 +29,7 @@ class Greeter(helloworld_pb2_grpc.GreeterServicer):
             request.tcUSD,
             request.extraData
         )
-        return helloworld_pb2.CotResponse(
+        return sales_pb2.CotResponse(
             valorRetorno='(python server) valorRetorno: {}'.format(valor_retorno)
         )
 
@@ -47,14 +44,14 @@ class Greeter(helloworld_pb2_grpc.GreeterServicer):
             request.account,
             request.matrix
         )
-        return helloworld_pb2.ValCustOrderResponse(
+        return sales_pb2.ValCustOrderResponse(
             valorRetorno='(python server) valorRetorno: {}'.format(valor_retorno)
         )
 
 
 def _engage():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    helloworld_pb2_grpc.add_GreeterServicer_to_server(Greeter(), server)
+    sales_pb2_grpc.add_SalesServicer_to_server(Sales(), server)
     server.add_insecure_port('[::]:10090')
     server.start()
     server.wait_for_termination()

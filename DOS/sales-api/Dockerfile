@@ -28,7 +28,7 @@ RUN python3 -m grpc_tools.protoc \
     -I../protos \
     --python_out=. \
     --grpc_python_out=. \
-    ../protos/helloworld.proto
+    ../protos/sales.proto
 
 RUN chmod 755 /app/docker-entrypoint.sh
 

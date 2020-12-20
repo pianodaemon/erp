@@ -15,27 +15,14 @@ syntax = "proto3";
 
 option java_multiple_files = true;
 option java_package = "com.maxima.sales.cli.grpc";
-option java_outer_classname = "HelloWorldProto";
-option objc_class_prefix = "HLW";
+option java_outer_classname = "SalesProto";
 
 package grpc;
 
-// The greeting service definition.
-service Greeter {
-  // Sends a greeting
-  rpc SayHello (HelloRequest) returns (HelloReply) {}
+// The sales service definition.
+service Sales {
   rpc EditCot (CotRequest) returns (CotResponse) {}
-  rpc ValCustOrder (ValCustOrderRequest) returns (ValCustOrderResponse) {}
-}
-
-// The request message containing the user's name.
-message HelloRequest {
-  string name = 1;
-}
-
-// The response message containing the greetings
-message HelloReply {
-  string message = 1;
+  rpc ValCustOrder (CustOrderValRequest) returns (CustOrderValResponse) {}
 }
 
 // The request message containing the quotation parameters
@@ -82,7 +69,7 @@ message CotResponse {
 }
 
 // The request message containing params for validation of customer order
-message ValCustOrderRequest {
+message CustOrderValRequest {
   int32 usrId = 1;
   string currVal = 2;
   string dateLim = 3;
@@ -92,6 +79,6 @@ message ValCustOrderRequest {
 }
 
 // The response message containing results of customer order's validation
-message ValCustOrderResponse {
+message CustOrderValResponse {
   string valorRetorno = 1;
 }
