@@ -1,3 +1,7 @@
+# User and group identifiers expected
+EXPUID=$(shell id -u)
+EXPGID=$(shell id -g)
+
 BUNDLES_DIR	= $(BINDIR)/bundles
 
 RM         		= rm

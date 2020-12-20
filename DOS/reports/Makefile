@@ -5,9 +5,6 @@ REPORTS_OUT	= $(BINDIR)/reports
 # The name coined to address the builder image
 BIMG=reports-builder
 
-# User and group identifiers expected
-EXPUID=$(shell id -u)
-EXPGID=$(shell id -g)
 
 all: build copy
 

@@ -5,9 +5,6 @@ LEGACY_OUT	= $(BINDIR)/legacy
 # The name coined to address the builder image
 BIMG=legacy-builder
 
-# User and group identifiers expected
-EXPUID=$(shell id -u)
-EXPGID=$(shell id -g)
 
 all: build copy
 
