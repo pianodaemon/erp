@@ -1,7 +1,7 @@
-STAGE=${STAGE:-"$HOME"}
+WORKSPACE=${WORKSPACE:-"$HOME"}
 
-export BINDIR=$STAGE/build
-export RELDIR=$STAGE/release/$(date +%s)
+export BINDIR=$WORKSPACE/build
+export RELDIR=$WORKSPACE/release/$(date +%s)
 
 [ -d $BINDIR ] || mkdir -p $BINDIR
 [ -d $RELDIR ] || mkdir -p $RELDIR
