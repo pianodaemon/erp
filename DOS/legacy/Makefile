@@ -1,3 +1,7 @@
+include $(OPERATIONAL)/../$(MACROS_INCLUDE)
+
+LEGACY_OUT	= $(BINDIR)/legacy
+
 # The name coined to address the builder image
 BIMG=legacy-builder
 
@@ -5,8 +9,16 @@ BIMG=legacy-builder
 EXPUID=$(shell id -u)
 EXPGID=$(shell id -g)
 
-all: image clean
+all: build copy clean
+
+build: image
 	docker run -it --rm -v$(shell pwd):/yield --user ${EXPUID}:${EXPGID} ${BIMG} /maven/apache-maven-3.6.3/bin/mvn package -DskipTests
+
+copy:
+	@if [ -d $(LEGACY_OUT) ]; then \
+		(mkdir -p $(LEGACY_OUT) && \
+		cp front-end/target/agnux.war $(LEGACY_OUT)); \
+	fi
 
 clean:
 	docker run -it --rm -v$(shell pwd):/yield --user ${EXPUID}:${EXPGID} ${BIMG} /maven/apache-maven-3.6.3/bin/mvn clean

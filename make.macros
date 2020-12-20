@@ -1,0 +1,5 @@
+BUNDLES_DIR	= $(BINDIR)/bundles
+
+RM         		= rm
+RM_FLAGS   		= -f
+BLOWUP_DIR		= "$RM $(RM_FLAGS)"
