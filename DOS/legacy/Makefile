@@ -9,19 +9,16 @@ BIMG=legacy-builder
 EXPUID=$(shell id -u)
 EXPGID=$(shell id -g)
 
-all: build copy clean
+all: build copy
 
 build: image
 	docker run -it --rm -v$(shell pwd):/yield --user ${EXPUID}:${EXPGID} ${BIMG} /maven/apache-maven-3.6.3/bin/mvn package -DskipTests
 
 copy:
-	@if [ -d $(LEGACY_OUT) ]; then \
-		(mkdir -p $(LEGACY_OUT) && \
-		cp front-end/target/agnux.war $(LEGACY_OUT)); \
-	fi
-
+	@[ -d $(LEGACY_OUT) ] || (mkdir -p $(LEGACY_OUT))
+	@cp -f front-end/target/agnux.war $(LEGACY_OUT)
 clean:
-	docker run -it --rm -v$(shell pwd):/yield --user ${EXPUID}:${EXPGID} ${BIMG} /maven/apache-maven-3.6.3/bin/mvn clean
+	docker run --rm -v$(shell pwd):/yield --user ${EXPUID}:${EXPGID} ${BIMG} /maven/apache-maven-3.6.3/bin/mvn clean
 
 image:
 	docker build . -t ${BIMG}
