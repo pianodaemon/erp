@@ -25,34 +25,22 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A simple client that requests a greeting from the {@link HelloWorldServer}.
+ * A simple client.
  */
-public class Process {
-  private static final Logger logger = Logger.getLogger(Process.class.getName());
+public class SalesClient {
+  private static final Logger logger = Logger.getLogger(SalesClient.class.getName());
 
-  private final GreeterGrpc.GreeterBlockingStub blockingStub;
+  private final SalesGrpc.SalesBlockingStub blockingStub;
 
-  /** Construct client for accessing HelloWorld server using the existing channel. */
-  public Process(Channel channel) {
+  public SalesClient(Channel channel) {
     // 'channel' here is a Channel, not a ManagedChannel, so it is not this code's responsibility to
     // shut it down.
 
     // Passing Channels to code makes code easier to test and makes it easier to reuse Channels.
-    blockingStub = GreeterGrpc.newBlockingStub(channel);
+    blockingStub = SalesGrpc.newBlockingStub(channel);
   }
 
-  /** Say hello to server. */
-  public void greet(String name) {
-    logger.info("Will try to greet " + name + " ...");
-    HelloRequest request = HelloRequest.newBuilder().setName(name).build();
-    HelloReply response;
-    try {
-      response = blockingStub.sayHello(request);
-    } catch (StatusRuntimeException e) {
-      logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
-      return;
-    }
-    logger.info("Greeting: " + response.getMessage());
+  public void runSalesServices() {
 
     CotRequest cotRequest =
       CotRequest.newBuilder()
@@ -116,8 +104,8 @@ public class Process {
     }
     logger.info("(java client) Cot Response valorRetorno: " + cotResponse.getValorRetorno());
 
-    ValCustOrderRequest valCustOrderRequest =
-      ValCustOrderRequest.newBuilder()
+    CustOrderValRequest custOrderValRequest =
+      CustOrderValRequest.newBuilder()
         .setUsrId(2)
         .setCurrVal("20.1411")
         .setDateLim("2020-12-15")
@@ -126,38 +114,33 @@ public class Process {
         .addMatrix("1___1___25___2___15.44___notr1___0___3")
         .addMatrix("1___2___5___2___1.00___notr2___0___2")
         .build();
-    ValCustOrderResponse valCustOrderResponse;
+    CustOrderValResponse custOrderValResponse;
 
     try {
-      valCustOrderResponse = blockingStub.valCustOrder(valCustOrderRequest);
+      custOrderValResponse = blockingStub.valCustOrder(custOrderValRequest);
     } catch (StatusRuntimeException e) {
       logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
       return;
     }
-    logger.info("(java client) ValCustOrder Response valorRetorno: " + valCustOrderResponse.getValorRetorno());
+    logger.info("(java client) CustOrderVal Response valorRetorno: " + custOrderValResponse.getValorRetorno());
   }
 
   /**
-   * Greet server. If provided, the first element of {@code args} is the name to use in the
+   * Sales server. If provided, the first element of {@code args} is the name to use in the
    * greeting. The second argument is the target server.
    */
   public static void main(String[] args) throws Exception {
-    String user = "world";
     // Access a service running on the local machine
     String target = "localhost:10090";
-    // Allow passing in the user and target strings as command line arguments
+    // Allow passing in the target string as command line argument
     if (args.length > 0) {
       if ("--help".equals(args[0])) {
-        System.err.println("Usage: [name [target]]");
+        System.err.println("Usage: [target]");
         System.err.println("");
-        System.err.println("  name    The name you wish to be greeted by. Defaults to " + user);
         System.err.println("  target  The server to connect to. Defaults to " + target);
         System.exit(1);
       }
-      user = args[0];
-    }
-    if (args.length > 1) {
-      target = args[1];
+      target = args[0];
     }
 
     // Create a communication channel to the server, known as a Channel. Channels are thread-safe
@@ -169,8 +152,8 @@ public class Process {
         .usePlaintext()
         .build();
     try {
-      Process client = new Process(channel);
-      client.greet(user);
+      SalesClient client = new SalesClient(channel);
+      client.runSalesServices();
     } finally {
       // ManagedChannels use resources like threads and TCP connections. To prevent leaking these
       // resources the channel should be shut down when it will no longer be used. If it may be used
