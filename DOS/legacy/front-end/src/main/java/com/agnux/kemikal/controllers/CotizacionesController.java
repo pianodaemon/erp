@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -33,6 +34,12 @@ import org.springframework.ui.Model;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+import com.maxima.sales.cli.grpc.CotRequest;
+import com.maxima.sales.cli.grpc.CotResponse;
+import com.maxima.sales.cli.grpc.GreeterGrpc;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 
 
 @Controller
@@ -555,104 +562,204 @@ public class CotizacionesController {
     //edicion y nuevo
     @RequestMapping(method = RequestMethod.POST, value="/edit.json")
     public @ResponseBody HashMap<String, String> editJson(
-            @RequestParam(value="id_cotizacion", required=true) Integer identificador,
-            @RequestParam(value="select_tipo_cotizacion", required=true) String select_tipo_cotizacion,
-            @RequestParam(value="id_cliente", required=true) String id_cliente,
-            @RequestParam(value="observaciones", required=true) String observaciones,
-            @RequestParam(value="check_descripcion_larga", required=false) String check_descripcion_larga,
-            @RequestParam(value="check_incluye_iva", required=false) String check_incluye_iva,
-            @RequestParam(value="select_accion", required=true) String select_accion,
-            @RequestParam(value="vigencia", required=true) String vigencia,
-            @RequestParam(value="tc", required=true) String tc,
-            @RequestParam(value="tc_usd", required=true) String tc_usd,
-            @RequestParam(value="moneda", required=true) String moneda_id,
-            @RequestParam(value="fecha", required=true) String fecha,
-            @RequestParam(value="select_agente", required=true) String select_agente,
-            
-            @RequestParam(value="total_tr", required=true) String total_tr,
-            @RequestParam(value="iddetalle", required=true) String[] iddetalle,
-            @RequestParam(value="eliminado", required=true) String[] eliminado,
-            @RequestParam(value="idproducto", required=true) String[] idproducto,
-            @RequestParam(value="select_umedida", required=false) String[] select_umedida,
-            @RequestParam(value="id_presentacion", required=true) String[] id_presentacion,
-            @RequestParam(value="cantidad", required=true) String[] cantidad,
-            @RequestParam(value="precio", required=true) String[] precio,
-            @RequestParam(value="monedagrid", required=true) String[] monedagrid,
-            @RequestParam(value="id_imp_prod", required=true) String[] id_imp_prod,
-            @RequestParam(value="valor_imp", required=true) String[] valor_imp,
-            @RequestParam(value="notr", required=true) String[] notr,
-            @RequestParam(value="select_incoterms", required=false) String[] select_incoterms,
-            @RequestParam(value="statusreg", required=true) String[] statusreg,
-            @RequestParam(value="reqauth", required=true) String[] reqauth,
-            @RequestParam(value="success", required=true) String[] salvar_registro,
-            
-            @ModelAttribute("user") UserSessionData user,
-            Model model
-        ) {
-            HashMap<String, String> jsonretorno = new HashMap<String, String>();
-            HashMap<String, String> succes = new HashMap<String, String>();
-            String arreglo[];
-            arreglo = new String[eliminado.length];
-            Integer id_usuario= user.getUserId();//variable para el id  del usuario
-            Integer app_selected = 12;
-            String command_selected = "new";
-            String actualizo = "0";
-            
-            command_selected=select_accion;
-            
-            for(int i=0; i<eliminado.length; i++) { 
-                select_umedida[i] = StringHelper.verificarSelect(select_umedida[i]);
-                
-                System.out.println("statusreg[i]: "+statusreg[i]);
-                
-                //statreg&&&valuereg&&&ident
-                String partida[] = statusreg[i].split("\\&&&");
-                //partida[0]    Estatus autorizacion
-                //partida[1]    Valor precio autorizado
-                //partida[2]    Usuario que autoriza
-                
-                String stat_reg = (StringHelper.isNullString(String.valueOf(partida[0])).equals("0"))? "false":"true";
-                String precio_autorizado = StringHelper.isNullString(String.valueOf(partida[1]));
-                String id_user_autoriza = (partida[2].trim().equals("0"))?partida[2]:Base64Coder.decodeString(StringHelper.isNullString(String.valueOf(partida[2])));
-                
-                //Imprimir el contenido de cada celda 
-                arreglo[i]= "'"+eliminado[i] +"___" + iddetalle[i] +"___" + idproducto[i] +"___" + id_presentacion[i] +"___" + cantidad[i] +"___" + StringHelper.removerComas(precio[i]) +"___" + monedagrid[i]+"___"+notr[i]+"___"+id_imp_prod[i]+"___"+valor_imp[i]+"___"+select_umedida[i]+"___"+stat_reg+"___"+precio_autorizado+"___"+id_user_autoriza+"___"+reqauth[i]+"___"+salvar_registro[i]+"'";
-                System.out.println("arreglo["+i+"] = "+arreglo[i]);
+        @RequestParam(value="id_cotizacion", required=true) Integer identificador,
+        @RequestParam(value="select_tipo_cotizacion", required=true) String select_tipo_cotizacion,
+        @RequestParam(value="id_cliente", required=true) String id_cliente,
+        @RequestParam(value="observaciones", required=true) String observaciones,
+        @RequestParam(value="check_descripcion_larga", required=false) String check_descripcion_larga,
+        @RequestParam(value="check_incluye_iva", required=false) String check_incluye_iva,
+        @RequestParam(value="select_accion", required=true) String select_accion,
+        @RequestParam(value="vigencia", required=true) String vigencia,
+        @RequestParam(value="tc", required=true) String tc,
+        @RequestParam(value="tc_usd", required=true) String tc_usd,
+        @RequestParam(value="moneda", required=true) String moneda_id,
+        @RequestParam(value="fecha", required=true) String fecha,
+        @RequestParam(value="select_agente", required=true) String select_agente,
+
+        @RequestParam(value="total_tr", required=true) String total_tr,
+        @RequestParam(value="iddetalle", required=true) String[] iddetalle,
+        @RequestParam(value="eliminado", required=true) String[] eliminado,
+        @RequestParam(value="idproducto", required=true) String[] idproducto,
+        @RequestParam(value="select_umedida", required=false) String[] select_umedida,
+        @RequestParam(value="id_presentacion", required=true) String[] id_presentacion,
+        @RequestParam(value="cantidad", required=true) String[] cantidad,
+        @RequestParam(value="precio", required=true) String[] precio,
+        @RequestParam(value="monedagrid", required=true) String[] monedagrid,
+        @RequestParam(value="id_imp_prod", required=true) String[] id_imp_prod,
+        @RequestParam(value="valor_imp", required=true) String[] valor_imp,
+        @RequestParam(value="notr", required=true) String[] notr,
+        @RequestParam(value="select_incoterms", required=false) String[] select_incoterms,
+        @RequestParam(value="statusreg", required=true) String[] statusreg,
+        @RequestParam(value="reqauth", required=true) String[] reqauth,
+        @RequestParam(value="success", required=true) String[] salvar_registro,
+
+        @ModelAttribute("user") UserSessionData user,
+        Model model)
+    {
+        HashMap<String, String> jsonretorno = new HashMap<String, String>();
+        HashMap<String, String> success = new HashMap<String, String>();
+        String arreglo[] = new String[eliminado.length];
+        Integer id_usuario= user.getUserId();
+        Integer app_selected = 12;
+        String command_selected = select_accion;
+
+        check_descripcion_larga = StringHelper.verificarCheckBox(check_descripcion_larga);
+        check_incluye_iva = StringHelper.verificarCheckBox(check_incluye_iva);
+        
+        int cotId = identificador.intValue();
+        if (command_selected.equals("new") && cotId != 0) {
+            cotId = 0;
+        }
+
+        CotRequest.Builder cotRequestBuilder =
+            CotRequest.newBuilder()
+                .setUsuarioId(id_usuario.intValue())
+                .setIdentificador(cotId)
+                .setSelectTipoCotizacion(Integer.parseInt(select_tipo_cotizacion))
+                .setIdClienteOProspecto(Integer.parseInt(id_cliente))
+                .setCheckDescripcionLarga(Boolean.parseBoolean(check_descripcion_larga))
+                .setObservaciones(observaciones.toUpperCase())
+                .setTipoCambio(Double.parseDouble(tc))
+                .setMonedaId(Integer.parseInt(moneda_id))
+                .setFecha(fecha)
+                .setAgenteId(Integer.parseInt(select_agente))
+                .setVigencia(Integer.parseInt(vigencia))
+                .setIncluyeIva(Boolean.parseBoolean(check_incluye_iva))
+                .setTcUSD(Double.parseDouble(tc_usd));
+
+        for(int i=0; i<eliminado.length; i++) { 
+            select_umedida[i] = StringHelper.verificarSelect(select_umedida[i]);
+
+            System.out.println("statusreg[i]: "+statusreg[i]);
+
+            //statreg&&&valuereg&&&ident
+            String partida[] = statusreg[i].split("\\&&&");
+            //partida[0]    Estatus autorizacion
+            //partida[1]    Valor precio autorizado
+            //partida[2]    Usuario que autoriza
+
+            String stat_reg = (StringHelper.isNullString(String.valueOf(partida[0])).equals("0"))? "false":"true";
+            String precio_autorizado = StringHelper.isNullString(String.valueOf(partida[1]));
+            String id_user_autoriza = (partida[2].trim().equals("0"))?partida[2]:Base64Coder.decodeString(StringHelper.isNullString(String.valueOf(partida[2])));
+
+            int detalleId = Integer.parseInt(iddetalle[i]);
+            if (command_selected.equals("new") && detalleId != 0) {
+                detalleId = 0;
             }
             
-            //Serializar el arreglo
-            String extra_data_array = StringUtils.join(arreglo, ",");
+            //Imprimir el contenido de cada celda 
+            arreglo[i] = "'" + eliminado[i] + "___" + 
+                    String.valueOf(detalleId) + "___" + 
+                    idproducto[i] + "___" + 
+                    id_presentacion[i] + "___" + 
+                    cantidad[i] + "___" + 
+                    StringHelper.removerComas(precio[i]) + "___" + 
+                    monedagrid[i] + "___" +
+                    notr[i] + "___" +
+                    id_imp_prod[i] + "___" +
+                    valor_imp[i] + "___" +
+                    select_umedida[i] + "___" +
+                    stat_reg + "___" +
+                    precio_autorizado + "___" +
+                    id_user_autoriza + "___" +
+                    reqauth[i] + "___" +
+                    salvar_registro[i] + "'";
+            System.out.println("arreglo[" + i + "] = " + arreglo[i]);
+
             
-            //System.out.println("select_incoterms: "+select_incoterms);
-            String incoterms="";
-            int primerIncoterm = 0;
-            if(select_incoterms != null){
-                for(int i=0; i<select_incoterms.length; i++) { 
-                    if(primerIncoterm==0){
-                        incoterms = select_incoterms[i];
-                        primerIncoterm++;
-                    }else{
-                        incoterms += ","+select_incoterms[i];
-                        primerIncoterm++;
-                    }
+            cotRequestBuilder.addExtraData(
+                CotRequest.GridRenglonCot.newBuilder()
+                    .setRemovido(Integer.parseInt(eliminado[i]))
+                    .setIdDetalle(detalleId)
+                    .setIdProducto(Integer.parseInt(idproducto[i]))
+                    .setIdPresentacion(Integer.parseInt(id_presentacion[i]))
+                    .setCantidad(Double.parseDouble(cantidad[i]))
+                    .setPrecio(Double.parseDouble(StringHelper.removerComas(precio[i])))
+                    .setMonedaGrId(Integer.parseInt(monedagrid[i]))
+                    .setNotr(notr[i])
+                    .setIdImpProd(Integer.parseInt(id_imp_prod[i]))
+                    .setValorImp(Double.parseDouble(valor_imp[i]))
+                    .setUnidadId(Integer.parseInt(select_umedida[i]))
+                    .setStatusAutorizacion(Boolean.parseBoolean(stat_reg))
+                    .setPrecioAutorizado(Double.parseDouble(precio_autorizado))
+                    .setIdUserAut(Integer.parseInt(id_user_autoriza))
+                    .setRequiereAutorizacion(Boolean.parseBoolean(reqauth[i]))
+                    .setSalvarRegistro(salvar_registro[i]));
+        }
+
+        //Serializar el arreglo
+        String extra_data_array = StringUtils.join(arreglo, ",");
+
+        //System.out.println("select_incoterms: "+select_incoterms);
+        String incoterms="";
+        int primerIncoterm = 0;
+        if(select_incoterms != null){
+            for(int i=0; i<select_incoterms.length; i++) { 
+                if(primerIncoterm==0){
+                    incoterms = select_incoterms[i];
+                    primerIncoterm++;
+                }else{
+                    incoterms += ","+select_incoterms[i];
+                    primerIncoterm++;
                 }
             }
-            
-            check_descripcion_larga = StringHelper.verificarCheckBox(check_descripcion_larga);
-            check_incluye_iva = StringHelper.verificarCheckBox(check_incluye_iva);
-            
-            String data_string = app_selected + "___"+ command_selected + "___"+ id_usuario + "___"+ identificador + "___"+ select_tipo_cotizacion + "___"+ id_cliente + "___"+ check_descripcion_larga + "___"+ observaciones.toUpperCase() + "___"+ tc+"___"+moneda_id+"___"+fecha+"___"+select_agente+"___"+vigencia+"___"+check_incluye_iva+"___"+incoterms+"___"+tc_usd;
-            
-            succes = this.getPocDao().selectFunctionValidateAaplicativo(data_string, app_selected, extra_data_array);
-            
-            log.log(Level.INFO, "despues de validacion {0}", String.valueOf(succes.get("success")));
-            
-            if( String.valueOf(succes.get("success")).equals("true")  ){
-                actualizo = this.getPocDao().selectFunctionForThisApp(data_string, extra_data_array);
+        }
+
+        String data_string = app_selected + "___" +
+                command_selected + "___" +
+                id_usuario + "___" +
+                String.valueOf(cotId) + "___" +
+                select_tipo_cotizacion + "___" +
+                id_cliente + "___" +
+                check_descripcion_larga + "___" +
+                observaciones.toUpperCase() + "___" +
+                tc + "___" +
+                moneda_id + "___" +
+                fecha + "___" +
+                select_agente + "___" +
+                vigencia + "___" +
+                check_incluye_iva + "___" +
+                incoterms + "___" +
+                tc_usd;
+
+        success = this.getPocDao().selectFunctionValidateAaplicativo(data_string, app_selected, extra_data_array);
+
+        log.log(Level.INFO, "despues de validacion {0}", String.valueOf(success.get("success")));
+
+        if( String.valueOf(success.get("success")).equals("true")  ) {
+
+            ManagedChannel channel = ManagedChannelBuilder.forTarget("192.168.100.143:10090")
+            // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
+            // needing certificates.
+                .usePlaintext()
+                .build();
+
+            GreeterGrpc.GreeterBlockingStub blockingStub;
+            blockingStub = GreeterGrpc.newBlockingStub(channel);
+
+            CotRequest cotRequest = cotRequestBuilder.build();
+            CotResponse cotResponse;
+
+            try {
+                cotResponse = blockingStub.editCot(cotRequest);
+                log.info("(java client) Cot Response valorRetorno: " + cotResponse.getValorRetorno());
+            } catch (StatusRuntimeException e) {
+                log.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
             }
-            jsonretorno.put("success",String.valueOf(succes.get("success")));
-            
-            log.log(Level.INFO, "Salida json {0}", String.valueOf(jsonretorno.get("success")));
+
+            try {
+                // ManagedChannels use resources like threads and TCP connections. To prevent leaking these
+                // resources the channel should be shut down when it will no longer be used. If it may be used
+                // again leave it running.
+                channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+            } catch (InterruptedException ex) {
+                log.log(Level.SEVERE, null, ex);
+            }
+        }
+
+        jsonretorno.put("success",String.valueOf(success.get("success")));
+
+        log.log(Level.INFO, "Salida json {0}", String.valueOf(jsonretorno.get("success")));
         return jsonretorno;
     }
     
