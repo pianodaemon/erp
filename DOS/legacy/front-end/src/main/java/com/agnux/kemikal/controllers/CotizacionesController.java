@@ -730,14 +730,16 @@ public class CotizacionesController {
 
         if(Boolean.parseBoolean(success.get("success"))) {
 
-            ManagedChannel channel = ManagedChannelBuilder.forTarget("192.168.100.143:10090")
+            String grpcHost = System.getenv("GRPC_HOST"),
+                   grpcPort = System.getenv("GRPC_PORT");
+            
+            ManagedChannel channel = ManagedChannelBuilder.forTarget(grpcHost + ":" + grpcPort)
             // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
             // needing certificates.
                 .usePlaintext()
                 .build();
 
-            SalesGrpc.SalesBlockingStub blockingStub;
-            blockingStub = SalesGrpc.newBlockingStub(channel);
+            SalesGrpc.SalesBlockingStub blockingStub = SalesGrpc.newBlockingStub(channel);
 
             CotRequest cotRequest = cotRequestBuilder.build();
             CotResponse cotResponse;
@@ -750,16 +752,17 @@ public class CotizacionesController {
                 log.log(Level.SEVERE, "RPC failed: {0}", e.getStatus());
                 jsonretorno.put("success", "false");
                 return jsonretorno;
-            }
-
-            try {
-                // ManagedChannels use resources like threads and TCP connections. To prevent leaking these
-                // resources the channel should be shut down when it will no longer be used. If it may be used
-                // again leave it running.
-                channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
             
-            } catch (InterruptedException ex) {
-                log.log(Level.SEVERE, null, ex);
+            } finally {
+                try {
+                    // ManagedChannels use resources like threads and TCP connections. To prevent leaking these
+                    // resources the channel should be shut down when it will no longer be used. If it may be used
+                    // again leave it running.
+                    channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+
+                } catch (InterruptedException ex) {
+                    log.log(Level.SEVERE, null, ex);
+                }
             }
         }
 
