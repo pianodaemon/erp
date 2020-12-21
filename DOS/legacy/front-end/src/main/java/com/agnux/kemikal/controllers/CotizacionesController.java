@@ -648,22 +648,23 @@ public class CotizacionesController {
             }
             
             //Imprimir el contenido de cada celda 
-            arreglo[i] = "'" + eliminado[i] + "___" + 
-                    String.valueOf(detalleId) + "___" + 
-                    idproducto[i] + "___" + 
-                    id_presentacion[i] + "___" + 
-                    cantidad[i] + "___" + 
-                    StringHelper.removerComas(precio[i]) + "___" + 
-                    monedagrid[i] + "___" +
-                    notr[i] + "___" +
-                    id_imp_prod[i] + "___" +
-                    valor_imp[i] + "___" +
-                    select_umedida[i] + "___" +
-                    stat_reg + "___" +
-                    precio_autorizado + "___" +
-                    id_user_autoriza + "___" +
-                    reqauth[i] + "___" +
-                    salvar_registro[i] + "'";
+            arreglo[i] = "'" +
+                eliminado[i]                            + "___" + 
+                String.valueOf(detalleId)               + "___" + 
+                idproducto[i]                           + "___" + 
+                id_presentacion[i]                      + "___" + 
+                cantidad[i]                             + "___" + 
+                StringHelper.removerComas(precio[i])    + "___" + 
+                monedagrid[i]                           + "___" +
+                notr[i]                                 + "___" +
+                id_imp_prod[i]                          + "___" +
+                valor_imp[i]                            + "___" +
+                select_umedida[i]                       + "___" +
+                stat_reg                                + "___" +
+                precio_autorizado                       + "___" +
+                id_user_autoriza                        + "___" +
+                reqauth[i]                              + "___" +
+                salvar_registro[i]                      + "'";
             System.out.println("arreglo[" + i + "] = " + arreglo[i]);
 
             
@@ -705,28 +706,29 @@ public class CotizacionesController {
             }
         }
 
-        String data_string = app_selected + "___" +
-                command_selected + "___" +
-                id_usuario + "___" +
-                String.valueOf(cotId) + "___" +
-                select_tipo_cotizacion + "___" +
-                id_cliente + "___" +
-                check_descripcion_larga + "___" +
-                observaciones.toUpperCase() + "___" +
-                tc + "___" +
-                moneda_id + "___" +
-                fecha + "___" +
-                select_agente + "___" +
-                vigencia + "___" +
-                check_incluye_iva + "___" +
-                incoterms + "___" +
-                tc_usd;
+        String data_string =
+            app_selected                + "___" +
+            command_selected            + "___" +
+            id_usuario                  + "___" +
+            String.valueOf(cotId)       + "___" +
+            select_tipo_cotizacion      + "___" +
+            id_cliente                  + "___" +
+            check_descripcion_larga     + "___" +
+            observaciones.toUpperCase() + "___" +
+            tc                          + "___" +
+            moneda_id                   + "___" +
+            fecha                       + "___" +
+            select_agente               + "___" +
+            vigencia                    + "___" +
+            check_incluye_iva           + "___" +
+            incoterms                   + "___" +
+            tc_usd;
 
         success = this.getPocDao().selectFunctionValidateAaplicativo(data_string, app_selected, extra_data_array);
 
-        log.log(Level.INFO, "despues de validacion {0}", String.valueOf(success.get("success")));
+        log.log(Level.INFO, "despues de validacion {0}", success.get("success"));
 
-        if( String.valueOf(success.get("success")).equals("true")  ) {
+        if(Boolean.parseBoolean(success.get("success"))) {
 
             ManagedChannel channel = ManagedChannelBuilder.forTarget("192.168.100.143:10090")
             // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
@@ -743,8 +745,11 @@ public class CotizacionesController {
             try {
                 cotResponse = blockingStub.editCot(cotRequest);
                 log.info("(java client) Cot Response valorRetorno: " + cotResponse.getValorRetorno());
+            
             } catch (StatusRuntimeException e) {
-                log.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
+                log.log(Level.SEVERE, "RPC failed: {0}", e.getStatus());
+                jsonretorno.put("success", "false");
+                return jsonretorno;
             }
 
             try {
@@ -752,14 +757,15 @@ public class CotizacionesController {
                 // resources the channel should be shut down when it will no longer be used. If it may be used
                 // again leave it running.
                 channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+            
             } catch (InterruptedException ex) {
                 log.log(Level.SEVERE, null, ex);
             }
         }
 
-        jsonretorno.put("success",String.valueOf(success.get("success")));
-
-        log.log(Level.INFO, "Salida json {0}", String.valueOf(jsonretorno.get("success")));
+        jsonretorno.put("success", success.get("success"));
+        log.log(Level.INFO, "Salida json {0}", jsonretorno.get("success"));
+        
         return jsonretorno;
     }
     
