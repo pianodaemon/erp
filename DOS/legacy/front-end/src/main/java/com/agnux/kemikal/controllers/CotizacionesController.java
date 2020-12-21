@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import com.maxima.sales.cli.grpc.CotRequest;
 import com.maxima.sales.cli.grpc.CotResponse;
-import com.maxima.sales.cli.grpc.GreeterGrpc;
+import com.maxima.sales.cli.grpc.SalesGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -734,8 +734,8 @@ public class CotizacionesController {
                 .usePlaintext()
                 .build();
 
-            GreeterGrpc.GreeterBlockingStub blockingStub;
-            blockingStub = GreeterGrpc.newBlockingStub(channel);
+            SalesGrpc.SalesBlockingStub blockingStub;
+            blockingStub = SalesGrpc.newBlockingStub(channel);
 
             CotRequest cotRequest = cotRequestBuilder.build();
             CotResponse cotResponse;
