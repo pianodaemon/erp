@@ -733,12 +733,17 @@ public class CotizacionesController {
             String grpcHost = System.getenv("GRPC_HOST"),
                    grpcPort = System.getenv("GRPC_PORT");
             
+            if (grpcHost == null || grpcPort == null) {
+                grpcHost = "127.0.0.1";
+                grpcPort = "10090";
+            }
+            
             ManagedChannel channel = ManagedChannelBuilder.forTarget(grpcHost + ":" + grpcPort)
             // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
             // needing certificates.
                 .usePlaintext()
                 .build();
-
+            
             SalesGrpc.SalesBlockingStub blockingStub = SalesGrpc.newBlockingStub(channel);
 
             CotRequest cotRequest = cotRequestBuilder.build();
@@ -760,8 +765,8 @@ public class CotizacionesController {
                     // again leave it running.
                     channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
 
-                } catch (InterruptedException ex) {
-                    log.log(Level.SEVERE, null, ex);
+                } catch (InterruptedException e) {
+                    log.log(Level.SEVERE, "Channel shutdown failed.", e);
                 }
             }
         }
