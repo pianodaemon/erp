@@ -6,8 +6,11 @@ LEGACY_OUT	= $(BINDIR)/legacy
 BIMG=legacy-builder
 
 # Protobuf files for Sales API
-SALES_SRV_PROTO_DIR		= $(OPERATIONAL)/sales-api/protos
+SALES_SRV_PROTO_DIR	= $(OPERATIONAL)/sales-api/protos
 SALES_LEGACY_CLI_DIR	= $(OPERATIONAL)/legacy/sales-grpc-jcli/src/main/proto
+
+# WAR
+UI_LEGACY_PKG_DIR	= $(OPERATIONAL)/legacy/front-end/target
 
 all: build copy
 
@@ -18,7 +21,7 @@ build: image
 
 copy:
 	@[ -d $(LEGACY_OUT) ] || (mkdir -p $(LEGACY_OUT))
-	@cp -f front-end/target/agnux.war $(LEGACY_OUT)
+	@cp -f $(UI_LEGACY_PKG_DIR)/agnux.war $(LEGACY_OUT)
 clean:
 	- ${BLOWUP_FOLDER} $(SALES_LEGACY_CLI_DIR)
 	docker run --rm -v$(shell pwd):/yield --user ${EXPUID}:${EXPGID} ${BIMG} /maven/apache-maven-3.6.3/bin/mvn clean
