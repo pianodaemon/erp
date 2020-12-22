@@ -1,7 +1,8 @@
 #!/bin/sh -e
 
 RDBMS_CONTAINER="rdbms_dos"
+DCF="dev-compose.yaml"
 
-docker-compose run \
+docker-compose  -f ${DCF} run \
 --rm -v $(pwd)/DOS/scripts:/scripts -v $(pwd)/DOS/migrations:/migrations \
 $RDBMS_CONTAINER /scripts/create_schema.sh
