@@ -5,5 +5,5 @@ EXPGID=$(shell id -g)
 BUNDLES_DIR	= $(BINDIR)/bundles
 
 RM         		= rm
-RM_FLAGS   		= -f
-BLOWUP_DIR		= "$RM $(RM_FLAGS)"
+RM_FLAGS   		= -rf
+BLOWUP_FOLDER		= $(RM) $(RM_FLAGS)
