@@ -6,7 +6,7 @@ import sales_pb2
 import sales_pb2_grpc
 
 from dal import cotizacion
-from dal import pedido_cliente
+from dal import pedido_ventas
 
 class Sales(sales_pb2_grpc.SalesServicer):
     
@@ -33,18 +33,52 @@ class Sales(sales_pb2_grpc.SalesServicer):
             valorRetorno='(python server) valorRetorno: {}'.format(valor_retorno)
         )
 
-    def ValCustOrder(self, request, context):
+
+    def EditPedido(self, request, context):
         print(request)
 
-        valor_retorno = pedido_cliente.val_cust_order(
-            request.usrId,
-            request.currVal,
-            request.dateLim,
-            request.payMet,
-            request.account,
-            request.matrix
+        valor_retorno = pedido_ventas.edit_pedido(
+            request.usuarioId,
+            request.agenteId,
+            request.clienteId,
+            request.clienteDfId,
+            request.almacenId,
+            request.monedaId,
+            request.provCrediasId,
+            request.cfdiMetPagoId,
+            request.formaPagoId,
+            request.cfdiUsoId,
+            request.pedidoId,
+            request.tasaRetencionImmex,
+            request.tipoCambio,
+            request.porcentajeDescto,
+            request.desctoAllowed,
+            request.enviarObserFac,
+            request.fleteEnabled,
+            request.enviarRuta,
+            request.observaciones,
+            request.motivoDescto,
+            request.transporte,
+            request.fechaCompromiso,
+            request.lugarEntrega,
+            request.ordenCompra,
+            request.numCuenta,
+            request.folioCot,
+            request.gridDetalle
         )
-        return sales_pb2.ValCustOrderResponse(
+        return sales_pb2.PedidoResponse(
+            valorRetorno='(python server) valorRetorno: {}'.format(valor_retorno)
+        )
+
+
+    def CancelPedido(self, request, context):
+        print(request)
+
+        valor_retorno = pedido_ventas.cancel_pedido(
+            request.pedidoId,
+            request.usuarioId
+        )
+        return sales_pb2.PedidoCancelResponse(
             valorRetorno='(python server) valorRetorno: {}'.format(valor_retorno)
         )
 

@@ -2600,3 +2600,1359 @@ BEGIN
 END;$BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
+
+
+CREATE TYPE grid_renglon_pedido AS (
+    id                  integer,
+    to_keep             integer,
+    inv_prod_id         integer,
+    presentacion_id     integer,
+    cantidad            double precision,
+    precio_unitario     double precision,
+    gral_imp_id         integer,
+    valor_imp           double precision,
+    inv_prod_unidad_id  integer,
+    gral_ieps_id        integer,
+    valor_ieps          double precision,
+    descto              double precision,
+    cot_id              integer,
+    cot_detalle_id      integer,
+    requiere_aut        boolean,
+    autorizado          boolean,
+    precio_aut          double precision,
+    gral_usr_id_aut     integer,
+    gral_imptos_ret_id  integer,
+    tasa_ret            double precision
+);
+
+CREATE FUNCTION public.pedido_edit(
+    _usuario_id           integer,
+    _agente_id            integer,
+    _cliente_id           integer,
+    _cliente_df_id        integer,
+    _almacen_id           integer,
+    _moneda_id            integer,
+    _prov_credias_id      integer,
+    _cfdi_met_pago_id     integer,
+    _forma_pago_id        integer,
+    _cfdi_uso_id          integer,
+    _pedido_id            integer,
+    _tasa_retencion_immex double precision,
+    _tipo_cambio          double precision,
+    _porcentaje_descto    double precision,
+    _descto_allowed       boolean,
+    _enviar_obser_fac     boolean,
+    _flete_enabled        boolean,
+    _enviar_ruta          boolean,
+    _observaciones        text,
+    _motivo_descto        text,
+    _transporte           text,
+    _fecha_compromiso     character varying,
+    _lugar_entrega        character varying,
+    _orden_compra         character varying,
+    _num_cuenta           character varying,
+    _folio_cot            character varying,
+    _grid_detalle         grid_renglon_pedido[]
+) RETURNS character varying
+AS $$
+DECLARE
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    -- >> Catalog of customer order    >>
+    -- >> Version: CDGB                >>
+    -- >> Date: 8/Ene/2021             >>
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+    --estas  variables se utilizan en la mayoria de los catalogos
+    valor_retorno character varying := '0';
+    emp_id integer := 0;
+    suc_id integer := 0;
+    id_tipo_consecutivo integer := 0;
+    ultimo_id integer := 0;
+    ultimo_id_det integer := 0;
+    espacio_tiempo_ejecucion timestamp with time zone := now();
+    ano_actual integer := 0;
+    sql_select character varying := '';
+
+    detalle grid_renglon_pedido;
+    --total de elementos de arreglo
+    no_rows integer := 0;
+    --contador de filas o posiciones del arreglo
+    counter integer := 0;
+
+    --variable para pedidos
+    --parametros de Facturacion
+    facpar record;
+    ultimo_id_proceso integer := 0;
+    id_proceso integer := 0;
+    id_proceso_flujo integer := 0;
+    prefijo_consecutivo character varying := '';
+    nuevo_consecutivo bigint := 0;
+    nuevo_folio character varying := '';
+    incluye_modulo_produccion boolean := FALSE;
+    tipo_prod integer := 0;
+    id_producto integer := 0;
+    total_existencia double precision := 0;
+    cant_reservada_anterior double precision := 0;
+    cant_reservar_nuevo double precision := 0;
+    generar_backorder boolean := FALSE;
+
+    importe_del_descto_partida double precision := 0;
+    importe_partida_con_descto double precision := 0;
+    suma_descuento double precision := 0;
+    suma_subtotal_con_descuento double precision := 0;
+
+    importe_partida double precision := 0;
+    impuesto_partida double precision := 0;
+    monto_subtotal double precision := 0;
+    monto_total double precision := 0;
+    monto_impuesto double precision := 0;
+    total_retencion double precision := 0;
+    importe_ieps_partida double precision := 0;
+    suma_ieps double precision := 0;
+    retener_iva boolean := FALSE;
+    tasa_retencion double precision := 0;
+    retencion_partida double precision := 0;
+    suma_retencion_de_partidas double precision := 0;
+
+    --variables autorizacion de pedidos
+    pedido record;
+    fila record;
+
+    --numero de decimales permitidos para la unidad
+    noDecUnidad integer := 0;
+    --equivalencia de la presentacion en la unidad del producto
+    equivalenciaPres double precision := 0;
+    cantPresAsignado double precision := 0;
+    cantPresReservAnterior double precision := 0;
+    --Variable que indica  si se debe controlar Existencias por Presentacion
+    controlExisPres boolean := FALSE;
+
+    --Id de la unidad de medida del producto
+    idUnidadMedida integer := 0;
+    --Nombre de la unidad de medida del producto
+    nombreUnidadMedida character varying := '0';
+    --Cantidad en la unidad de Venta, esto se utiliza cuando la unidad del producto es diferente a la de venta
+    cantUnidadVenta double precision := 0;
+
+    --Variable que indica si una partida generó requisicion
+    generar_requisicion  boolean := FALSE;
+
+BEGIN
+    SELECT EXTRACT(YEAR FROM espacio_tiempo_ejecucion) INTO ano_actual;
+
+    SELECT gral_suc.empresa_id,
+           gral_usr_suc.gral_suc_id
+    FROM   gral_usr_suc
+    JOIN   gral_suc ON gral_suc.id = gral_usr_suc.gral_suc_id
+    WHERE  gral_usr_suc.gral_usr_id = _usuario_id
+    INTO   emp_id,
+           suc_id;
+
+    --Obtener parametros para la facturacion
+    SELECT *
+    FROM   fac_par
+    WHERE  gral_suc_id = suc_id
+    INTO   facpar;
+
+    -- query para verificar si la Empresa actual incluye Modulo de Produccion y control de Existencias por Presentacion
+    SELECT incluye_produccion,
+           control_exis_pres
+    FROM   gral_emp
+    WHERE  id = emp_id
+    INTO   incluye_modulo_produccion,
+           controlExisPres;
+
+    -------------------------------------------------- NEW pedido -----------------------------------------------------
+    IF _pedido_id = 0 THEN
+
+        --crea registro en tabla erp_proceso y retorna el id del registro creado. El flujo del proceso es 4 = Pedido
+        INSERT INTO erp_proceso(
+            proceso_flujo_id,
+            empresa_id,
+            sucursal_id
+        ) VALUES (
+            4,
+            emp_id,
+            suc_id
+        ) RETURNING id into ultimo_id_proceso;
+
+        --consecutivo de pedidos
+        id_tipo_consecutivo := 7;
+            
+        -- aqui entra para tomar el consecutivo del pedido de la sucursal actual
+        UPDATE gral_cons
+        SET consecutivo = (
+                SELECT sbt.consecutivo + 1
+                FROM gral_cons AS sbt
+                WHERE sbt.id = gral_cons.id
+            )
+        WHERE gral_emp_id       = emp_id
+          AND gral_suc_id       = suc_id
+          AND gral_cons_tipo_id = id_tipo_consecutivo
+        RETURNING prefijo,
+                  consecutivo
+        INTO prefijo_consecutivo,
+             nuevo_consecutivo;
+
+        -- concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio del pedido
+        nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+
+        -- crear registro en la tabla poc_pedidos y retorna el id del registro creado
+        INSERT INTO poc_pedidos(
+            folio,                  -- nuevo_folio,
+            cxc_clie_id,            -- _cliente_id,
+            moneda_id,              -- _moneda_id,
+            observaciones,          -- _observaciones,
+            tipo_cambio,            -- _tipo_cambio,
+            cxc_agen_id,            -- _agente_id,
+            cxp_prov_credias_id,    -- _prov_credias_id,
+            orden_compra,           -- _orden_compra,
+            proceso_id,             -- ultimo_id_proceso,
+            fecha_compromiso,       -- _fecha_compromiso::date,
+            lugar_entrega,          -- _lugar_entrega,
+            transporte,             -- _transporte,
+            tasa_retencion_immex,   -- _tasa_retencion_immex,
+            fac_metodos_pago_id,    -- _forma_pago_id,
+            no_cuenta,              -- _num_cuenta,
+            enviar_ruta,            -- _enviar_ruta,
+            inv_alm_id,             -- _almacen_id::smallint
+            cxc_clie_df_id,         -- _cliente_df_id,
+            enviar_obser_fac,       -- _enviar_obser_fac,
+            flete,                  -- _flete_enabled,
+            subtotal,               -- 0,
+            impuesto,               -- 0,
+            monto_retencion,        -- 0,
+            total,                  -- 0,
+            borrado_logico,         -- FALSE,
+            cancelado,              -- FALSE,
+            momento_creacion,       -- espacio_tiempo_ejecucion,
+            gral_usr_id_creacion,   -- _usuario_id
+            motivo_descto,          -- _motivo_descto
+            porcentaje_descto,      -- _porcentaje_descto
+            folio_cot,              -- _folio_cot
+            cfdi_usos_id,           -- _cfdi_uso_id
+            cfdi_metodo_id          -- _cfdi_met_pago_id            
+        ) VALUES (
+            nuevo_folio, 
+            _cliente_id, 
+            _moneda_id, 
+            _observaciones, 
+            _tipo_cambio, 
+            _agente_id, 
+            _prov_credias_id, 
+            _orden_compra, 
+            ultimo_id_proceso, 
+            _fecha_compromiso::date, 
+            _lugar_entrega, 
+            _transporte, 
+            _tasa_retencion_immex, 
+            _forma_pago_id, 
+            _num_cuenta, 
+            _enviar_ruta, 
+            _almacen_id::smallint, 
+            _cliente_df_id, 
+            _enviar_obser_fac, 
+            _flete_enabled, 
+            0, 
+            0, 
+            0, 
+            0, 
+            FALSE, 
+            FALSE, 
+            espacio_tiempo_ejecucion, 
+            _usuario_id, 
+            _motivo_descto, 
+            _porcentaje_descto, 
+            _folio_cot,
+            _cfdi_uso_id,
+            _cfdi_met_pago_id
+        ) RETURNING id INTO ultimo_id;
+            
+        --obtiene total de elementos del arreglo
+        no_rows := array_length(_grid_detalle, 1);
+        counter := 1;
+        FOR counter IN 1 .. no_rows LOOP
+            generar_requisicion := FALSE;
+            retencion_partida   := 0;
+            
+            detalle := _grid_detalle[counter];
+
+            -- 1: se conserva, 0: se elimina
+            IF detalle.to_keep <> 0 THEN
+                
+                cantPresAsignado := 0;
+                equivalenciaPres := 0;
+                noDecUnidad := 0;
+                --Id de la unidad de medida del producto
+                idUnidadMedida := 0;
+                --Nombre de la unidad de medida del producto
+                nombreUnidadMedida := '';
+                --Cantidad en la unidad de Venta, esto se utiliza cuando la unidad del producto es diferente a la de venta
+                cantUnidadVenta := 0;
+                
+                --Obtener datos del Producto
+                SELECT inv_prod.tipo_de_producto_id AS tipo_producto,
+                       inv_prod.unidad_id,
+                       inv_prod_unidades.titulo,
+                       (CASE
+                           WHEN inv_prod_unidades.id IS NULL THEN 0
+                           ELSE inv_prod_unidades.decimales
+                        END) AS no_dec
+                FROM inv_prod
+                LEFT JOIN inv_prod_unidades ON inv_prod_unidades.id = inv_prod.unidad_id
+                WHERE inv_prod.id = detalle.inv_prod_id 
+                INTO  tipo_prod,
+                      idUnidadMedida,
+                      nombreUnidadMedida,
+                      noDecUnidad;
+                
+                IF noDecUnidad IS NULL THEN noDecUnidad := 0; END IF;
+                
+                --Redondear la cantidad de la Partida
+                detalle.cantidad := round(detalle.cantidad::numeric, noDecUnidad)::double precision;
+                cantUnidadVenta  := round(cantUnidadVenta::numeric, noDecUnidad)::double precision; 
+                
+                --Si el tipo de producto es diferente de 4, hay que RESERVAR existencias
+                --tipo = 4 Servicios
+                --para el tipo servicios no se debe reservar existencias
+                IF tipo_prod<>4 THEN 
+                
+                    IF incluye_modulo_produccion = FALSE THEN 
+                        --Aqui entra si la Empresa NO INCLUYE Modulo de Produccion
+                        
+                        --reservar toda cantidad la cantidad del pedido
+                        cant_reservar_nuevo := detalle.cantidad;
+                        generar_backorder := FALSE;
+                    ELSE
+                        --RAISE EXCEPTION '%','tipo_prod=' || tipo_prod;
+                        
+                        --Solo para productos formulados
+                        IF tipo_prod = 1 OR tipo_prod = 2 OR tipo_prod = 8 THEN
+                            --llamada a proc que devuelve la existencia del producto. 
+                            --El tipo de busqueda de existencia es 1 = Busqueda en el almacen de la Sucursal
+                            --el valor FALSE que se le esta pasando es para indicarle que en las existencias no incluya reservados, y que solo me devualva existencias disponibles
+                            SELECT inv_calculo_existencia_producto AS existencia
+                            FROM   inv_calculo_existencia_producto(1, FALSE, detalle.inv_prod_id, _usuario_id, _almacen_id)
+                            INTO   total_existencia; 
+                            
+                            --Redondear la existencia del producto
+                            total_existencia := round(total_existencia::numeric, noDecUnidad)::double precision;
+                            
+                            IF total_existencia < detalle.cantidad THEN
+                                IF total_existencia <=0 THEN 
+                                    --reservar cero
+                                    cant_reservar_nuevo = 0;
+                                ELSE
+                                    --tomar la existencia para reservar
+                                    cant_reservar_nuevo := total_existencia;
+                                END IF;
+                                
+                                generar_backorder := TRUE;
+                            ELSE
+                                --Reservar toda la cantidad del  pedido
+                                cant_reservar_nuevo := detalle.cantidad;
+                                
+                                generar_backorder := FALSE;
+                            END IF;
+                        END IF;
+                    END IF;
+                    
+                    
+                    /*
+                    "1";"Prod. Terminado";FALSE
+                    "2";"Prod. Intermedio";FALSE
+                    "3";"Kit";FALSE
+                    "4";"Servicios";FALSE
+                    "5";"Refacciones";FALSE
+                    "6";"Accesorios";FALSE
+                    "7";"Materia Prima";FALSE
+                    "8";"Prod. en Desarrollo";FALSE
+                    */
+                    IF facpar.permitir_req_com THEN 
+                        --7 = Materia Prima - Hay que generar una requisicion de compra.
+                        IF tipo_prod = 7 THEN 
+                            --llamada a proc que devuelve la existencia del producto. 
+                            --El tipo de busqueda de existencia es 1 = Busqueda en el almacen de la Sucursal
+                            --el valor FALSE que se le esta pasando es para indicarle que en las existencias no incluya reservados, y que solo me devualva existencias disponibles
+                            SELECT inv_calculo_existencia_producto AS existencia
+                            FROM   inv_calculo_existencia_producto(1, FALSE, detalle.inv_prod_id, _usuario_id, _almacen_id)
+                            INTO   total_existencia; 
+                            
+                            --Redondear la existencia del producto
+                            total_existencia := round(total_existencia::numeric, noDecUnidad)::double precision;
+                            
+                            IF total_existencia < detalle.cantidad THEN
+                                IF total_existencia <=0 THEN 
+                                    --reservar cero
+                                    cant_reservar_nuevo = 0;
+                                ELSE
+                                    --tomar la existencia para reservar
+                                    cant_reservar_nuevo := total_existencia;
+                                END IF;
+                                
+                                generar_requisicion := TRUE;
+                            ELSE
+                                --Reservar toda la cantidad del  pedido
+                                cant_reservar_nuevo := detalle.cantidad;
+                                
+                                generar_requisicion := FALSE;
+                            END IF;
+                        END IF;
+                    ELSE
+                        if tipo_prod = 7 then  
+                            --Reservar toda cantidad la cantidad del pedido ya que no incluye
+                            cant_reservar_nuevo := detalle.cantidad;
+                            generar_backorder := FALSE;
+                            generar_requisicion := FALSE;
+                        end if;
+                    END IF;
+                    
+                    --RAISE EXCEPTION '%','permitir_req_com=' || facpar.permitir_req_com || '    tipo_prod=' || tipo_prod || '    cant_reservar_nuevo=' || cant_reservar_nuevo;
+                    
+                    --Redondear la cantidad de a Reservar
+                    cant_reservar_nuevo := round(cant_reservar_nuevo::numeric, noDecUnidad)::double precision;
+                    
+                    --Reservar cantidad para el  pedido
+                    UPDATE inv_exi
+                    SET    reservado = (reservado::double precision + cant_reservar_nuevo::double precision)
+                    WHERE  inv_prod_id = detalle.inv_prod_id
+                      AND  inv_alm_id  = _almacen_id
+                      AND  ano         = ano_actual;
+                    
+                    ------inicia reservar existencias en presentaciones--------------------------
+                    --Verificar si hay que validar existencias de Presentaciones
+                    IF controlExisPres = TRUE THEN 
+                        --Verificar si hay que validar las existencias de presentaciones desde el Pedido.
+                        --TRUE = Validar presentaciones desde el Pedido
+                        --FALSE = No validar presentaciones desde el Pedido
+                        IF facpar.validar_pres_pedido = TRUE THEN 
+                            --buscar la equivalencia de la Presentacion
+                            SELECT cantidad
+                            FROM inv_prod_presentaciones
+                            WHERE id = detalle.presentacion_id 
+                            INTO equivalenciaPres;
+                            
+                            IF equivalenciaPres IS NULL THEN equivalenciaPres := 0; END IF;
+                            
+                            --Convertir a su equivalencia en Presentacion, la cantidad de la partida actual del pedido
+                            cantPresAsignado := cant_reservar_nuevo::double precision / equivalenciaPres::double precision;
+                            
+                            --Redondear la cantidad de Presentaciones Asignado en la partida
+                            cantPresAsignado := round(cantPresAsignado::numeric, noDecUnidad)::double precision; 
+                            
+                            --Reservar existencia en inv_exi_pres
+                            UPDATE inv_exi_pres
+                            SET   reservado = (reservado::double precision + cantPresAsignado::double precision)
+                            WHERE inv_alm_id               = _almacen_id
+                              AND inv_prod_id              = detalle.inv_prod_id
+                              AND inv_prod_presentacion_id = detalle.presentacion_id;
+                            
+                        END IF;
+                    END IF;
+                    ------termina reservar existencias de Presentaciones------------------------------------
+                    
+                ELSE
+                    generar_backorder := FALSE;
+                    generar_requisicion := FALSE;
+                    cant_reservar_nuevo := 0;
+                END IF;--termina IF tipo 4
+
+                --Tasa ieps
+                IF detalle.valor_ieps>0 THEN 
+                    detalle.valor_ieps := detalle.valor_ieps/100;
+                END IF;
+
+                --Tasa retencion
+                IF detalle.tasa_ret>0 THEN 
+                    detalle.tasa_ret := detalle.tasa_ret/100;
+                END IF;
+                
+                --Crea registros para tabla poc_pedidos_detalle
+                INSERT INTO poc_pedidos_detalle(
+                    poc_pedido_id,
+                    inv_prod_id,
+                    presentacion_id,
+                    gral_imp_id,
+                    cantidad,
+                    precio_unitario,
+                    valor_imp,
+                    reservado,
+                    backorder,
+                    inv_prod_unidad_id,
+                    gral_ieps_id,
+                    valor_ieps,
+                    descto,
+                    requisicion,
+                    requiere_aut,
+                    autorizado,
+                    precio_aut,
+                    gral_usr_id_aut,
+                    gral_imptos_ret_id,
+                    tasa_ret
+                ) VALUES (
+                    ultimo_id,
+                    detalle.inv_prod_id,
+                    detalle.presentacion_id,
+                    detalle.gral_imp_id,
+                    cantUnidadVenta::double precision,
+                    detalle.precio_unitario,
+                    detalle.valor_imp,
+                    cant_reservar_nuevo,
+                    generar_backorder,
+                    detalle.inv_prod_unidad_id,
+                    detalle.gral_ieps_id,
+                    detalle.valor_ieps,
+                    detalle.descto,
+                    generar_requisicion,
+                    detalle.requiere_aut,
+                    detalle.autorizado,
+                    detalle.precio_aut,
+                    detalle.gral_usr_id_aut,
+                    detalle.gral_imptos_ret_id,
+                    detalle.tasa_ret
+                ) RETURNING id INTO ultimo_id_det;
+                
+                --Calcula el Importe de la Partida
+                importe_partida := round((cantUnidadVenta::double precision * detalle.precio_unitario)::numeric, 4)::double precision;
+                
+                --Calcula el IEPS de la partida
+                importe_ieps_partida := round((importe_partida::double precision * detalle.valor_ieps)::numeric, 4)::double precision;
+                
+                --Calcula el IVA de la Partida
+                impuesto_partida := (importe_partida::double precision + importe_ieps_partida::double precision) * detalle.valor_imp;
+                
+                --detalle.gral_imptos_ret_id        retencion_id
+                --detalle.tasa_ret    retencion_tasa
+                
+                --Calcular el importe de la retencion de la partida si existe la tasa de retencion
+                if detalle.tasa_ret>0 then 
+                    retencion_partida := round((importe_partida::double precision * detalle.tasa_ret)::numeric, 4)::double precision;
+                end if;
+                
+                
+                --Cargar tabla que relaciona el pedido con la cotizacion
+                IF detalle.cot_detalle_id > 0 THEN 
+                    INSERT INTO poc_ped_cot(
+                        poc_ped_id,
+                        poc_cot_id,
+                        poc_ped_det_id,
+                        poc_cot_det_id
+                    ) VALUES (
+                        ultimo_id,
+                        detalle.cot_id,
+                        ultimo_id_det,
+                        detalle.cot_detalle_id
+                    );
+                END IF;
+                
+                IF _descto_allowed THEN
+                    IF detalle.descto > 0 THEN
+                        --$pu_con_descto.val(parseFloat(parseFloat($campoPrecioU.val()) - (parseFloat($campoPrecioU.val()) * (parseFloat($vdescto.val())/100))).toFixed(4));
+                        importe_del_descto_partida = round((importe_partida * (detalle.descto/100))::numeric, 4)::double precision;
+
+                        importe_partida_con_descto = round((importe_partida - importe_del_descto_partida)::numeric, 4)::double precision;
+                        
+                        --Recalcular el IEPS de la partida tomando el importe_partida_con_descto
+                        importe_ieps_partida := round((importe_partida_con_descto::double precision * detalle.valor_ieps)::numeric, 4)::double precision;
+                        
+                        --Recalcular el IVA de la Partida tomando el importe_partida_con_descto
+                        impuesto_partida := (importe_partida_con_descto::double precision + importe_ieps_partida::double precision) * detalle.valor_imp;
+                        
+                        --Reclacular el nuevo el importe de la retencion de la partida si existe la tasa de retencion
+                        if detalle.tasa_ret>0 then 
+                            retencion_partida := round((importe_partida::double precision * detalle.tasa_ret)::numeric, 4)::double precision;
+                        end if;
+                    END IF;
+                END IF;
+                
+                suma_descuento = suma_descuento + importe_del_descto_partida::double precision;
+                suma_subtotal_con_descuento = suma_subtotal_con_descuento + importe_partida_con_descto::double precision;
+                
+                monto_subtotal := monto_subtotal + importe_partida::double precision;
+                suma_ieps := suma_ieps + importe_ieps_partida::double precision; 
+                monto_impuesto := monto_impuesto + impuesto_partida::double precision;
+                suma_retencion_de_partidas := suma_retencion_de_partidas + retencion_partida::double precision;
+            END IF;
+        END LOOP;
+        
+        --Verificar si hay que retener iva para este cliente
+        SELECT empresa_immex,
+               (CASE
+                   WHEN tasa_ret_immex IS NULL THEN 0
+                   ELSE tasa_ret_immex::double precision / 100
+                END)
+        FROM cxc_clie
+        WHERE id = _cliente_id
+        INTO retener_iva,
+             tasa_retencion;
+        
+        IF _descto_allowed AND suma_descuento>0 THEN
+            IF retener_iva = TRUE THEN 
+                total_retencion := suma_subtotal_con_descuento::double precision * tasa_retencion;
+            ELSE
+                total_retencion :=0;
+            END IF;
+            
+            if suma_retencion_de_partidas > 0 then 
+                total_retencion := round((total_retencion + suma_retencion_de_partidas)::numeric, 4)::double precision;
+            end if;
+            
+            --Calcula el monto del pedido
+            monto_total := suma_subtotal_con_descuento::double precision + suma_ieps::double precision + monto_impuesto::double precision - total_retencion::double precision;
+            
+            --Actualiza campos subtotal, impuesto, retencion, total de tabla poc_pedidos
+            UPDATE poc_pedidos
+            SET    subtotal        = suma_subtotal_con_descuento,
+                   monto_descto    = suma_descuento,
+                   monto_ieps      = suma_ieps,
+                   impuesto        = monto_impuesto,
+                   monto_retencion = total_retencion,
+                   total           = monto_total
+            WHERE  id = ultimo_id;
+        ELSE
+            IF retener_iva = TRUE THEN
+                total_retencion := monto_subtotal::double precision * tasa_retencion;
+            ELSE
+                total_retencion := 0;
+            END IF;
+
+            if suma_retencion_de_partidas > 0 then 
+                total_retencion := round((total_retencion + suma_retencion_de_partidas)::numeric, 4)::double precision;
+            end if;
+            
+            --Calcula el monto del pedido
+            monto_total := monto_subtotal::double precision + suma_ieps::double precision + monto_impuesto::double precision - total_retencion::double precision;
+            
+            --Actualiza campos subtotal, impuesto, retencion, total de tabla poc_pedidos
+            UPDATE poc_pedidos
+            SET    subtotal        = monto_subtotal,
+                   monto_ieps      = suma_ieps,
+                   impuesto        = monto_impuesto,
+                   monto_retencion = total_retencion,
+                   total           = monto_total
+            WHERE  id = ultimo_id;
+        END IF;
+        
+        valor_retorno := '1';
+    END IF; -- termina accion NEW pedido
+
+    -------------------------------------------------- EDIT pedido -----------------------------------------------------
+    IF _pedido_id > 0 THEN
+        
+        --obtener el id del proceso para este pedido
+        SELECT proceso_id
+        FROM   poc_pedidos
+        WHERE  id = _pedido_id
+        INTO   id_proceso;
+        
+        --obtener el id del flujo del proceso
+        SELECT proceso_flujo_id
+        FROM   erp_proceso
+        WHERE  id = id_proceso
+        INTO   id_proceso_flujo;
+        
+        IF id_proceso_flujo = 4 THEN 
+            
+            UPDATE poc_pedidos 
+            SET cxc_clie_id               = _cliente_id,
+                moneda_id                 = _moneda_id,
+                observaciones             = _observaciones,
+                tipo_cambio               = _tipo_cambio,
+                cxc_agen_id               = _agente_id,
+                cxp_prov_credias_id       = _prov_credias_id,
+                orden_compra              = _orden_compra, 
+                fecha_compromiso          = _fecha_compromiso::date,
+                lugar_entrega             = _lugar_entrega, 
+                transporte                = _transporte, 
+                tasa_retencion_immex      = _tasa_retencion_immex, 
+                fac_metodos_pago_id       = _forma_pago_id, 
+                no_cuenta                 = _num_cuenta, 
+                enviar_ruta               = _enviar_ruta, 
+                inv_alm_id                = _almacen_id::smallint, 
+                cxc_clie_df_id            = _cliente_df_id, 
+                enviar_obser_fac          = _enviar_obser_fac, 
+                flete                     = _flete_enabled, 
+                momento_actualizacion     = espacio_tiempo_ejecucion, 
+                gral_usr_id_actualizacion = _usuario_id, 
+                motivo_descto             = _motivo_descto, 
+                porcentaje_descto         = _porcentaje_descto,
+                cfdi_usos_id              = _cfdi_uso_id,
+                cfdi_metodo_id            = _cfdi_met_pago_id
+            WHERE id = _pedido_id;
+            
+            no_rows := array_length(_grid_detalle, 1);
+            counter := 1;
+
+            FOR counter IN 1 .. no_rows LOOP
+                generar_requisicion := FALSE;
+                generar_backorder := FALSE;
+                retencion_partida := 0;
+                
+                detalle := _grid_detalle[counter];
+                
+                -- 1: se conserva, 0: se elimina
+                IF detalle.to_keep <> 0 THEN
+                    cant_reservada_anterior := 0;
+                    cant_reservar_nuevo     := 0;
+                    cantPresAsignado        := 0;
+                    equivalenciaPres        := 0;
+                    noDecUnidad             := 0;
+                    cantPresReservAnterior  := 0;
+                    idUnidadMedida          := 0;
+                    nombreUnidadMedida      := '';
+                    cantUnidadVenta         := 0;
+                
+                    --Obtener datos del Producto
+                    SELECT inv_prod.tipo_de_producto_id AS tipo_producto,
+                           inv_prod.unidad_id,
+                           inv_prod_unidades.titulo,
+                           (CASE
+                               WHEN inv_prod_unidades.id IS NULL THEN 0
+                               ELSE inv_prod_unidades.decimales
+                            END) AS no_dec
+                    FROM inv_prod
+                    LEFT JOIN inv_prod_unidades ON inv_prod_unidades.id = inv_prod.unidad_id
+                    WHERE inv_prod.id = detalle.inv_prod_id 
+                    INTO tipo_prod,
+                         idUnidadMedida,
+                         nombreUnidadMedida,
+                         noDecUnidad;
+                    
+                    IF noDecUnidad IS NULL THEN noDecUnidad := 0; END IF;
+
+                    --Redondear la cantidad de la Partida
+                    detalle.cantidad := round(detalle.cantidad::numeric, noDecUnidad)::double precision;
+                    cantUnidadVenta := round(cantUnidadVenta::numeric, noDecUnidad)::double precision; 
+                    
+                    --Si el tipo de producto es diferente de 4, hay que RESERVAR existencias
+                    --tipo = 4 Servicios
+                    --para el tipo servicios no se debe reservar existencias
+                    IF tipo_prod::integer<>4 THEN 
+
+                        --Solo Para productos formulados
+                        IF tipo_prod = 5 OR tipo_prod = 6 THEN 
+                            --Reservar toda cantidad de la partida del pedido
+                            cant_reservar_nuevo := detalle.cantidad;
+                            generar_backorder := FALSE;
+                        end if;
+                                
+                        
+                        IF incluye_modulo_produccion = FALSE THEN
+                            --Aqui entra si la Empresa NO INCLUYE Modulo de Produccion
+                            
+                            --Solo Para productos formulados
+                            IF tipo_prod = 1 OR tipo_prod = 2 OR tipo_prod = 8 THEN
+                                --si es diferente de cero estamos en editar
+                                IF detalle.id > 0 THEN 
+                                    --Buscamos la cantidad reservada anterior
+                                    SELECT inv_prod_id,
+                                           reservado
+                                    FROM   poc_pedidos_detalle
+                                    WHERE  id = detalle.id
+                                    INTO   id_producto,
+                                           cant_reservada_anterior;
+                                    
+                                    --redondear la cantidad de Presentaciones reservada anteriormente
+                                    cant_reservada_anterior := round(cant_reservada_anterior::numeric, noDecUnidad)::double precision;
+                                    
+                                    --restar la cantidad reservada anterior
+                                    UPDATE inv_exi
+                                    SET    reservado = (reservado::double precision - cant_reservada_anterior::double precision)
+                                    WHERE  inv_prod_id = id_producto
+                                      AND  inv_alm_id  = _almacen_id
+                                      AND  ano         = ano_actual;
+                                END IF;
+                                
+                                --Reservar toda cantidad de la partida del pedido
+                                cant_reservar_nuevo := detalle.cantidad;
+                                generar_backorder := FALSE;
+                                
+                            END IF;
+                        ELSE
+                            --Solo Para productos formulados
+                            IF tipo_prod = 1 OR tipo_prod = 2 OR tipo_prod = 8 THEN
+                                --llamada a proc que devuelve la existencia del producto. 
+                                --El tipo de busqueda de existencia es 1 = Busqueda en el almacen de la Sucursal
+                                --el valor FALSE que se le esta pasando es para indicarle que en las existencias no incluya reservados, y que solo me devualva existencias disponibles
+                                SELECT inv_calculo_existencia_producto AS existencia
+                                FROM   inv_calculo_existencia_producto(1, FALSE, detalle.inv_prod_id, _usuario_id, _almacen_id)
+                                INTO   total_existencia; 
+                                
+                                --Si es diferente de cero estamos en editar
+                                IF detalle.id > 0 THEN 
+                                    --buscamos la cantidad reservada anterior
+                                    SELECT inv_prod_id,
+                                           reservado
+                                    FROM   poc_pedidos_detalle
+                                    WHERE id = detalle.id
+                                    INTO  id_producto,
+                                          cant_reservada_anterior;
+
+                                    --redondear la cantidad de Presentaciones reservada anteriormente
+                                    cant_reservada_anterior := round(cant_reservada_anterior::numeric, noDecUnidad)::double precision;
+                                    
+                                    --restar la cantidad reservada anterior
+                                    UPDATE inv_exi
+                                    SET    reservado = (reservado::double precision - cant_reservada_anterior::double precision)
+                                    WHERE  inv_prod_id = id_producto
+                                      AND  inv_alm_id  = _almacen_id
+                                      AND  ano         = ano_actual;
+                                    
+                                    --le sumamos a la existencia la cantidad reservada anterior para tener la existencia real
+                                    total_existencia := total_existencia + cant_reservada_anterior;
+                                END IF;
+                                
+                                IF total_existencia < detalle.cantidad THEN
+                                    IF total_existencia <=0 THEN 
+                                        cant_reservar_nuevo = 0;--reservar cero
+                                    ELSE
+                                        cant_reservar_nuevo := total_existencia;--tomar la existencia para reservar
+                                    END IF;
+                                    
+                                    generar_backorder := TRUE;
+                                ELSE
+                                    cant_reservar_nuevo := detalle.cantidad;--reservar toda la cantidad del  pedido
+                                    generar_backorder := FALSE;
+                                END IF;
+                            END IF;
+                        END IF;
+
+
+                        IF facpar.permitir_req_com THEN 
+                            --7 = Materia Prima - Hay que generar una requisicion de compra.
+                            IF tipo_prod = 7 THEN 
+                                --llamada a proc que devuelve la existencia del producto. 
+                                --El tipo de busqueda de existencia es 1 = Busqueda en el almacen de la Sucursal
+                                --el valor FALSE que se le esta pasando es para indicarle que en las existencias no incluya reservados, y que solo me devualva existencias disponibles
+                                SELECT inv_calculo_existencia_producto AS existencia
+                                FROM   inv_calculo_existencia_producto(1, FALSE, detalle.inv_prod_id, _usuario_id, _almacen_id)
+                                INTO   total_existencia; 
+                                
+                                --si es diferente de cero estamos en editar
+                                IF detalle.id > 0 THEN 
+                                    --Buscamos la cantidad reservada anterior
+                                    SELECT inv_prod_id,
+                                           reservado
+                                    FROM   poc_pedidos_detalle
+                                    WHERE  id = detalle.id
+                                    INTO   id_producto,
+                                           cant_reservada_anterior;
+
+                                    --Redondear la cantidad de Presentaciones reservada anteriormente
+                                    cant_reservada_anterior := round(cant_reservada_anterior::numeric, noDecUnidad)::double precision;
+                                    
+                                    --Restar la cantidad reservada anterior
+                                    UPDATE inv_exi
+                                    SET    reservado = (reservado::double precision - cant_reservada_anterior::double precision)
+                                    WHERE  inv_prod_id = id_producto
+                                      AND  inv_alm_id  = _almacen_id
+                                      AND  ano         = ano_actual;
+                                    
+                                    --Le sumamos a la existencia la cantidad reservada anterior para tener la existencia real
+                                    total_existencia := total_existencia + cant_reservada_anterior;
+                                END IF;
+                                
+                                IF total_existencia < detalle.cantidad THEN
+                                    IF total_existencia <=0 THEN 
+                                        --Reservar cero
+                                        cant_reservar_nuevo = 0;
+                                    ELSE
+                                        --Tomar la existencia para reservar
+                                        cant_reservar_nuevo := total_existencia;
+                                    END IF;
+                                    
+                                    generar_requisicion := TRUE;
+                                ELSE
+                                    --Reservar toda la cantidad del  pedido
+                                    cant_reservar_nuevo := detalle.cantidad;
+                                    generar_requisicion := FALSE;
+                                END IF;
+                            END IF;
+                        ELSE
+                            if tipo_prod = 7 then  
+                                --llamada a proc que devuelve la existencia del producto. 
+                                --El tipo de busqueda de existencia es 1 = Busqueda en el almacen de la Sucursal
+                                --el valor FALSE que se le esta pasando es para indicarle que en las existencias no incluya reservados, y que solo me devualva existencias disponibles
+                                SELECT inv_calculo_existencia_producto AS existencia
+                                FROM   inv_calculo_existencia_producto(1, FALSE, detalle.inv_prod_id, _usuario_id, _almacen_id)
+                                INTO   total_existencia; 
+                                
+                                --si es diferente de cero estamos en editar
+                                IF detalle.id > 0 THEN 
+                                    --Buscamos la cantidad reservada anterior
+                                    SELECT inv_prod_id,
+                                           reservado
+                                    FROM   poc_pedidos_detalle
+                                    WHERE  id = detalle.id
+                                    INTO   id_producto,
+                                           cant_reservada_anterior;
+
+                                    --Redondear la cantidad de Presentaciones reservada anteriormente
+                                    cant_reservada_anterior := round(cant_reservada_anterior::numeric, noDecUnidad)::double precision;
+                                    
+                                    --Restar la cantidad reservada anterior
+                                    UPDATE inv_exi
+                                    SET    reservado = (reservado::double precision - cant_reservada_anterior::double precision)
+                                    WHERE  inv_prod_id = id_producto
+                                      AND  inv_alm_id  = _almacen_id
+                                      AND  ano         = ano_actual;
+                                    
+                                    --Le sumamos a la existencia la cantidad reservada anterior para tener la existencia real
+                                    total_existencia := total_existencia + cant_reservada_anterior;
+                                END IF;
+                                
+                                IF total_existencia < detalle.cantidad THEN
+                                    IF total_existencia <=0 THEN 
+                                        --Reservar cero
+                                        cant_reservar_nuevo = 0;
+                                    ELSE
+                                        --Tomar la existencia para reservar
+                                        cant_reservar_nuevo := total_existencia;
+                                    END IF;
+                                    
+                                    generar_requisicion := FALSE;
+                                ELSE
+                                    --Reservar toda la cantidad del  pedido
+                                    cant_reservar_nuevo := detalle.cantidad;
+                                    generar_requisicion := FALSE;
+                                END IF;
+                            end if;
+                        END IF;
+                        
+                        --Redondear la nueva cantidad a reservar
+                        cant_reservar_nuevo := round(cant_reservar_nuevo::numeric, noDecUnidad)::double precision;
+                        
+                        --Reservar cantidad para el  pedido
+                        UPDATE inv_exi
+                        SET   reservado = (reservado::double precision + cant_reservar_nuevo::double precision)
+                        WHERE inv_prod_id = detalle.inv_prod_id
+                          AND inv_alm_id  = _almacen_id
+                          AND ano         = ano_actual;
+                        
+                        ------inicia reservar existencias en presentaciones--------------------------
+                        --verificar si hay que validar existencias de Presentaciones
+                        IF controlExisPres = TRUE THEN 
+                            --Verificar si hay que validar las existencias de presentaciones desde el Pedido.
+                            --TRUE = Validar presentaciones desde el Pedido
+                            --FALSE = No validar presentaciones desde el Pedido
+                            IF facpar.validar_pres_pedido = TRUE THEN 
+                                --buscar la equivalencia de la Presentacion
+                                SELECT cantidad
+                                FROM   inv_prod_presentaciones
+                                WHERE  id = detalle.presentacion_id 
+                                INTO   equivalenciaPres;
+                                
+                                IF equivalenciaPres IS NULL THEN equivalenciaPres := 0; END IF;
+                                
+                                --si es diferente de cero estamos en editar
+                                IF detalle.id > 0 THEN 
+                                    cantPresReservAnterior := cant_reservada_anterior::double precision / equivalenciaPres::double precision;
+
+                                    --redondear la cantidad de Presentaciones Reservada anteriormente
+                                    cantPresReservAnterior := round(cantPresReservAnterior::numeric, noDecUnidad)::double precision; 
+                                    
+                                    --Quitar la Cantidad Reservada anteriormente
+                                    UPDATE inv_exi_pres
+                                    SET    reservado = (reservado::double precision - cantPresReservAnterior::double precision)
+                                    WHERE  inv_alm_id               = _almacen_id
+                                      AND  inv_prod_id              = detalle.inv_prod_id
+                                      AND  inv_prod_presentacion_id = detalle.presentacion_id;
+                                END IF;
+                                
+                                
+                                --convertir a su equivalencia en Presentacion, la cantidad de la partida actual del pedido
+                                cantPresAsignado := cant_reservar_nuevo::double precision / equivalenciaPres::double precision;
+                                
+                                --redondear la cantidad de Presentaciones Asignado en la partida
+                                cantPresAsignado := round(cantPresAsignado::numeric, noDecUnidad)::double precision; 
+                                
+                                --Reservar existencia en inv_exi_pres
+                                UPDATE inv_exi_pres
+                                SET    reservado = (reservado::double precision + cantPresAsignado::double precision)
+                                WHERE  inv_alm_id               = _almacen_id
+                                  AND  inv_prod_id              = detalle.inv_prod_id
+                                  AND  inv_prod_presentacion_id = detalle.presentacion_id;
+                                
+                            END IF;
+                        END IF;
+                        ------termina reservar existencias de Presentaciones------------------------------------
+                    ELSE
+                        generar_backorder := FALSE;
+                        cant_reservar_nuevo = 0;
+                    END IF;--termina if tipo_prod!=4
+                    
+                    --Dividir entre 100 la tasa del IEPS
+                    IF detalle.valor_ieps>0 THEN 
+                        detalle.valor_ieps := detalle.valor_ieps/100;
+                    END IF;
+
+                    --Tasa retencion
+                    IF detalle.tasa_ret>0 THEN 
+                        detalle.tasa_ret := detalle.tasa_ret/100;
+                    END IF;
+
+                    --requiere_aut = detalle.requiere_aut, autorizado = detalle.autorizado, precio_aut = detalle.precio_aut, gral_usr_id_aut = detalle.gral_usr_id_aut 
+                    --requiere_aut, autorizado, precio_aut, gral_usr_id_aut
+                    --detalle.requiere_aut, detalle.autorizado, detalle.precio_aut, detalle.gral_usr_id_aut 
+                    
+                    -- detalle.id = 0 Es registro Nuevo
+                    -- detalle.id > 0 El registro ya existe, solo hay que actualizar
+                    IF detalle.id = 0 THEN
+                        --Crea registro nuevo en tabla poc_pedidos_detalle
+                        INSERT INTO poc_pedidos_detalle(
+                            poc_pedido_id,
+                            inv_prod_id,
+                            presentacion_id,
+                            gral_imp_id,
+                            cantidad,
+                            precio_unitario,
+                            valor_imp,
+                            reservado,
+                            backorder,
+                            inv_prod_unidad_id,
+                            gral_ieps_id,
+                            valor_ieps,
+                            descto,
+                            requisicion,
+                            requiere_aut,
+                            autorizado,
+                            precio_aut,
+                            gral_usr_id_aut,
+                            gral_imptos_ret_id,
+                            tasa_ret
+                        ) VALUES (
+                            _pedido_id,
+                            detalle.inv_prod_id,
+                            detalle.presentacion_id,
+                            detalle.gral_imp_id,
+                            cantUnidadVenta::double precision,
+                            detalle.precio_unitario,
+                            detalle.valor_imp,
+                            cant_reservar_nuevo,
+                            generar_backorder,
+                            detalle.inv_prod_unidad_id,
+                            detalle.gral_ieps_id,
+                            detalle.valor_ieps,
+                            detalle.descto,
+                            generar_requisicion,
+                            detalle.requiere_aut,
+                            detalle.autorizado,
+                            detalle.precio_aut,
+                            detalle.gral_usr_id_aut,
+                            detalle.gral_imptos_ret_id,
+                            detalle.tasa_ret
+                        );
+                    ELSE
+                        --Actualiza registro
+                        UPDATE poc_pedidos_detalle
+                        SET poc_pedido_id       = _pedido_id,
+                            inv_prod_id         = detalle.inv_prod_id,
+                            presentacion_id     = detalle.presentacion_id,
+                            gral_imp_id         = detalle.gral_imp_id,
+                            cantidad            = cantUnidadVenta::double precision,
+                            precio_unitario     = detalle.precio_unitario,
+                            valor_imp           = detalle.valor_imp,
+                            reservado           = cant_reservar_nuevo,
+                            backorder           = generar_backorder,
+                            inv_prod_unidad_id  = detalle.inv_prod_unidad_id,
+                            valor_ieps          = detalle.valor_ieps,
+                            descto              = detalle.descto,
+                            requisicion         = generar_requisicion,
+                            requiere_aut        = detalle.requiere_aut,
+                            autorizado          = detalle.autorizado,
+                            precio_aut          = detalle.precio_aut,
+                            gral_usr_id_aut     = detalle.gral_usr_id_aut,
+                            gral_imptos_ret_id  = detalle.gral_imptos_ret_id,
+                            tasa_ret            = detalle.tasa_ret
+                        WHERE id            = detalle.id
+                          AND poc_pedido_id = _pedido_id;
+                    END IF;
+                    
+                    --Calcular el Importe de la partida y redondealo a 4 digitos
+                    importe_partida := round((cantUnidadVenta::double precision * detalle.precio_unitario)::numeric, 4)::double precision;
+                    
+                    --Calcula el IEPS de la partida y redondear a 4 digitos
+                    importe_ieps_partida := round((importe_partida::double precision * detalle.valor_ieps)::numeric, 4)::double precision;
+                    
+                    --Calcula el IVA de la Partida
+                    impuesto_partida := (importe_partida::double precision + importe_ieps_partida::double precision) * detalle.valor_imp;
+
+                    --Calcular el importe de la retencion de la partida si existe la tasa de retencion
+                    if detalle.tasa_ret>0 then 
+                        retencion_partida := round((importe_partida::double precision * detalle.tasa_ret)::numeric, 4)::double precision;
+                    end if;
+                    
+                    IF _descto_allowed THEN
+                        IF detalle.descto>0 THEN
+                            importe_del_descto_partida = round((importe_partida * (detalle.descto/100))::numeric, 4)::double precision;
+                            
+                            importe_partida_con_descto = round((importe_partida - importe_del_descto_partida)::numeric, 4)::double precision;
+                            
+                            --Recalcular el IEPS de la partida tomando el importe_partida_con_descto
+                            importe_ieps_partida := round((importe_partida_con_descto::double precision * detalle.valor_ieps)::numeric, 4)::double precision;
+                            
+                            --Recalcular el IVA de la Partida tomando el importe_partida_con_descto
+                            impuesto_partida := (importe_partida_con_descto::double precision + importe_ieps_partida::double precision) * detalle.valor_imp;
+
+                            --Reclacular el nuevo el importe de la retencion de la partida si existe la tasa de retencion
+                            if detalle.tasa_ret>0 then 
+                                retencion_partida := round((importe_partida_con_descto::double precision * detalle.tasa_ret)::numeric, 4)::double precision;
+                            end if;
+                        END IF;
+                    END IF;
+                    
+                    suma_descuento              := suma_descuento + importe_del_descto_partida::double precision;
+                    suma_subtotal_con_descuento := suma_subtotal_con_descuento + importe_partida_con_descto::double precision;
+                    
+                    monto_subtotal             := monto_subtotal + importe_partida::double precision;
+                    suma_ieps                  := suma_ieps + importe_ieps_partida::double precision; 
+                    monto_impuesto             := monto_impuesto + impuesto_partida::double precision;
+                    suma_retencion_de_partidas := suma_retencion_de_partidas + retencion_partida::double precision;
+
+                ELSE                    
+                    --Extraer datos del registro eliminado
+                    sql_select := 'SELECT * FROM poc_pedidos_detalle WHERE id = ' || detalle.id || '::integer AND poc_pedido_id = ' || _pedido_id;
+                    
+                    --Regresar existencias reservadas
+                    FOR fila IN EXECUTE (sql_select) LOOP
+                        UPDATE inv_exi
+                        SET    reservado = (reservado::double precision - fila.reservado::double precision)
+                        WHERE  inv_prod_id = fila.inv_prod_id
+                          AND  inv_alm_id  = _almacen_id
+                          AND  ano         = ano_actual;
+                    END LOOP;
+                    
+                    --Elimina registro que se elimino en el grid del navegador
+                    DELETE FROM poc_pedidos_detalle
+                    WHERE id            = detalle.id
+                      AND poc_pedido_id = _pedido_id;
+                    
+                    --Eliminar el registro de la tabla que relaciona la Cotizacion con el Pedido
+                    DELETE FROM poc_ped_cot
+                    WHERE poc_ped_det_id = detalle.id
+                      AND poc_ped_id     = _pedido_id;
+                END IF;
+            END LOOP;
+            
+            --Verificar si hay que retener iva para este cliente
+            SELECT empresa_immex,
+                   (CASE
+                       WHEN tasa_ret_immex IS NULL THEN 0
+                       ELSE tasa_ret_immex/100
+                    END)
+            FROM   cxc_clie
+            WHERE  id = _cliente_id
+            INTO   retener_iva,
+                   tasa_retencion;
+            
+            --RAISE EXCEPTION '%','desct: ' || _descto_allowed || '        suma_descuento:' || suma_descuento;
+            IF _descto_allowed AND suma_descuento>0 THEN
+                IF retener_iva = TRUE THEN
+                    total_retencion := suma_subtotal_con_descuento::double precision * tasa_retencion;
+                ELSE 
+                    total_retencion := 0;
+                END IF;
+                
+                if suma_retencion_de_partidas > 0 then 
+                    total_retencion := round((total_retencion + suma_retencion_de_partidas)::numeric, 4)::double precision;
+                end if;
+                
+                ---RAISE EXCEPTION '%','suma_subtotal_con_descuento:' || suma_subtotal_con_descuento || '        suma_ieps:' || suma_ieps || '        monto_impuesto:' || monto_impuesto;
+                --Calcula el monto del pedido
+                monto_total := suma_subtotal_con_descuento::double precision + suma_ieps::double precision + monto_impuesto::double precision - total_retencion::double precision;
+                
+                --Actualiza campos subtotal, impuesto, retencion, total de tabla poc_pedidos
+                UPDATE poc_pedidos
+                SET subtotal        = suma_subtotal_con_descuento,
+                    monto_descto    = suma_descuento,
+                    monto_ieps      = suma_ieps,
+                    impuesto        = monto_impuesto,
+                    monto_retencion = total_retencion,
+                    total           = monto_total
+                WHERE id = _pedido_id;
+            ELSE 
+                IF retener_iva = TRUE THEN
+                    total_retencion := monto_subtotal * tasa_retencion;
+                ELSE
+                    total_retencion := 0;
+                END IF;
+                
+                if suma_retencion_de_partidas > 0 then 
+                    total_retencion := round((total_retencion + suma_retencion_de_partidas)::numeric, 4)::double precision;
+                end if;
+                
+                --Calcula el monto Total del pedido
+                monto_total := monto_subtotal::double precision + suma_ieps::double precision + monto_impuesto::double precision - total_retencion::double precision;
+                
+                --Actualiza campos subtotal, impuesto, retencion, total de tabla poc_pedidos
+                UPDATE poc_pedidos
+                SET subtotal        = monto_subtotal,
+                    monto_ieps      = suma_ieps,
+                    impuesto        = monto_impuesto,
+                    monto_retencion = total_retencion,
+                    total           = monto_total
+                WHERE id = _pedido_id;
+            END IF;
+            
+            valor_retorno := '1';
+        ELSE
+            IF id_proceso_flujo = 2 THEN 
+                valor_retorno := 'El pedido no pudo ser Actualizado, ya fue autorizado. Se encuentra en proceso de Facturacion.';
+            END IF;
+            
+            IF id_proceso_flujo = 3 THEN 
+                valor_retorno := 'El pedido no pudo ser Actualizado, ya fue Facturado.';
+            END IF;
+        END IF;
+    END IF; -- termina edit pedido
+
+    RETURN valor_retorno;
+
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE FUNCTION pedido_cancel(
+    _pedido_id integer,
+    _usuario_id integer
+) RETURNS character varying
+AS $$
+
+DECLARE
+	valor_retorno character varying := '0';
+    id_proceso integer := 0;
+    id_proceso_flujo integer := 0;
+    warehouse_id integer := 0;
+    sql_select character varying := '';
+    cant_pres_reserv_anterior double precision := 0;
+    equivalencia_pres double precision := 0;
+    no_dec_unidad integer := 0;
+    tipo_prod integer := 0;
+    espacio_tiempo_ejecucion timestamp with time zone = now();
+    ano_actual integer := 0;
+    emp_id integer := 0;
+    var_control_exis_pres boolean := FALSE;
+	fila record;
+
+BEGIN
+    SELECT EXTRACT(YEAR FROM espacio_tiempo_ejecucion) INTO ano_actual;
+
+    SELECT gral_suc.empresa_id
+    FROM   gral_usr_suc
+    JOIN   gral_suc ON gral_suc.id = gral_usr_suc.gral_suc_id
+    WHERE  gral_usr_suc.gral_usr_id = _usuario_id
+    INTO   emp_id;
+
+    -- query para verificar si la Empresa actual tiene control de Existencias por Presentacion
+    SELECT control_exis_pres
+    FROM   gral_emp
+    WHERE  id = emp_id
+    INTO   var_control_exis_pres;
+    
+    --Obtener el id del proceso para este pedido
+    SELECT proceso_id
+    FROM   poc_pedidos
+    WHERE  id = _pedido_id
+    INTO   id_proceso;
+    
+    --obtener el id del flujo del proceso
+    SELECT proceso_flujo_id
+    FROM   erp_proceso
+    WHERE  id = id_proceso
+    INTO   id_proceso_flujo;
+
+    IF id_proceso_flujo = 4 THEN
+
+        UPDATE poc_pedidos
+        SET cancelado               = TRUE,
+            momento_cancelacion     = espacio_tiempo_ejecucion,
+            gral_usr_id_cancelacion = _usuario_id
+        WHERE id = _pedido_id
+        RETURNING inv_alm_id
+        INTO warehouse_id;
+        
+        --extraer datos del detalle del pedido
+        sql_select := 'SELECT * FROM poc_pedidos_detalle WHERE poc_pedido_id = ' || _pedido_id;
+        
+        --crea devolver existencias reservadas
+        FOR fila IN EXECUTE (sql_select) LOOP
+
+            cant_pres_reserv_anterior := 0;
+            no_dec_unidad             := 0;
+            equivalencia_pres         := 0;
+            
+            --obtener el tipo de producto y el numero de Decimales Permitidos
+            SELECT inv_prod.tipo_de_producto_id AS tipo_producto,
+                   (CASE
+                       WHEN inv_prod_unidades.id IS NULL THEN 0
+                       ELSE inv_prod_unidades.decimales
+                    END) AS no_dec
+            FROM inv_prod
+            LEFT JOIN inv_prod_unidades ON inv_prod_unidades.id = inv_prod.unidad_id
+            WHERE inv_prod.id = fila.inv_prod_id 
+            INTO  tipo_prod,
+                  no_dec_unidad;
+            
+            IF no_dec_unidad IS NULL THEN
+                no_dec_unidad := 0;
+            END IF;
+            
+            --Redondear la cantidad reservada
+            fila.reservado := round(fila.reservado::numeric, no_dec_unidad)::double precision;
+            
+            --Quitar reservado de la tabla inv_exi
+            UPDATE inv_exi
+            SET    reservado   = (reservado::double precision - fila.reservado::double precision)
+            WHERE  inv_prod_id = fila.inv_prod_id
+              AND  inv_alm_id  = warehouse_id
+              AND  ano         = ano_actual;
+            
+            ------Inicia quitar existencias reservadas en inv_exi_pres--------------------------
+            --Verificar si la configuracion indica que se esta controlando existencias por presentaciones
+            IF var_control_exis_pres = TRUE THEN 
+                --Verificar si hay que validar las existencias de presentaciones desde el Pedido.
+                --TRUE = Validar presentaciones desde el Pedido
+                --FALSE = No validar presentaciones desde el Pedido
+                IF facpar.validar_pres_pedido = TRUE THEN 
+                    --buscar la equivalencia de la Presentacion
+                    SELECT cantidad
+                    FROM   inv_prod_presentaciones
+                    WHERE  id = fila.presentacion_id::integer 
+                    INTO   equivalencia_pres;
+                    
+                    IF equivalencia_pres IS NULL THEN
+                        equivalencia_pres := 0;
+                    END IF;
+                    
+                    --convertir a Presentaciones la cantidad Reservada
+                    cant_pres_reserv_anterior := fila.reservado::double precision / equivalencia_pres::double precision;
+                    
+                    --redondear la cantidad de Presentaciones Reservada anteriormente
+                    cant_pres_reserv_anterior := round(cant_pres_reserv_anterior::numeric, no_dec_unidad)::double precision; 
+                    
+                    --Quitar la Cantidad Reservada anteriormente
+                    UPDATE inv_exi_pres
+                    SET    reservado = (reservado::double precision - cant_pres_reserv_anterior::double precision)
+                    WHERE  inv_alm_id               = warehouse_id
+                      AND  inv_prod_id              = fila.inv_prod_id::integer
+                      AND  inv_prod_presentacion_id = fila.presentacion_id::integer;
+                END IF;
+            END IF;
+            
+        END LOOP;
+        
+        valor_retorno := '1';
+    ELSE
+        IF id_proceso_flujo = 2 THEN
+            valor_retorno := 'El pedido ya fue Autorizado, se encuentra en Facturacion. No se puede Cancelar.';
+        END IF;
+        
+        IF id_proceso_flujo = 3 THEN
+            valor_retorno := 'El pedido ya fue Facturado. No se puede Cancelar.';
+        END IF;
+    END IF;
+
+	RETURN valor_retorno;
+
+END;
+$$ LANGUAGE plpgsql;

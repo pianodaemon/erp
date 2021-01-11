@@ -1,4 +1,3 @@
-
 syntax = "proto3";
 
 option java_multiple_files = true;
@@ -10,44 +9,45 @@ package grpc;
 // The sales service definition.
 service Sales {
   rpc EditCot (CotRequest) returns (CotResponse) {}
-  rpc ValCustOrder (CustOrderValRequest) returns (CustOrderValResponse) {}
+  rpc EditPedido (PedidoRequest) returns (PedidoResponse) {}
+  rpc CancelPedido (PedidoCancelRequest) returns (PedidoCancelResponse) {}
 }
 
-// The request message containing the quotation parameters
+
+// The request message containing the quotation's parameters
 message CotRequest {
-  int32 usuarioId = 1;
-  int32 identificador = 2;
+  int32 usuarioId            = 1;
+  int32 identificador        = 2;
   int32 selectTipoCotizacion = 3;
-  int32 idClienteOProspecto = 4;
+  int32 idClienteOProspecto  = 4;
   bool checkDescripcionLarga = 5;
-  string observaciones = 6;
-  double tipoCambio = 7;
-  int32 monedaId = 8;
-  string fecha = 9;
-  int32 agenteId = 10;
-  int32 vigencia = 11;
-  bool incluyeIva = 12;
-  double tcUSD = 13;
+  string observaciones       = 6;
+  double tipoCambio          = 7;
+  int32 monedaId             = 8;
+  string fecha               = 9;
+  int32 agenteId             = 10;
+  int32 vigencia             = 11;
+  bool incluyeIva            = 12;
+  double tcUSD               = 13;
 
   message GridRenglonCot {
-    int32 removido = 1;
-    int32 idDetalle = 2;
-    int32 idProducto = 3;
-    int32 idPresentacion = 4;
-    double cantidad = 5;
-    double precio = 6;
-    int32 monedaGrId = 7;
-    string notr = 8;
-    int32 idImpProd = 9;
-    double valorImp = 10;
-    int32 unidadId = 11;
-    bool statusAutorizacion = 12;
-    double precioAutorizado = 13;
-    int32 idUserAut = 14;
+    int32 removido            = 1;
+    int32 idDetalle           = 2;
+    int32 idProducto          = 3;
+    int32 idPresentacion      = 4;
+    double cantidad           = 5;
+    double precio             = 6;
+    int32 monedaGrId          = 7;
+    string notr               = 8;
+    int32 idImpProd           = 9;
+    double valorImp           = 10;
+    int32 unidadId            = 11;
+    bool statusAutorizacion   = 12;
+    double precioAutorizado   = 13;
+    int32 idUserAut           = 14;
     bool requiereAutorizacion = 15;
-    string salvarRegistro = 16;
+    string salvarRegistro     = 16;
   }
-
   repeated GridRenglonCot extraData = 14;
 }
 
@@ -56,17 +56,74 @@ message CotResponse {
   string valorRetorno = 1;
 }
 
-// The request message containing params for validation of customer order
-message CustOrderValRequest {
-  int32 usrId = 1;
-  string currVal = 2;
-  string dateLim = 3;
-  int32 payMet = 4;
-  string account = 5;
-  repeated string matrix = 6;
+
+// The request message containing the sales order's parameters
+message PedidoRequest {
+  int32 usuarioId           = 1;
+  int32 agenteId            = 2;
+  int32 clienteId           = 3;
+  int32 clienteDfId         = 4;
+  int32 almacenId           = 5;
+  int32 monedaId            = 6;
+  int32 provCrediasId       = 7;
+  int32 cfdiMetPagoId       = 8;
+  int32 formaPagoId         = 9;
+  int32 cfdiUsoId           = 10;
+  int32 pedidoId            = 11;
+  double tasaRetencionImmex = 12;
+  double tipoCambio         = 13;
+  double porcentajeDescto   = 14;
+  bool desctoAllowed        = 15;
+  bool enviarObserFac       = 16;
+  bool fleteEnabled         = 17;
+  bool enviarRuta           = 18;
+  string observaciones      = 19;
+  string motivoDescto       = 20;
+  string transporte         = 21;
+  string fechaCompromiso    = 22;
+  string lugarEntrega       = 23;
+  string ordenCompra        = 24;
+  string numCuenta          = 25;
+  string folioCot           = 26;
+
+  message GridRenglonPedido {
+    int32 id              = 1;
+    int32 toKeep          = 2;
+    int32 invProdId       = 3;
+    int32 presentacionId  = 4;
+    double cantidad       = 5;
+    double precioUnitario = 6;
+    int32 gralImpId       = 7;
+    double valorImp       = 8;
+    int32 invProdUnidadId = 9;
+    int32 gralIepsId      = 10;
+    double valorIeps      = 11;
+    double descto         = 12;
+    int32 cotId           = 13;
+    int32 cotDetalleId    = 14;
+    bool requiereAut      = 15;
+    bool autorizado       = 16;
+    double precioAut      = 17;
+    int32 gralUsrIdAut    = 18;
+    int32 gralImptosRetId = 19;
+    double tasaRet        = 20;
+  }
+  repeated GridRenglonPedido gridDetalle = 27;
 }
 
-// The response message containing results of customer order's validation
-message CustOrderValResponse {
+// The response message containing the sales order's create/edit operation results
+message PedidoResponse {
+  string valorRetorno = 1;
+}
+
+
+// The request message containing the sales order's cancellation parameters
+message PedidoCancelRequest {
+  int32 pedidoId  = 1;
+  int32 usuarioId = 2;
+}
+
+// The response message containing the sales order's cancellation results
+message PedidoCancelResponse {
   string valorRetorno = 1;
 }
