@@ -10,6 +10,16 @@ x-shared-environment: &commonEnv
     MYSQL_DATABASE: "dwh"
 
 services:
+    sso_erp:
+        container_name: 'sso_erp'
+        build: './DOS/sso'
+        ports:
+          - '10100:10100'
+        environment: *commonEnv
+        volumes:
+          - ./DOS/keys:/pem
+        networks:
+          - operational_network
     rdbms_dos:
         container_name: 'rdbms_dos'
         image: 'debezium/postgres'
