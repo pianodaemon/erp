@@ -10,6 +10,14 @@ x-shared-environment: &commonEnv
     MYSQL_DATABASE: "dwh"
 
 services:
+    cache_erp:
+        container_name: 'cache_erp'
+        image: redis:alpine
+        ports:
+          - "6379:6379"
+        environment: *commonEnv
+        networks:
+          - operational_network
     sso_erp:
         container_name: 'sso_erp'
         build: './DOS/sso'
