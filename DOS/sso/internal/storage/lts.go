@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"crypto/sha256"
 	"database/sql"
 	"fmt"
 
@@ -60,22 +59,18 @@ func Authenticate(username, password string) (*User, error) {
 	defer db.Close()
 
 	{
-		var uid, passwordHash, retUsername string
-		var disabled bool
+		var uid, passwordPlain, retUsername string
+		var enabled bool
 
-		err := db.QueryRow("SELECT id::character varying as uid, username, passwd, disabled FROM users WHERE username = $1",
-			username).Scan(&uid, &retUsername, &passwordHash, &disabled)
+		err := db.QueryRow("SELECT id::character varying as uid, username, password, enabled FROM users WHERE username = $1",
+			username).Scan(&uid, &retUsername, &passwordPlain, &enabled)
 
 		if err != nil {
 
 			return nil, err
 		}
 
-		h := sha256.New()
-		h.Write([]byte(password))
-		hashed := fmt.Sprintf("%x", h.Sum(nil))
-
-		if passwordHash != hashed {
+		if passwordPlain != password {
 
 			return nil, fmt.Errorf("Verify your credentials")
 		}
@@ -83,7 +78,7 @@ func Authenticate(username, password string) (*User, error) {
 		usr = &User{
 			UID:       uid,
 			Username:  retUsername,
-			IsActive:  !disabled,
+			IsActive:  enabled,
 			CreatedAt: 12123123,
 		}
 	}
