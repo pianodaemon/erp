@@ -6,6 +6,7 @@ Some of the elements of this project may be deemed as obsoletes but there is cur
 | ------ | ------ |
 | DOS/cfdiengine | microservice in charge of issuing cfdi documents |
 | DOS/sales-api | microservice that administers the sale flow |
+| DOS/sso | single sign on |
 | DOS/reports/builders | reports formats library |
 | DOS/reports/cli | command line to render reports from operation |
 | DOS/reports/godinez | POM project, usable as a parent for other modules |
