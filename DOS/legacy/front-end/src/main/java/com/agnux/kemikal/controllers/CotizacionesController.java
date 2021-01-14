@@ -596,8 +596,6 @@ public class CotizacionesController {
         @ModelAttribute("user") UserSessionData user,
         Model model)
     {
-        HashMap<String, String> jsonretorno = new HashMap<String, String>();
-        HashMap<String, String> success = new HashMap<String, String>();
         String arreglo[] = new String[eliminado.length];
         Integer id_usuario= user.getUserId();
         Integer app_selected = 12;
@@ -611,21 +609,7 @@ public class CotizacionesController {
             cotId = 0;
         }
 
-        CotRequest.Builder cotRequestBuilder =
-            CotRequest.newBuilder()
-                .setUsuarioId(id_usuario.intValue())
-                .setIdentificador(cotId)
-                .setSelectTipoCotizacion(Integer.parseInt(select_tipo_cotizacion))
-                .setIdClienteOProspecto(Integer.parseInt(id_cliente))
-                .setCheckDescripcionLarga(Boolean.parseBoolean(check_descripcion_larga))
-                .setObservaciones(observaciones.toUpperCase())
-                .setTipoCambio(Double.parseDouble(tc))
-                .setMonedaId(Integer.parseInt(moneda_id))
-                .setFecha(fecha)
-                .setAgenteId(Integer.parseInt(select_agente))
-                .setVigencia(Integer.parseInt(vigencia))
-                .setIncluyeIva(Boolean.parseBoolean(check_incluye_iva))
-                .setTcUSD(Double.parseDouble(tc_usd));
+        CotRequest.Builder cotRequestBuilder = CotRequest.newBuilder();
 
         for(int i=0; i<eliminado.length; i++) { 
             select_umedida[i] = StringHelper.verificarSelect(select_umedida[i]);
@@ -694,12 +678,15 @@ public class CotizacionesController {
         //System.out.println("select_incoterms: "+select_incoterms);
         String incoterms="";
         int primerIncoterm = 0;
-        if(select_incoterms != null){
-            for(int i=0; i<select_incoterms.length; i++) { 
-                if(primerIncoterm==0){
+        if (select_incoterms != null){
+
+            for (int i=0; i<select_incoterms.length; i++) { 
+
+                if (primerIncoterm==0){
                     incoterms = select_incoterms[i];
                     primerIncoterm++;
-                }else{
+
+                } else {
                     incoterms += ","+select_incoterms[i];
                     primerIncoterm++;
                 }
@@ -724,11 +711,28 @@ public class CotizacionesController {
             incoterms                   + "___" +
             tc_usd;
 
-        success = this.getPocDao().selectFunctionValidateAaplicativo(data_string, app_selected, extra_data_array);
+        cotRequestBuilder
+            .setUsuarioId(id_usuario.intValue())
+            .setIdentificador(cotId)
+            .setSelectTipoCotizacion(Integer.parseInt(select_tipo_cotizacion))
+            .setIdClienteOProspecto(Integer.parseInt(id_cliente))
+            .setCheckDescripcionLarga(Boolean.parseBoolean(check_descripcion_larga))
+            .setObservaciones(observaciones.toUpperCase())
+            .setTipoCambio(Double.parseDouble(tc))
+            .setMonedaId(Integer.parseInt(moneda_id))
+            .setFecha(fecha)
+            .setAgenteId(Integer.parseInt(select_agente))
+            .setVigencia(Integer.parseInt(vigencia))
+            .setIncluyeIva(Boolean.parseBoolean(check_incluye_iva))
+            .setTcUSD(Double.parseDouble(tc_usd));
 
-        log.log(Level.INFO, "despues de validacion {0}", success.get("success"));
+        HashMap<String, String> jsonretorno = new HashMap<String, String>();
+        HashMap<String, String> success = this.getPocDao()
+            .selectFunctionValidateAaplicativo(data_string, app_selected, extra_data_array);
 
-        if(Boolean.parseBoolean(success.get("success"))) {
+        log.log(Level.INFO, "Resultado de validacion Cot: {0}", success.get("success"));
+
+        if(success.get("success").equals("true")) {
 
             String grpcHost = System.getenv("GRPC_HOST"),
                    grpcPort = System.getenv("GRPC_PORT");
@@ -739,8 +743,6 @@ public class CotizacionesController {
             }
             
             ManagedChannel channel = ManagedChannelBuilder.forTarget(grpcHost + ":" + grpcPort)
-            // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
-            // needing certificates.
                 .usePlaintext()
                 .build();
             
@@ -751,29 +753,33 @@ public class CotizacionesController {
 
             try {
                 cotResponse = blockingStub.editCot(cotRequest);
-                log.info("(java client) Cot Response valorRetorno: " + cotResponse.getValorRetorno());
+                String valorRetorno = cotResponse.getValorRetorno();
+
+                if (valorRetorno.equals("1")) {
+                    jsonretorno.put("success", "true");
+
+                } else {
+                    jsonretorno.put("success", valorRetorno);
+                }
+                log.log(Level.INFO, "(java client) Cot Response valorRetorno: {0}", valorRetorno);
             
             } catch (StatusRuntimeException e) {
+                jsonretorno.put("success", "Error en llamada a procedimiento remoto.");
                 log.log(Level.SEVERE, "RPC failed: {0}", e.getStatus());
-                jsonretorno.put("success", "false");
-                return jsonretorno;
             
             } finally {
                 try {
-                    // ManagedChannels use resources like threads and TCP connections. To prevent leaking these
-                    // resources the channel should be shut down when it will no longer be used. If it may be used
-                    // again leave it running.
                     channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
 
                 } catch (InterruptedException e) {
                     log.log(Level.SEVERE, "Channel shutdown failed.", e);
                 }
             }
+
+        } else {
+            jsonretorno.put("success", success.get("success"));
         }
 
-        jsonretorno.put("success", success.get("success"));
-        log.log(Level.INFO, "Salida json {0}", jsonretorno.get("success"));
-        
         return jsonretorno;
     }
     

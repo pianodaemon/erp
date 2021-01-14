@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,6 +34,12 @@ import org.springframework.ui.Model;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+import com.maxima.sales.cli.grpc.PedidoRequest;
+import com.maxima.sales.cli.grpc.PedidoResponse;
+import com.maxima.sales.cli.grpc.SalesGrpc;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 
 
 @Controller
@@ -789,210 +796,321 @@ public class PocPedidosController {
     
     
     
-    //Edicion y nuevo
+    //Edicion, nuevo y cancelacion
     @RequestMapping(method = RequestMethod.POST, value="/edit.json")
     public @ResponseBody HashMap<String, String> editJson(
-            @RequestParam(value="id_pedido", required=true) Integer id_pedido,
-            @RequestParam(value="id_cliente", required=true) String id_cliente,
-            @RequestParam(value="select_moneda", required=true) String select_moneda,
-            @RequestParam(value="tasa_ret_immex", required=true) String tasa_ret_immex,
-            @RequestParam(value="tipo_cambio", required=true) String tipo_cambio,
-            @RequestParam(value="observaciones", required=true) String observaciones,
-            @RequestParam(value="vendedor", required=true) String id_agente,
-            @RequestParam(value="select_condiciones", required=true) String select_condiciones,
-            @RequestParam(value="orden_compra", required=true) String orden_compra,
-            @RequestParam(value="fecha_compromiso", required=true) String fecha_compromiso,
-            @RequestParam(value="lugar_entrega", required=true) String lugar_entrega,
-            @RequestParam(value="transporte", required=true) String transporte,
-            @RequestParam(value="accion_proceso", required=true) String accion_proceso,
-            @RequestParam(value="select_metodo_pago", required=true) Integer select_forma_pago,
-            @RequestParam(value="select_uso", required=true) String select_uso,
-            @RequestParam(value="select_metodo", required=true) String select_metodo,
-            @RequestParam(value="no_cuenta", required=false) String no_cuenta,
-            @RequestParam(value="check_ruta", required=false) String check_ruta,
-            @RequestParam(value="select_almacen", required=false) String select_almacen,
-            @RequestParam(value="id_df", required=true) String id_df,
-            @RequestParam(value="check_enviar_obser", required=false) String check_enviar_obser,
-            @RequestParam(value="pdescto", required=true) String permitir_descto,
-            @RequestParam(value="motivo_descuento", required=true) String motivo_descuento,
-            @RequestParam(value="valor_descto", required=true) String porcentaje_descto,
+        @RequestParam(value="id_pedido", required=true)           Integer id_pedido,
+        @RequestParam(value="id_cliente", required=true)          String id_cliente,
+        @RequestParam(value="select_moneda", required=true)       String select_moneda,
+        @RequestParam(value="tasa_ret_immex", required=true)      String tasa_ret_immex,
+        @RequestParam(value="tipo_cambio", required=true)         String tipo_cambio,
+        @RequestParam(value="observaciones", required=true)       String observaciones,
+        @RequestParam(value="vendedor", required=true)            String id_agente,
+        @RequestParam(value="select_condiciones", required=true)  String select_condiciones,
+        @RequestParam(value="orden_compra", required=true)        String orden_compra,
+        @RequestParam(value="fecha_compromiso", required=true)    String fecha_compromiso,
+        @RequestParam(value="lugar_entrega", required=true)       String lugar_entrega,
+        @RequestParam(value="transporte", required=true)          String transporte,
+        @RequestParam(value="accion_proceso", required=true)      String accion_proceso,
+        @RequestParam(value="select_metodo_pago", required=true)  Integer select_forma_pago,
+        @RequestParam(value="select_uso", required=true)          String select_uso,
+        @RequestParam(value="select_metodo", required=true)       String select_metodo,
+        @RequestParam(value="no_cuenta", required=false)          String no_cuenta,
+        @RequestParam(value="check_ruta", required=false)         String check_ruta,
+        @RequestParam(value="select_almacen", required=false)     String select_almacen,
+        @RequestParam(value="id_df", required=true)               String id_df,
+        @RequestParam(value="check_enviar_obser", required=false) String check_enviar_obser,
+        @RequestParam(value="pdescto", required=true)             String permitir_descto,
+        @RequestParam(value="motivo_descuento", required=true)    String motivo_descuento,
+        @RequestParam(value="valor_descto", required=true)        String porcentaje_descto,
+
+        @RequestParam(value="eliminado", required=false)       String[] eliminado,
+        @RequestParam(value="iddetalle", required=false)       String[] iddetalle,
+        @RequestParam(value="idproducto", required=false)      String[] idproducto,
+        @RequestParam(value="select_umedida", required=false)  String[] select_umedida,
+        @RequestParam(value="id_presentacion", required=false) String[] id_presentacion,
+        @RequestParam(value="id_imp_prod", required=false)     String[] id_impuesto,
+        @RequestParam(value="valor_imp", required=false)       String[] valor_imp,
+        @RequestParam(value="vdescto", required=false)         String[] vdescto,
+        @RequestParam(value="idIeps", required=false)          String[] idIeps,
+        @RequestParam(value="tasaIeps", required=false)        String[] tasaIeps,
+        @RequestParam(value="ret_id", required=false)          String[] ret_id,
+        @RequestParam(value="ret_tasa", required=false)        String[] ret_tasa,
+
+        @RequestParam(value="cantidad", required=false)     String[] cantidad,
+        @RequestParam(value="costo", required=false)        String[] costo,
+        @RequestParam(value="noTr", required=false)         String[] noTr,
+        @RequestParam(value="seleccionado", required=false) String[] seleccionado,
+        @RequestParam(value="idcot", required=false)        String[] idcot,
+        @RequestParam(value="iddetcot", required=false)     String[] iddetcot,
+        @RequestParam(value="nocot", required=true)         String[] nocot,
+        @RequestParam(value="statusreg", required=true)     String[] statusreg,
+        @RequestParam(value="reqauth", required=true)       String[] reqauth,
+        @RequestParam(value="success", required=true)       String[] salvar_registro,
+
+        @RequestParam(value="transportista", required=true)                String transportista,
+        @RequestParam(value="check_flete", required=false)                 String check_flete,
+        @RequestParam(value="nombre_documentador", required=false)         String nombre_documentador,
+        @RequestParam(value="valor_declarado", required=false)             String valor_declarado,
+        @RequestParam(value="select_tviaje", required=false)               String select_tviaje,
+        @RequestParam(value="remolque1", required=false)                   String remolque1,
+        @RequestParam(value="remolque2", required=false)                   String remolque2,
+        @RequestParam(value="id_vehiculo", required=false)                 String id_vehiculo,
+        @RequestParam(value="no_operador", required=false)                 String no_operador,
+        @RequestParam(value="nombre_operador", required=false)             String nombre_operador,
+        @RequestParam(value="select_pais_origen", required=false)          String select_pais_origen,
+        @RequestParam(value="select_estado_origen", required=false)        String select_estado_origen,
+        @RequestParam(value="select_municipio_origen", required=false)     String select_municipio_origen,
+        @RequestParam(value="select_pais_dest", required=false)            String select_pais_dest,
+        @RequestParam(value="select_estado_dest", required=false)          String select_estado_dest,
+        @RequestParam(value="select_municipio_dest", required=false)       String select_municipio_dest,
+        @RequestParam(value="agena_id", required=false)                    String agena_id,
+        @RequestParam(value="rem_id", required=false)                      String rem_id,
+        @RequestParam(value="rem_dir_alterna", required=false)             String rem_dir_alterna,
+        @RequestParam(value="dest_id", required=false)                     String dest_id,
+        @RequestParam(value="dest_dir_alterna", required=false)            String dest_dir_alterna,
+        @RequestParam(value="observaciones_transportista", required=false) String observaciones_transportista,
+
+        @ModelAttribute("user") UserSessionData user)
+    {
             
-            @RequestParam(value="eliminado", required=false) String[] eliminado,
-            @RequestParam(value="iddetalle", required=false) String[] iddetalle,
-            @RequestParam(value="idproducto", required=false) String[] idproducto,
-            @RequestParam(value="select_umedida", required=false) String[] select_umedida,
-            @RequestParam(value="id_presentacion", required=false) String[] id_presentacion,
-            @RequestParam(value="id_imp_prod", required=false) String[] id_impuesto,
-            @RequestParam(value="valor_imp", required=false) String[] valor_imp,
-            @RequestParam(value="vdescto", required=false) String[] vdescto,
-            @RequestParam(value="idIeps", required=false) String[] idIeps,
-            @RequestParam(value="tasaIeps", required=false) String[] tasaIeps,
-            @RequestParam(value="ret_id", required=false) String[] ret_id,
-            @RequestParam(value="ret_tasa", required=false) String[] ret_tasa,
+        log.log(Level.INFO, "Edicion/nuevo/cancelacion de pedido");
+
+        Integer id_usuario = user.getUserId();
+        String folio_cot = "";
+
+        String arreglo[] = new String[eliminado.length];
+        
+        PedidoRequest.Builder pedidoRequestBuilder = PedidoRequest.newBuilder();
+
+        for (int i = 0; i < eliminado.length; i++) {
+
+            if (!nocot[i].trim().equals("") && !nocot[i].equals("0")) {
+                folio_cot = nocot[i];
+            }
+
+            //statreg&&&valuereg&&&ident
+            String partida[] = statusreg[i].split("\\&&&");
+            //partida[0]    Estatus autorizacion
+            //partida[1]    Valor precio autorizado
+            //partida[2]    Usuario que autoriza
+
+            String stat_reg = (StringHelper.isNullString(String.valueOf(partida[0])).equals("0")) ? "false" : "true";
+            String precio_autorizado = StringHelper.isNullString(String.valueOf(partida[1]));
+            String id_user_autoriza = (
+                partida[2].trim().equals("0")) ? partida[2] : Base64Coder.decodeString(StringHelper.isNullString(String.valueOf(partida[2]))
+            );
+
+            select_umedida[i] = StringHelper.verificarSelect(select_umedida[i]);
+            arreglo[i] =
+                "'"                +
+                eliminado[i]       + "___" + 
+                iddetalle[i]       + "___" + 
+                idproducto[i]      + "___" + 
+                id_presentacion[i] + "___" + 
+                id_impuesto[i]     + "___" + 
+                cantidad[i]        + "___" + 
+                costo[i]           + "___" +
+                valor_imp[i]       + "___" +
+                noTr[i]            + "___" +
+                seleccionado[i]    + "___" + 
+                select_umedida[i]  + "___" + 
+                idIeps[i]          + "___" + 
+                tasaIeps[i]        + "___" + 
+                vdescto[i]         + "___" + 
+                idcot[i]           + "___" + 
+                iddetcot[i]        + "___" +
+                stat_reg           + "___" +
+                precio_autorizado  + "___" +
+                id_user_autoriza   + "___" +
+                reqauth[i]         + "___" +
+                salvar_registro[i] + "___" + 
+                ret_id[i]          + "___" + 
+                ret_tasa[i]        +
+                "'";
+
+            pedidoRequestBuilder.addGridDetalle(
+                PedidoRequest.GridRenglonPedido.newBuilder()
+                    .setId(Integer.parseInt(iddetalle[i]))
+                    .setToKeep(Integer.parseInt(eliminado[i]))
+                    .setInvProdId(Integer.parseInt(idproducto[i]))
+                    .setPresentacionId(Integer.parseInt(id_presentacion[i]))
+                    .setCantidad(Double.parseDouble(cantidad[i]))
+                    .setPrecioUnitario(Double.parseDouble(costo[i]))
+                    .setGralImpId(Integer.parseInt(id_impuesto[i]))
+                    .setValorImp(Double.parseDouble(valor_imp[i]))
+                    .setInvProdUnidadId(Integer.parseInt(select_umedida[i]))
+                    .setGralIepsId(Integer.parseInt(idIeps[i]))
+                    .setValorIeps(Double.parseDouble(tasaIeps[i]))
+                    .setDescto(Double.parseDouble(vdescto[i]))
+                    .setCotId(Integer.parseInt(idcot[i]))
+                    .setCotDetalleId(Integer.parseInt(iddetcot[i]))
+                    .setRequiereAut(Boolean.parseBoolean(reqauth[i]))
+                    .setAutorizado(Boolean.parseBoolean(stat_reg))
+                    .setPrecioAut(Double.parseDouble(precio_autorizado))
+                    .setGralUsrIdAut(Integer.parseInt(id_user_autoriza))
+                    .setGralImptosRetId(Integer.parseInt(ret_id[i]))
+                    .setTasaRet(Double.parseDouble(ret_tasa[i])));
+        }
+
+        //Serializar el arreglo
+        String extra_data_array = StringUtils.join(arreglo, ",");
+
+        PotCatCusorder pc = new PotCatCusorder();
+        pc.matrix         = extra_data_array;
+        pc.no_cot         = folio_cot;
+        pc.usuario_id     = id_usuario.toString();
+        pc.comments       = observaciones.toUpperCase();
+        pc.salesman_id    = id_agente;
+        pc.currency_val   = tipo_cambio;
+        pc.purch_order    = orden_compra.toUpperCase();
+        pc.tasaretimmex   = tasa_ret_immex;
+        pc.date_lim       = fecha_compromiso;
+        pc.customer_id    = id_cliente;
+        pc.pedido_id      = id_pedido.toString();
+        pc.trans          = transporte.toUpperCase();
+        pc.delivery_place = lugar_entrega.toUpperCase();
+        pc.allow_desc     = permitir_descto;
+        pc.razon_desc     = motivo_descuento.toUpperCase();
+        pc.perc_desc      = porcentaje_descto;
+
+        if ( id_pedido == 0 ) {
+            pc.cmd = "new";
+        } else {
+            if (accion_proceso.equals("cancelar")) {
+                pc.cmd = accion_proceso;
+            } else {
+                pc.cmd = "edit";
+            }
+        }
+
+        if (no_cuenta == null) {
+            pc.account = "";
+        } else {
+            pc.account = no_cuenta;
+        }
+
+        if (select_forma_pago == null) {
+            pc.forma_pago_id = "0";
+        } else {
+            pc.forma_pago_id = select_forma_pago.toString();
+        }
+
+        if (select_uso == null) {
+            pc.uso_id = "0";
+        } else {
+            pc.uso_id = select_uso.toString();
+        }
+
+        if (select_metodo == null) {
+            pc.met_pago_id = "0";
+        } else {
+            pc.met_pago_id = select_metodo.toString();
+        }
+        
+        //Verificar valores
+        pc.warehouse_id = StringHelper.verificarSelect(select_almacen);
+        pc.currency_id = StringHelper.verificarSelect(select_moneda);
+        pc.sup_credays_id = StringHelper.verificarSelect(select_condiciones);
+        pc.send_route = StringHelper.verificarCheckBox(check_ruta);
+        pc.send_comments = StringHelper.verificarCheckBox(check_enviar_obser);
+        pc.flete_enable = StringHelper.verificarCheckBox(check_flete);
+
+        if (id_df.equals("0")) {
+            id_df = "1";//si viene cero, le asignamos uno para indicar que debe tomar la direccion de la tabla cxc_clie.
+        }
+        pc.cust_df_id = id_df;
+        
+        pedidoRequestBuilder
+            .setUsuarioId(Integer.parseInt(pc.usuario_id))
+            .setAgenteId(Integer.parseInt(pc.salesman_id))
+            .setClienteId(Integer.parseInt(pc.customer_id))
+            .setClienteDfId(Integer.parseInt(pc.cust_df_id))
+            .setAlmacenId(Integer.parseInt(pc.warehouse_id))
+            .setMonedaId(Integer.parseInt(pc.currency_id))
+            .setProvCrediasId(Integer.parseInt(pc.sup_credays_id))
+            .setCfdiMetPagoId(Integer.parseInt(pc.met_pago_id))
+            .setFormaPagoId(Integer.parseInt(pc.forma_pago_id))
+            .setCfdiUsoId(Integer.parseInt(pc.uso_id))
+            .setPedidoId(Integer.parseInt(pc.pedido_id))
+            .setTasaRetencionImmex(Double.parseDouble(pc.tasaretimmex))
+            .setTipoCambio(Double.parseDouble(pc.currency_val))
+            .setPorcentajeDescto(Double.parseDouble(pc.perc_desc))
+            .setDesctoAllowed(Boolean.parseBoolean(pc.allow_desc))
+            .setEnviarObserFac(Boolean.parseBoolean(pc.send_comments))
+            .setFleteEnabled(Boolean.parseBoolean(pc.flete_enable))
+            .setEnviarRuta(Boolean.parseBoolean(pc.send_route))
+            .setObservaciones(pc.comments)
+            .setMotivoDescto(pc.razon_desc)
+            .setTransporte(pc.trans)
+            .setFechaCompromiso(pc.date_lim)
+            .setLugarEntrega(pc.delivery_place)
+            .setOrdenCompra(pc.purch_order)
+            .setNumCuenta(pc.account)
+            .setFolioCot(pc.no_cot);
+
+        HashMap<String, String> jsonretorno = new HashMap<String, String>();
+        HashMap<String, String> success = this.getPocDao().poc_val_cusorder(
+            new Integer(id_usuario),
+            tipo_cambio,
+            fecha_compromiso,
+            select_forma_pago,
+            no_cuenta,
+            extra_data_array
+        );
+        log.log(Level.INFO, "Resultado de validacion Pedido: {0}", success.get("success"));
+
+        if ( success.get("success").equals("true") ) {
+
+            System.out.println(pc.conform_cat_store());
+
+            String grpcHost = System.getenv("GRPC_HOST"),
+                   grpcPort = System.getenv("GRPC_PORT");
             
-            @RequestParam(value="cantidad", required=false) String[] cantidad,
-            @RequestParam(value="costo", required=false) String[] costo,
-            @RequestParam(value="noTr", required=false) String[] noTr,
-            @RequestParam(value="seleccionado", required=false) String[] seleccionado,
-            @RequestParam(value="idcot", required=false) String[] idcot,
-            @RequestParam(value="iddetcot", required=false) String[] iddetcot,
-            @RequestParam(value="nocot", required=true) String[] nocot,
-            @RequestParam(value="statusreg", required=true) String[] statusreg,
-            @RequestParam(value="reqauth", required=true) String[] reqauth,
-            @RequestParam(value="success", required=true) String[] salvar_registro,
+            if (grpcHost == null || grpcPort == null) {
+                grpcHost = "127.0.0.1";
+                grpcPort = "10090";
+            }
             
-            @RequestParam(value="transportista", required=true) String transportista,
-            @RequestParam(value="check_flete", required=false) String check_flete,
-            @RequestParam(value="nombre_documentador", required=false) String nombre_documentador,
-            @RequestParam(value="valor_declarado", required=false) String valor_declarado,
-            @RequestParam(value="select_tviaje", required=false) String select_tviaje,
-            @RequestParam(value="remolque1", required=false) String remolque1,
-            @RequestParam(value="remolque2", required=false) String remolque2,
-            @RequestParam(value="id_vehiculo", required=false) String id_vehiculo,
-            @RequestParam(value="no_operador", required=false) String no_operador,
-            @RequestParam(value="nombre_operador", required=false) String nombre_operador,
-            @RequestParam(value="select_pais_origen", required=false) String select_pais_origen,
-            @RequestParam(value="select_estado_origen", required=false) String select_estado_origen,
-            @RequestParam(value="select_municipio_origen", required=false) String select_municipio_origen,
-            @RequestParam(value="select_pais_dest", required=false) String select_pais_dest,
-            @RequestParam(value="select_estado_dest", required=false) String select_estado_dest,
-            @RequestParam(value="select_municipio_dest", required=false) String select_municipio_dest,
-            @RequestParam(value="agena_id", required=false) String agena_id,
-            @RequestParam(value="rem_id", required=false) String rem_id,
-            @RequestParam(value="rem_dir_alterna", required=false) String rem_dir_alterna,
-            @RequestParam(value="dest_id", required=false) String dest_id,
-            @RequestParam(value="dest_dir_alterna", required=false) String dest_dir_alterna,
-            @RequestParam(value="observaciones_transportista", required=false) String observaciones_transportista,
+            ManagedChannel channel = ManagedChannelBuilder.forTarget(grpcHost + ":" + grpcPort)
+                .usePlaintext()
+                .build();
             
-            @ModelAttribute("user") UserSessionData user
-        ) {
-            
-            System.out.println("Guardar del Pedido");
-            HashMap<String, String> jsonretorno = new HashMap<String, String>();
-            HashMap<String, String> succes = new HashMap<String, String>();
-            
-            Integer app_selected = 64;
-            Integer id_usuario= user.getUserId();
-            String folio_cot="";
-            
-            String arreglo[];
-            arreglo = new String[eliminado.length];
-            
-            for(int i=0; i<eliminado.length; i++) { 
-                
-                if(!nocot[i].trim().equals("") && !nocot[i].equals("0")){
-                    folio_cot=nocot[i];
+            SalesGrpc.SalesBlockingStub blockingStub = SalesGrpc.newBlockingStub(channel);
+
+            PedidoRequest pedidoRequest = pedidoRequestBuilder.build();
+            PedidoResponse pedidoResponse;
+
+            try {
+                pedidoResponse = blockingStub.editPedido(pedidoRequest);
+                String valorRetorno = pedidoResponse.getValorRetorno();
+
+                if (valorRetorno.equals("1")) {
+                    jsonretorno.put("success", "true");
+                    jsonretorno.put("actualizo", valorRetorno);
+
+                } else {
+                    jsonretorno.put("success", valorRetorno);
                 }
-                
-                //statreg&&&valuereg&&&ident
-                String partida[] = statusreg[i].split("\\&&&");
-                //partida[0]    Estatus autorizacion
-                //partida[1]    Valor precio autorizado
-                //partida[2]    Usuario que autoriza
-                
-                String stat_reg = (StringHelper.isNullString(String.valueOf(partida[0])).equals("0"))? "false":"true";
-                String precio_autorizado = StringHelper.isNullString(String.valueOf(partida[1]));
-                String id_user_autoriza = (partida[2].trim().equals("0"))?partida[2]:Base64Coder.decodeString(StringHelper.isNullString(String.valueOf(partida[2])));
-                
-                select_umedida[i] = StringHelper.verificarSelect(select_umedida[i]);
-                arreglo[i]= "'"+eliminado[i] +"___" + iddetalle[i] +"___" + idproducto[i] +"___" + id_presentacion[i] +"___" + id_impuesto[i] +"___" + cantidad[i] +"___" + costo[i] + "___"+valor_imp[i] + "___"+noTr[i] + "___"+seleccionado[i]+ "___" + select_umedida[i] + "___" + idIeps[i] + "___" + tasaIeps[i]+ "___"+ vdescto[i] +"___"+ idcot[i] +"___"+ iddetcot[i] +"___"+stat_reg+"___"+precio_autorizado+"___"+id_user_autoriza+"___"+reqauth[i]+"___"+salvar_registro[i] +"___"+ ret_id[i] +"___"+ ret_tasa[i] +"'";
-                //System.out.println(arreglo[i]);
-            }
+                log.log(Level.INFO, "(java client) Pedido Response valorRetorno: {0}", valorRetorno);
             
+            } catch (StatusRuntimeException e) {
+                jsonretorno.put("success", "Error en llamada a procedimiento remoto.");
+                log.log(Level.SEVERE, "RPC failed: {0}", e.getStatus());
             
-            //Serializar el arreglo
-            String extra_data_array = StringUtils.join(arreglo, ",");
+            } finally {
+                try {
+                    channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
 
-            PotCatCusorder pc = new PotCatCusorder();
-            pc.matrix = extra_data_array;
-            pc.no_cot = folio_cot;
-            pc.usuario_id = id_usuario.toString();
-            pc.comments = observaciones.toUpperCase();
-            pc.salesman_id = id_agente;
-            pc.currency_val = tipo_cambio;
-            pc.purch_order = orden_compra.toUpperCase();
-            pc.tasaretimmex = tasa_ret_immex;
-            pc.date_lim = fecha_compromiso;
-            pc.customer_id = id_cliente;
-            pc.pedido_id = id_pedido.toString();
-            pc.trans = transporte.toUpperCase();
-            pc.delivery_place = lugar_entrega.toUpperCase();
-            pc.allow_desc = permitir_descto;
-            pc.razon_desc = motivo_descuento.toUpperCase();
-            pc.perc_desc = porcentaje_descto;
-            
-            if( id_pedido==0 ){
-                pc.cmd = "new";
-            }else{
-                if(accion_proceso.equals("cancelar")){
-                    pc.cmd = accion_proceso;
-                }else{
-                    pc.cmd = "edit";
+                } catch (InterruptedException e) {
+                    log.log(Level.SEVERE, "Channel shutdown failed.", e);
                 }
             }
+            
+        } else {
+            jsonretorno.put("success", success.get("success"));
+        }
 
-            if (no_cuenta==null) {
-                pc.account = "";
-            }
-            else
-            {
-                pc.account = no_cuenta;
-            }
-
-            if (select_forma_pago==null) {
-                pc.forma_pago_id = new Integer(0).toString();
-            }
-            else {
-                pc.forma_pago_id = select_forma_pago.toString();
-            }
-
-            if (select_uso==null) {
-                pc.uso_id = new Integer(0).toString();
-            }
-            else {
-                pc.uso_id = select_uso.toString();
-            }
-
-            if (select_metodo==null) {
-                pc.met_pago_id = new Integer(0).toString();
-            }
-            else {
-                pc.met_pago_id = select_metodo.toString();
-            }
-            
-            //Verificar valores
-            pc.warehouse_id = StringHelper.verificarSelect(select_almacen);
-            pc.currency_id = StringHelper.verificarSelect(select_moneda);
-            pc.sup_credays_id = StringHelper.verificarSelect(select_condiciones);
-            pc.send_route = StringHelper.verificarCheckBox(check_ruta);
-            pc.send_comments = StringHelper.verificarCheckBox(check_enviar_obser);
-            pc.flete_enable = StringHelper.verificarCheckBox(check_flete);
-            
-            if (id_df.equals("0")){
-                id_df="1";//si viene cero, le asignamos uno para indicar que debe tomar la direccion de la tabla cxc_clie.
-            }
-            pc.cust_df_id = id_df;
-            
-            succes = this.getPocDao().poc_val_cusorder(
-                new Integer(id_usuario),
-                tipo_cambio,
-                fecha_compromiso,
-                select_forma_pago,
-                no_cuenta,
-                extra_data_array);
-            
-            log.log(Level.INFO, "despues de validacion {0}", String.valueOf(succes.get("success")));
-            String actualizo = "0";
-            
-            if( String.valueOf(succes.get("success")).equals("true") ){
-                System.out.println(pc.conform_cat_store());
-                actualizo = this.getPocDao().poc_cat_cusorder(pc);
-                jsonretorno.put("actualizo",String.valueOf(actualizo));
-            }
-            
-            jsonretorno.put("success",String.valueOf(succes.get("success")));
-            
-            log.log(Level.INFO, "Salida json {0}", String.valueOf(jsonretorno.get("success")));
         return jsonretorno;
     }
     
