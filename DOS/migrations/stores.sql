@@ -2907,7 +2907,10 @@ BEGIN
                       noDecUnidad;
                 
                 IF noDecUnidad IS NULL THEN noDecUnidad := 0; END IF;
-                
+
+                --Tomamos la cantidad en la unidad de Venta seleccionada por el usuario
+                cantUnidadVenta := detalle.cantidad;
+
                 --Redondear la cantidad de la Partida
                 detalle.cantidad := round(detalle.cantidad::numeric, noDecUnidad)::double precision;
                 cantUnidadVenta  := round(cantUnidadVenta::numeric, noDecUnidad)::double precision; 
@@ -3320,9 +3323,12 @@ BEGIN
                     
                     IF noDecUnidad IS NULL THEN noDecUnidad := 0; END IF;
 
+                    --Tomamos la cantidad en la unidad de Venta seleccionada por el usuario
+                    cantUnidadVenta := detalle.cantidad;
+
                     --Redondear la cantidad de la Partida
                     detalle.cantidad := round(detalle.cantidad::numeric, noDecUnidad)::double precision;
-                    cantUnidadVenta := round(cantUnidadVenta::numeric, noDecUnidad)::double precision; 
+                    cantUnidadVenta  := round(cantUnidadVenta::numeric, noDecUnidad)::double precision; 
                     
                     --Si el tipo de producto es diferente de 4, hay que RESERVAR existencias
                     --tipo = 4 Servicios

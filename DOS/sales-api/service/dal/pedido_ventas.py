@@ -72,9 +72,6 @@ def edit_pedido(usuario_id,    agente_id,         cliente_id,      cliente_df_id
             )
 
     rmsg = run_stored_procedure(sql)
-    if rmsg[0] != '1':
-        raise Exception(rmsg)
-
     return rmsg[0]
 
 
@@ -92,9 +89,6 @@ def cancel_pedido(pedido_id, usuario_id):
             )
 
     rmsg = run_stored_procedure(sql)
-    if rmsg[0] != '1':
-        raise Exception(rmsg)
-
     return rmsg[0]
 
 

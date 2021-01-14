@@ -40,9 +40,6 @@ def edit_cot(usuario_id, identificador, select_tipo_cotizacion, id_cliente_o_pro
         )
 
     rmsg = run_stored_procedure(sql)
-    if rmsg[0] != '1':
-        raise Exception(rmsg)
-
     return rmsg[0]
 
 

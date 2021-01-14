@@ -30,7 +30,7 @@ class Sales(sales_pb2_grpc.SalesServicer):
             request.extraData
         )
         return sales_pb2.CotResponse(
-            valorRetorno='(python server) valorRetorno: {}'.format(valor_retorno)
+            valorRetorno='{}'.format(valor_retorno)
         )
 
 
@@ -67,7 +67,7 @@ class Sales(sales_pb2_grpc.SalesServicer):
             request.gridDetalle
         )
         return sales_pb2.PedidoResponse(
-            valorRetorno='(python server) valorRetorno: {}'.format(valor_retorno)
+            valorRetorno='{}'.format(valor_retorno)
         )
 
 
@@ -79,7 +79,7 @@ class Sales(sales_pb2_grpc.SalesServicer):
             request.usuarioId
         )
         return sales_pb2.PedidoCancelResponse(
-            valorRetorno='(python server) valorRetorno: {}'.format(valor_retorno)
+            valorRetorno='{}'.format(valor_retorno)
         )
 
 
