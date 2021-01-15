@@ -2181,11 +2181,14 @@ CREATE OR REPLACE FUNCTION public.cot_edit(
 $BODY$
 DECLARE
 
-    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    -- >> Edit a cotizacion         >>
-    -- >> Version: RRM              >>
-    -- >> Date: 10/Dic/2020         >>
-    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    -- >> Name:     Creación/Edición de Cotización                                  >>
+    -- >> Version:  RRM                                                             >>
+    -- >> Date:     10/Dic/2020                                                     >>
+    -- >>                                                                           >>
+    -- >> Si _identificador = 0 entonces se trata de una Creación de Cotización.    >>
+    -- >> Si _identificador > 0 entonces se trata de una Edición de Cotización.     >>
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     -- Estas  variables se utilizan en la mayoria de los catalogos
     requiere_autorizacion boolean;
@@ -2656,13 +2659,16 @@ CREATE FUNCTION public.pedido_edit(
 ) RETURNS character varying
 AS $$
 DECLARE
-    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    -- >> Catalog of customer order    >>
-    -- >> Version: CDGB                >>
-    -- >> Date: 8/Ene/2021             >>
-    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    -- >> Name:     Creación/Edición de Pedido de ventas                            >>
+    -- >> Version:  CDGB                                                            >>
+    -- >> Date:     8/Ene/2021                                                      >>
+    -- >>                                                                           >>
+    -- >> Si _pedido_id = 0 entonces se trata de una Creación de Pedido de ventas.  >>
+    -- >> Si _pedido_id > 0 entonces se trata de una Edición de Pedido de ventas.   >>
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-    --estas  variables se utilizan en la mayoria de los catalogos
+    --estas variables se utilizan en la mayoria de los catalogos
     valor_retorno character varying := '0';
     emp_id integer := 0;
     suc_id integer := 0;
@@ -3825,14 +3831,14 @@ AS $$
 DECLARE
 
     -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    -- >> Name: Cancelación de Pedido de ventas                                    >>
-    -- >> Version: MAZINGER                                                        >>
-    -- >> Date: 13/Ene/2021                                                        >>
+    -- >> Name:     Cancelación de Pedido de ventas                                >>
+    -- >> Version:  MAZINGER                                                       >>
+    -- >> Date:     13/Ene/2021                                                    >>
     -- >>                                                                          >>
     -- >> Si el pedido ya fue autorizado o facturado entonces no podrá cancelarse  >>
     -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-	valor_retorno character varying := '0';
+    valor_retorno character varying := '0';
     id_proceso integer := 0;
     id_proceso_flujo integer := 0;
     warehouse_id integer := 0;
@@ -3846,7 +3852,7 @@ DECLARE
     emp_id integer := 0;
     suc_id integer := 0;
     var_control_exis_pres boolean := FALSE;
-	fila record;
+    fila record;
     facpar record;
 
 BEGIN
@@ -3975,7 +3981,7 @@ BEGIN
         END IF;
     END IF;
 
-	RETURN valor_retorno;
+    RETURN valor_retorno;
 
 END;
 $$ LANGUAGE plpgsql;

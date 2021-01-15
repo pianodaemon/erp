@@ -761,7 +761,7 @@ public class CotizacionesController {
                 } else {
                     jsonretorno.put("success", valorRetorno);
                 }
-                log.log(Level.INFO, "(java client) Cot Response valorRetorno: {0}", valorRetorno);
+                log.log(Level.INFO, "Cot Response valorRetorno: {0}", valorRetorno);
             
             } catch (StatusRuntimeException e) {
                 jsonretorno.put("success", "Error en llamada a procedimiento remoto.");
