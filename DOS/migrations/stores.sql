@@ -3818,13 +3818,20 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE FUNCTION pedido_cancel(
-    _pedido_id integer,
-    _usuario_id integer
-) RETURNS character varying
+CREATE FUNCTION pedido_cancel( _pedido_id integer, _usuario_id integer )
+RETURNS character varying
 AS $$
 
 DECLARE
+
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    -- >> Name: Cancelación de Pedido de ventas                                    >>
+    -- >> Version: MAZINGER                                                        >>
+    -- >> Date: 13/Ene/2021                                                        >>
+    -- >>                                                                          >>
+    -- >> Si el pedido ya fue autorizado o facturado entonces no podrá cancelarse  >>
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 	valor_retorno character varying := '0';
     id_proceso integer := 0;
     id_proceso_flujo integer := 0;
@@ -3837,17 +3844,27 @@ DECLARE
     espacio_tiempo_ejecucion timestamp with time zone = now();
     ano_actual integer := 0;
     emp_id integer := 0;
+    suc_id integer := 0;
     var_control_exis_pres boolean := FALSE;
 	fila record;
+    facpar record;
 
 BEGIN
     SELECT EXTRACT(YEAR FROM espacio_tiempo_ejecucion) INTO ano_actual;
 
-    SELECT gral_suc.empresa_id
+    SELECT gral_suc.empresa_id,
+           gral_usr_suc.gral_suc_id
     FROM   gral_usr_suc
     JOIN   gral_suc ON gral_suc.id = gral_usr_suc.gral_suc_id
     WHERE  gral_usr_suc.gral_usr_id = _usuario_id
-    INTO   emp_id;
+    INTO   emp_id,
+           suc_id;
+
+    -- Obtener parametros para la facturacion
+    SELECT *
+    FROM   fac_par
+    WHERE  gral_suc_id = suc_id
+    INTO   facpar;
 
     -- query para verificar si la Empresa actual tiene control de Existencias por Presentacion
     SELECT control_exis_pres
@@ -3855,13 +3872,13 @@ BEGIN
     WHERE  id = emp_id
     INTO   var_control_exis_pres;
     
-    --Obtener el id del proceso para este pedido
+    -- Obtener el id del proceso para este pedido
     SELECT proceso_id
     FROM   poc_pedidos
     WHERE  id = _pedido_id
     INTO   id_proceso;
     
-    --obtener el id del flujo del proceso
+    -- Obtener el id del flujo del proceso
     SELECT proceso_flujo_id
     FROM   erp_proceso
     WHERE  id = id_proceso
