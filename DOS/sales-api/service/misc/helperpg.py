@@ -3,10 +3,8 @@ import psycopg2.extras
 
 from misc.common import env_property
 
-
 class EmptySetError(Exception):
     pass
-
 
 class ServerError(Exception):
     pass
@@ -77,11 +75,24 @@ def pgslack_connected(func):
     return wrapper
 
 
-def get_msg_pgerror(err):
-    ''' It works only for psycopg2.Error exception. It is called in several places of endpoints layer.
-        Reason for this is that there are cases in which pgerror is None but args does have a message '''
-    if err.pgerror is None:
-        msg = err.args[0]
-    else:
-        msg = err.pgerror
-    return msg
+@pgslack_connected
+def run_stored_procedure(conn, sql):
+    """Runs a stored procedure with rich answer"""
+
+    r = pgslack_exec(conn, sql)
+
+    # For this case we are just expecting one row
+    if len(r) != 1:
+        return ["Unexpected result regarding execution of stored procedure"]
+
+    return r.pop()
+
+
+@pgslack_connected
+def exec_steady(conn, sql):
+    return pgslack_exec(conn, sql)
+
+
+@pgslack_connected
+def update_steady(conn, sql):
+    return pgslack_update(conn, sql)

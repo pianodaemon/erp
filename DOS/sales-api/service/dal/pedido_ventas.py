@@ -1,4 +1,4 @@
-from dal.helper import run_stored_procedure
+from misc.helperpg import run_stored_procedure
 
 def edit_pedido(usuario_id,    agente_id,         cliente_id,      cliente_df_id,
                 almacen_id,    moneda_id,         prov_credias_id, cfdi_met_pago_id,

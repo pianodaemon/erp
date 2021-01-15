@@ -1,10 +1,12 @@
-from dal.helper import run_stored_procedure
+from misc.helperpg import run_stored_procedure
 
-def edit_cot(usuario_id, identificador, select_tipo_cotizacion, id_cliente_o_prospecto,
-    check_descripcion_larga, observaciones, tipo_cambio, moneda_id, fecha, agente_id,
-    vigencia, incluye_iva, tc_usd, extra_data):
+def edit_cot(usuario_id,            identificador,           select_tipo_cotizacion,
+            id_cliente_o_prospecto, check_descripcion_larga, observaciones,
+            tipo_cambio,            moneda_id,               fecha,
+            agente_id,              vigencia,                incluye_iva,
+            tc_usd,                 extra_data):
 
-    grid_renglon_cot_str = renglones_cot_to_comp_type_arr_lit(extra_data)
+    grid_renglon_cot_str = convert_to_sql_array_literal(extra_data)
 
     """Calls database function in order to create/update a quotation"""
     sql = """SELECT * FROM cot_edit(
@@ -43,7 +45,7 @@ def edit_cot(usuario_id, identificador, select_tipo_cotizacion, id_cliente_o_pro
     return rmsg[0]
 
 
-def renglones_cot_to_comp_type_arr_lit(extra_data):
+def convert_to_sql_array_literal(extra_data):
     rens_str = "array["
     first = True
     
