@@ -36,6 +36,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import com.maxima.sales.cli.grpc.PedidoRequest;
 import com.maxima.sales.cli.grpc.PedidoResponse;
+import com.maxima.sales.cli.grpc.PedidoCancelRequest;
+import com.maxima.sales.cli.grpc.PedidoCancelResponse;
 import com.maxima.sales.cli.grpc.SalesGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -794,7 +796,61 @@ public class PocPedidosController {
         return jsonretorno;
     }
     
+    public String getGrpcConnString() {
+
+        String grpcHost = System.getenv("GRPC_HOST"),
+               grpcPort = System.getenv("GRPC_PORT");
+
+         if (grpcHost == null || grpcPort == null) {
+             grpcHost = "127.0.0.1";
+             grpcPort = "10090";
+         }
+
+         return grpcHost + ":" + grpcPort;
+    }
     
+    public void cancelPedido(int pedidoId, int usuarioId, HashMap<String,String> jsonretorno) {
+
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(getGrpcConnString())
+            .usePlaintext()
+            .build();
+            
+        SalesGrpc.SalesBlockingStub blockingStub = SalesGrpc.newBlockingStub(channel);
+        
+        PedidoCancelRequest pedidoCancelRequest =
+            PedidoCancelRequest.newBuilder()
+                .setPedidoId(pedidoId)
+                .setUsuarioId(usuarioId)
+                .build();
+
+        PedidoCancelResponse pedidoCancelResponse;
+
+        try {
+            pedidoCancelResponse = blockingStub.cancelPedido(pedidoCancelRequest);
+            String valorRetorno = pedidoCancelResponse.getValorRetorno();
+
+            if (valorRetorno.equals("1")) {
+                jsonretorno.put("success", "true");
+                jsonretorno.put("actualizo", valorRetorno);
+
+            } else {
+                jsonretorno.put("success", valorRetorno);
+            }
+            log.log(Level.INFO, "Pedido Cancel Response valorRetorno: {0}", valorRetorno);
+
+        } catch (StatusRuntimeException e) {
+            jsonretorno.put("success", "Error en llamada a procedimiento remoto.");
+            log.log(Level.SEVERE, "RPC failed: {0}", e.getStatus());
+
+        } finally {
+            try {
+                channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+
+            } catch (InterruptedException e) {
+                log.log(Level.SEVERE, "Channel shutdown failed.", e);
+            }
+        }
+    }
     
     //Edicion, nuevo y cancelacion
     @RequestMapping(method = RequestMethod.POST, value="/edit.json")
@@ -878,6 +934,12 @@ public class PocPedidosController {
 
         Integer id_usuario = user.getUserId();
         String folio_cot = "";
+        HashMap<String, String> jsonretorno = new HashMap<String, String>();
+        
+        if (accion_proceso.equals("cancelar")) {
+            cancelPedido(id_pedido.intValue(), id_usuario.intValue(), jsonretorno);
+            return jsonretorno;
+        }
 
         String arreglo[] = new String[eliminado.length];
         
@@ -1049,7 +1111,6 @@ public class PocPedidosController {
             .setNumCuenta(pc.account)
             .setFolioCot(pc.no_cot);
 
-        HashMap<String, String> jsonretorno = new HashMap<String, String>();
         HashMap<String, String> success = this.getPocDao().poc_val_cusorder(
             new Integer(id_usuario),
             tipo_cambio,
@@ -1064,15 +1125,7 @@ public class PocPedidosController {
 
             System.out.println(pc.conform_cat_store());
 
-            String grpcHost = System.getenv("GRPC_HOST"),
-                   grpcPort = System.getenv("GRPC_PORT");
-            
-            if (grpcHost == null || grpcPort == null) {
-                grpcHost = "127.0.0.1";
-                grpcPort = "10090";
-            }
-            
-            ManagedChannel channel = ManagedChannelBuilder.forTarget(grpcHost + ":" + grpcPort)
+            ManagedChannel channel = ManagedChannelBuilder.forTarget(getGrpcConnString())
                 .usePlaintext()
                 .build();
             
@@ -1092,7 +1145,7 @@ public class PocPedidosController {
                 } else {
                     jsonretorno.put("success", valorRetorno);
                 }
-                log.log(Level.INFO, "(java client) Pedido Response valorRetorno: {0}", valorRetorno);
+                log.log(Level.INFO, "Pedido Response valorRetorno: {0}", valorRetorno);
             
             } catch (StatusRuntimeException e) {
                 jsonretorno.put("success", "Error en llamada a procedimiento remoto.");
