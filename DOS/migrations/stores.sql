@@ -3985,3 +3985,426 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
+
+
+CREATE FUNCTION pedido_auth(
+    _pedido_id  integer,
+    _usuario_id integer
+) RETURNS character varying
+AS $$
+
+DECLARE
+
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    -- >> Name:     Autorización de Pedido de ventas                               >>
+    -- >> Version:  MAZINGER                                                       >>
+    -- >> Date:     15/Ene/2021                                                    >>
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+    espacio_tiempo_ejecucion timestamp with time zone = now();
+    id_almacen integer                    := 0;
+    obser_prefactura text                 := '';
+    ultimo_id integer                     := 0;
+    sql_select character varying          := '';
+    emp_id integer                        := 0;
+    suc_id integer                        := 0;
+    tipo_prod integer                     := 0;
+    --Id de la unidad de medida del producto
+    idUnidadMedida integer                := 0;
+    --Nombre de la unidad de medida del producto
+    nombreUnidadMedida character varying  := 0;
+    --Densidad del producto
+    densidadProd double precision         := 0;
+    --numero de decimales permitidos para la unidad
+    noDecUnidad integer                   := 0;
+    match_cadena boolean                  := FALSE;
+    --Variable para controlar la creacion de un registro en la tabla header de requisiciones cuando la configuracion lo permita
+    header_requisicion_generada boolean   := FALSE;
+    id_tipo_consecutivo integer           := 0;
+    prefijo_consecutivo character varying := '';
+    nuevo_consecutivo bigint              := 0;
+    nuevo_folio character varying         := '';
+    ultimo_id2 integer                    := 0;
+    cantidad_produccion double precision  := 0;
+    valor_retorno character varying       := 0;
+    pedido record;
+    facpar record;
+    fila record;
+
+BEGIN
+    --actualiza el pedido con datos del usuario que autoriza
+    UPDATE poc_pedidos
+       SET momento_autorizacion = espacio_tiempo_ejecucion,
+           gral_usr_id_autoriza = _usuario_id
+     WHERE id = _pedido_id;
+    
+    --extraer datos del pedido
+    SELECT *
+      FROM poc_pedidos
+     WHERE id = _pedido_id
+      INTO pedido;
+    
+    id_almacen := pedido.inv_alm_id;
+
+    SELECT gral_suc.empresa_id,
+           gral_usr_suc.gral_suc_id
+      FROM gral_usr_suc 
+      JOIN gral_suc ON gral_suc.id = gral_usr_suc.gral_suc_id
+     WHERE gral_usr_suc.gral_usr_id = _usuario_id
+      INTO emp_id,
+           suc_id;
+    
+    --Obtener parametros para la facturacion
+    SELECT *
+      FROM fac_par
+     WHERE gral_suc_id = suc_id
+      INTO facpar;
+    
+    IF pedido.cancelado = FALSE THEN
+        
+        --Actualiza el flujo del proceso a 2=Prefactura
+        UPDATE erp_proceso
+           SET proceso_flujo_id = 2
+         WHERE id = pedido.proceso_id;
+        
+        IF pedido.lugar_entrega != '' AND pedido.lugar_entrega IS NOT NULL THEN
+            obser_prefactura := 'LUGAR DE ENTREGA: ' || pedido.lugar_entrega;
+        ELSE
+            obser_prefactura := '';
+        END IF;
+        
+        --si enviar_obser_fac=true, hay que enviar las observaciones del pedido a las observaciones de la prefactura
+        IF pedido.enviar_obser_fac = TRUE THEN
+            --verificamos que las observaciones del pedido no venga vacio
+            IF pedido.observaciones != '' AND pedido.observaciones IS NOT NULL THEN
+
+                IF obser_prefactura != '' THEN
+                    --si obser_prefactura no viene vacio, le agregamos un salto de linea
+                    obser_prefactura := obser_prefactura || E'\n';
+                END IF;
+                
+                obser_prefactura := obser_prefactura || pedido.observaciones;
+            END IF;
+
+        END IF;
+        
+        --Crear registro en la tabla erp_prefacturas y retorna el id del registro creado
+        INSERT INTO  erp_prefacturas(
+            proceso_id,             --pedido.proceso_id,
+            folio_pedido,           --pedido.folio,
+            cliente_id,             --pedido.cxc_clie_id,
+            moneda_id,              --pedido.moneda_id,
+            --observaciones,        --pedido.observaciones,
+            observaciones,          --obser_prefactura,
+            subtotal,               --pedido.subtotal,
+            impuesto,               --pedido.impuesto,
+            monto_retencion,        --pedido.monto_retencion,
+            total,                  --pedido.total,
+            tasa_retencion_immex,   --pedido.tasa_retencion_immex,
+            tipo_cambio,            --pedido.tipo_cambio,
+            empleado_id,            --pedido.cxc_agen_id,
+            terminos_id,            --pedido.cxp_prov_credias_id
+            orden_compra,           --pedido.orden_compra,
+            fac_metodos_pago_id,    --pedido.fac_metodos_pago_id,
+            no_cuenta,              --pedido.no_cuenta,
+            enviar_ruta,            --pedido.enviar_ruta,
+            inv_alm_id,             --pedido.inv_alm_id,
+            cxc_clie_df_id,         --pedido.cxc_clie_df_id,
+            refacturar,             --false,
+            id_usuario_creacion,    --_usuario_id,
+            momento_creacion,       --espacio_tiempo_ejecucion
+            monto_ieps,             --pedido.monto_ieps
+            monto_descto,           --pedido.monto_descto
+            motivo_descto,          --pedido.motivo_descto
+            cfdi_usos_id,
+            cfdi_metodo_id
+        ) VALUES (
+            pedido.proceso_id,
+            pedido.folio,
+            pedido.cxc_clie_id,
+            pedido.moneda_id,
+            --pedido.observaciones,
+            obser_prefactura,
+            pedido.subtotal,
+            pedido.impuesto,
+            pedido.monto_retencion,
+            pedido.total,
+            pedido.tasa_retencion_immex,
+            pedido.tipo_cambio,
+            pedido.cxc_agen_id,
+            pedido.cxp_prov_credias_id,
+            pedido.orden_compra,
+            pedido.fac_metodos_pago_id,
+            pedido.no_cuenta,
+            pedido.enviar_ruta,
+            pedido.inv_alm_id,
+            pedido.cxc_clie_df_id,
+            FALSE,
+            _usuario_id,
+            espacio_tiempo_ejecucion,
+            pedido.monto_ieps,
+            pedido.monto_descto,
+            pedido.motivo_descto,
+            pedido.cfdi_usos_id,
+            pedido.cfdi_metodo_id
+        ) RETURNING id into ultimo_id;
+        
+        --Extraer datos del detalle del pedido
+        sql_select := 'SELECT *, 0::integer as depto_id, 0::integer as empleado_id FROM poc_pedidos_detalle WHERE poc_pedido_id = ' || _pedido_id;
+        
+        --RAISE EXCEPTION '%','sql_select: '||sql_select;
+        
+        --crea registros para tabla erp_prefacturas_detalles
+        FOR fila IN EXECUTE (sql_select) LOOP
+            
+            INSERT INTO erp_prefacturas_detalles(
+                prefacturas_id,
+                producto_id,
+                presentacion_id,
+                tipo_impuesto_id,
+                valor_imp,
+                cantidad,
+                precio_unitario,
+                reservado,
+                inv_prod_unidad_id,
+                gral_ieps_id,
+                valor_ieps,
+                descto,
+                gral_imptos_ret_id,
+                tasa_ret
+            ) VALUES (
+                ultimo_id,
+                fila.inv_prod_id,
+                fila.presentacion_id,
+                fila.gral_imp_id,
+                fila.valor_imp,
+                fila.cantidad,
+                fila.precio_unitario,
+                fila.reservado,
+                fila.inv_prod_unidad_id,
+                fila.gral_ieps_id,
+                fila.valor_ieps,
+                fila.descto,
+                fila.gral_imptos_ret_id,
+                fila.tasa_ret
+            );
+            
+            IF facpar.cambiar_unidad_medida THEN
+                --Obtener datos del Producto
+                SELECT inv_prod.tipo_de_producto_id AS tipo_producto,
+                       inv_prod.unidad_id,
+                       inv_prod_unidades.titulo,
+                       inv_prod.densidad,
+                       (CASE WHEN inv_prod_unidades.id IS NULL
+                            THEN 0
+                            ELSE inv_prod_unidades.decimales
+                        END) AS no_dec
+                  FROM inv_prod LEFT JOIN inv_prod_unidades ON inv_prod_unidades.id = inv_prod.unidad_id
+                 WHERE inv_prod.id = fila.inv_prod_id
+                  INTO tipo_prod,
+                       idUnidadMedida,
+                       nombreUnidadMedida,
+                       densidadProd,
+                       noDecUnidad;
+                
+                IF noDecUnidad IS NULL THEN
+                    noDecUnidad := 0;
+                END IF;
+                
+                IF idUnidadMedida::integer <> fila.inv_prod_unidad_id THEN
+
+                    IF densidadProd IS NULL OR densidadProd = 0 THEN
+                        densidadProd := 1;
+                    END IF;
+                    
+                    EXECUTE 'select ''' || nombreUnidadMedida || ''' ~* ''KILO*'';'
+                       INTO match_cadena;
+
+                    IF match_cadena = TRUE THEN
+                        --Convertir a kilos
+                        fila.cantidad := fila.cantidad::double precision * densidadProd;
+                        fila.cantidad := round(fila.cantidad::numeric, noDecUnidad)::double precision;
+                    ELSE
+                        EXECUTE 'select ''' || nombreUnidadMedida || ''' ~* ''LITRO*'';'
+                           INTO match_cadena;
+
+                        IF match_cadena = TRUE THEN 
+                            --Convertir a Litros
+                            fila.cantidad := fila.cantidad::double precision / densidadProd;
+                            fila.cantidad := round(fila.cantidad::numeric, noDecUnidad)::double precision;
+                        END IF;
+                    END IF;
+                END IF;
+            END IF;
+
+            --Aqui debe entrar cuando la partida va a Requisicion de Compra
+            IF fila.backorder = FALSE AND fila.requisicion = TRUE THEN 
+
+                IF header_requisicion_generada = FALSE THEN
+                    id_tipo_consecutivo := 32;--consecutivo de Requisicion
+                    
+                    --Aqui entra para tomar el consecutivo de la Requisicion de la sucursal actual
+                    UPDATE gral_cons
+                       SET consecutivo = (
+                           SELECT sbt.consecutivo + 1
+                             FROM gral_cons AS sbt
+                            WHERE sbt.id = gral_cons.id
+                           )
+                     WHERE gral_emp_id       = emp_id
+                       AND gral_suc_id       = suc_id
+                       AND gral_cons_tipo_id = id_tipo_consecutivo
+                    RETURNING prefijo,
+                              consecutivo
+                         INTO prefijo_consecutivo,
+                              nuevo_consecutivo;
+                    
+                    --Concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio
+                    nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+
+                    --Obtener id del empleado y departamento la que pertenece el usuario
+                    --select gral_empleados.id, gral_empleados.gral_depto_id from gral_usr join gral_empleados on gral_empleados.id=gral_usr.gral_empleados_id into fila.empleado_id, fila.depto_id;
+                    
+                    SELECT gral_empleados.id,
+                           gral_empleados.gral_depto_id
+                      FROM gral_empleados
+                     WHERE gral_empleados.id = pedido.cxc_agen_id 
+                      INTO fila.empleado_id,
+                           fila.depto_id;
+                    
+                    IF fila.empleado_id IS NULL THEN
+                        fila.empleado_id := 0;
+                    END IF;
+
+                    IF fila.depto_id IS NULL THEN
+                        fila.depto_id:=0;
+                    END IF;
+                    
+                    --Tipo 1=Requisiciones creadas manualmente, 2=Requisiciones generadas desde un pedido.
+                    INSERT INTO com_oc_req(
+                        folio,
+                        fecha_compromiso,
+                        observaciones,
+                        cancelado,
+                        borrado_logico,
+                        gral_emp_id,
+                        gral_suc_id,
+                        momento_creacion,
+                        gral_usr_id_creacion,
+                        gral_empleado_id,
+                        gral_depto_id,
+                        folio_pedido,
+                        tipo
+                    ) VALUES (
+                        nuevo_folio,
+                        pedido.fecha_compromiso,
+                        pedido.observaciones,
+                        FALSE,
+                        FALSE,
+                        emp_id,
+                        suc_id,
+                        espacio_tiempo_ejecucion,
+                        _usuario_id,
+                        fila.empleado_id,
+                        fila.depto_id,
+                        pedido.folio,
+                        2
+                    ) RETURNING id INTO ultimo_id2;
+                    
+                    --Cambiar bandera para indicar que ya se generó el header de la tabla de requisiciones
+                    header_requisicion_generada := true;
+                END IF;
+                
+                --Aqui se calcula la cantidad que se debe enviar a la requisicion de compra
+                cantidad_produccion := fila.cantidad - fila.reservado;
+                
+                --Genera registro en la tabla detalle de la requisicion
+                INSERT INTO com_oc_req_detalle(
+                    com_oc_req_id,
+                    inv_prod_id,
+                    presentacion_id,
+                    cantidad
+                ) VALUES (
+                    ultimo_id2,
+                    fila.inv_prod_id,
+                    fila.presentacion_id,
+                    cantidad_produccion
+                );
+                
+            END IF;
+            
+            
+            --Aqui debe entrar solo cuando la partida va a backorder de produccion
+            IF fila.backorder = TRUE AND fila.requisicion = FALSE THEN 
+                --Folio backorder
+                id_tipo_consecutivo := 24;
+                
+                --aqui entra para tomar el consecutivo del pedido de la sucursal actual
+                UPDATE gral_cons
+                   SET consecutivo = (
+                        SELECT sbt.consecutivo + 1
+                          FROM gral_cons AS sbt
+                         WHERE sbt.id = gral_cons.id
+                       )
+                 WHERE gral_emp_id       = emp_id
+                   AND gral_suc_id       = suc_id
+                   AND gral_cons_tipo_id = id_tipo_consecutivo
+                RETURNING prefijo,
+                          consecutivo
+                     INTO prefijo_consecutivo,
+                          nuevo_consecutivo;
+                --suc_id_consecutivo
+                
+                --concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio del pedido
+                nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+                
+                cantidad_produccion := fila.cantidad - fila.reservado;
+                
+                INSERT INTO poc_ped_bo(
+                    folio,
+                    poc_ped_detalle_id,
+                    inv_prod_id,
+                    cantidad,
+                    inv_alm_id,
+                    inv_mov_tipo_id,
+                    cxc_clie_id,
+                    orden_compra,
+                    observaciones,
+                    autorizado,
+                    momento_autorizacion,
+                    momento_creacion,
+                    gral_usr_id_autoriza,
+                    gral_usr_id_creacion,
+                    gral_emp_id,
+                    gral_suc_id
+                ) VALUES (
+                    nuevo_folio,
+                    fila.id,
+                    fila.inv_prod_id,
+                    cantidad_produccion,
+                    id_almacen,
+                    0,
+                    pedido.cxc_clie_id,
+                    pedido.orden_compra,
+                    pedido.observaciones,
+                    TRUE,
+                    espacio_tiempo_ejecucion,
+                    espacio_tiempo_ejecucion,
+                    _usuario_id,
+                    _usuario_id,
+                    emp_id,
+                    suc_id
+                );
+            END IF;
+            
+        END LOOP;
+        
+        valor_retorno := '1';
+
+    ELSE
+        valor_retorno := 'El pedido fue CANCELADO en un proceso anterior. No se puede Autorizar.';
+    END IF;
+
+    RETURN valor_retorno;
+
+END;
+$$ LANGUAGE plpgsql;
