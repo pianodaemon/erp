@@ -796,7 +796,7 @@ public class PocPedidosController {
         return jsonretorno;
     }
     
-    public String getGrpcConnString() {
+    private String getGrpcConnString() {
 
         String grpcHost = System.getenv("GRPC_HOST"),
                grpcPort = System.getenv("GRPC_PORT");
@@ -809,7 +809,7 @@ public class PocPedidosController {
          return grpcHost + ":" + grpcPort;
     }
     
-    public void cancelPedido(int pedidoId, int usuarioId, HashMap<String,String> jsonretorno) {
+    private void cancelPedido(int pedidoId, int usuarioId, HashMap<String,String> jsonretorno) {
 
         ManagedChannel channel = ManagedChannelBuilder.forTarget(getGrpcConnString())
             .usePlaintext()
@@ -850,6 +850,16 @@ public class PocPedidosController {
                 log.log(Level.SEVERE, "Channel shutdown failed.", e);
             }
         }
+    }
+    
+    private int toInt(String str) {
+        String res = str.trim();
+        return res.equals("") ? 0 : Integer.parseInt(res);
+    }
+    
+    private double toDouble(String str) {
+        String res = str.trim();
+        return res.equals("") ? 0.0 : Double.parseDouble(res);
     }
     
     //Edicion, nuevo y cancelacion
@@ -993,26 +1003,26 @@ public class PocPedidosController {
 
             pedidoRequestBuilder.addGridDetalle(
                 PedidoRequest.GridRenglonPedido.newBuilder()
-                    .setId(Integer.parseInt(iddetalle[i]))
-                    .setToKeep(Integer.parseInt(eliminado[i]))
-                    .setInvProdId(Integer.parseInt(idproducto[i]))
-                    .setPresentacionId(Integer.parseInt(id_presentacion[i]))
-                    .setCantidad(Double.parseDouble(cantidad[i]))
-                    .setPrecioUnitario(Double.parseDouble(costo[i]))
-                    .setGralImpId(Integer.parseInt(id_impuesto[i]))
-                    .setValorImp(Double.parseDouble(valor_imp[i]))
-                    .setInvProdUnidadId(Integer.parseInt(select_umedida[i]))
-                    .setGralIepsId(Integer.parseInt(idIeps[i]))
-                    .setValorIeps(Double.parseDouble(tasaIeps[i]))
-                    .setDescto(Double.parseDouble(vdescto[i]))
-                    .setCotId(Integer.parseInt(idcot[i]))
-                    .setCotDetalleId(Integer.parseInt(iddetcot[i]))
+                    .setId(toInt(iddetalle[i]))
+                    .setToKeep(toInt(eliminado[i]))
+                    .setInvProdId(toInt(idproducto[i]))
+                    .setPresentacionId(toInt(id_presentacion[i]))
+                    .setCantidad(toDouble(cantidad[i]))
+                    .setPrecioUnitario(toDouble(costo[i]))
+                    .setGralImpId(toInt(id_impuesto[i]))
+                    .setValorImp(toDouble(valor_imp[i]))
+                    .setInvProdUnidadId(toInt(select_umedida[i]))
+                    .setGralIepsId(toInt(idIeps[i]))
+                    .setValorIeps(toDouble(tasaIeps[i]))
+                    .setDescto(toDouble(vdescto[i]))
+                    .setCotId(toInt(idcot[i]))
+                    .setCotDetalleId(toInt(iddetcot[i]))
                     .setRequiereAut(Boolean.parseBoolean(reqauth[i]))
                     .setAutorizado(Boolean.parseBoolean(stat_reg))
-                    .setPrecioAut(Double.parseDouble(precio_autorizado))
-                    .setGralUsrIdAut(Integer.parseInt(id_user_autoriza))
-                    .setGralImptosRetId(Integer.parseInt(ret_id[i]))
-                    .setTasaRet(Double.parseDouble(ret_tasa[i])));
+                    .setPrecioAut(toDouble(precio_autorizado))
+                    .setGralUsrIdAut(toInt(id_user_autoriza))
+                    .setGralImptosRetId(toInt(ret_id[i]))
+                    .setTasaRet(toDouble(ret_tasa[i])));
         }
 
         //Serializar el arreglo
