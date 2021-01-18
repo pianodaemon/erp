@@ -654,20 +654,20 @@ public class CotizacionesController {
             
             cotRequestBuilder.addExtraData(
                 CotRequest.GridRenglonCot.newBuilder()
-                    .setRemovido(Integer.parseInt(eliminado[i]))
+                    .setRemovido(Helper.toInt(eliminado[i]))
                     .setIdDetalle(detalleId)
-                    .setIdProducto(Integer.parseInt(idproducto[i]))
-                    .setIdPresentacion(Integer.parseInt(id_presentacion[i]))
-                    .setCantidad(Double.parseDouble(cantidad[i]))
-                    .setPrecio(Double.parseDouble(StringHelper.removerComas(precio[i])))
-                    .setMonedaGrId(Integer.parseInt(monedagrid[i]))
+                    .setIdProducto(Helper.toInt(idproducto[i]))
+                    .setIdPresentacion(Helper.toInt(id_presentacion[i]))
+                    .setCantidad(Helper.toDouble(cantidad[i]))
+                    .setPrecio(Helper.toDouble(StringHelper.removerComas(precio[i])))
+                    .setMonedaGrId(Helper.toInt(monedagrid[i]))
                     .setNotr(notr[i])
-                    .setIdImpProd(Integer.parseInt(id_imp_prod[i]))
-                    .setValorImp(Double.parseDouble(valor_imp[i]))
-                    .setUnidadId(Integer.parseInt(select_umedida[i]))
+                    .setIdImpProd(Helper.toInt(id_imp_prod[i]))
+                    .setValorImp(Helper.toDouble(valor_imp[i]))
+                    .setUnidadId(Helper.toInt(select_umedida[i]))
                     .setStatusAutorizacion(Boolean.parseBoolean(stat_reg))
-                    .setPrecioAutorizado(Double.parseDouble(precio_autorizado))
-                    .setIdUserAut(Integer.parseInt(id_user_autoriza))
+                    .setPrecioAutorizado(Helper.toDouble(precio_autorizado))
+                    .setIdUserAut(Helper.toInt(id_user_autoriza))
                     .setRequiereAutorizacion(Boolean.parseBoolean(reqauth[i]))
                     .setSalvarRegistro(salvar_registro[i]));
         }
@@ -714,17 +714,17 @@ public class CotizacionesController {
         cotRequestBuilder
             .setUsuarioId(id_usuario.intValue())
             .setIdentificador(cotId)
-            .setSelectTipoCotizacion(Integer.parseInt(select_tipo_cotizacion))
-            .setIdClienteOProspecto(Integer.parseInt(id_cliente))
+            .setSelectTipoCotizacion(Helper.toInt(select_tipo_cotizacion))
+            .setIdClienteOProspecto(Helper.toInt(id_cliente))
             .setCheckDescripcionLarga(Boolean.parseBoolean(check_descripcion_larga))
             .setObservaciones(observaciones.toUpperCase())
-            .setTipoCambio(Double.parseDouble(tc))
-            .setMonedaId(Integer.parseInt(moneda_id))
+            .setTipoCambio(Helper.toDouble(tc))
+            .setMonedaId(Helper.toInt(moneda_id))
             .setFecha(fecha)
-            .setAgenteId(Integer.parseInt(select_agente))
-            .setVigencia(Integer.parseInt(vigencia))
+            .setAgenteId(Helper.toInt(select_agente))
+            .setVigencia(Helper.toInt(vigencia))
             .setIncluyeIva(Boolean.parseBoolean(check_incluye_iva))
-            .setTcUSD(Double.parseDouble(tc_usd));
+            .setTcUSD(Helper.toDouble(tc_usd));
 
         HashMap<String, String> jsonretorno = new HashMap<String, String>();
         HashMap<String, String> success = this.getPocDao()
@@ -733,16 +733,8 @@ public class CotizacionesController {
         log.log(Level.INFO, "Resultado de validacion Cot: {0}", success.get("success"));
 
         if(success.get("success").equals("true")) {
-
-            String grpcHost = System.getenv("GRPC_HOST"),
-                   grpcPort = System.getenv("GRPC_PORT");
             
-            if (grpcHost == null || grpcPort == null) {
-                grpcHost = "127.0.0.1";
-                grpcPort = "10090";
-            }
-            
-            ManagedChannel channel = ManagedChannelBuilder.forTarget(grpcHost + ":" + grpcPort)
+            ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString())
                 .usePlaintext()
                 .build();
             

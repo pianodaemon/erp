@@ -796,22 +796,10 @@ public class PocPedidosController {
         return jsonretorno;
     }
     
-    private String getGrpcConnString() {
-
-        String grpcHost = System.getenv("GRPC_HOST"),
-               grpcPort = System.getenv("GRPC_PORT");
-
-         if (grpcHost == null || grpcPort == null) {
-             grpcHost = "127.0.0.1";
-             grpcPort = "10090";
-         }
-
-         return grpcHost + ":" + grpcPort;
-    }
     
     private void cancelPedido(int pedidoId, int usuarioId, HashMap<String,String> jsonretorno) {
 
-        ManagedChannel channel = ManagedChannelBuilder.forTarget(getGrpcConnString())
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString())
             .usePlaintext()
             .build();
             
@@ -852,15 +840,6 @@ public class PocPedidosController {
         }
     }
     
-    private int toInt(String str) {
-        String res = str.trim();
-        return res.equals("") ? 0 : Integer.parseInt(res);
-    }
-    
-    private double toDouble(String str) {
-        String res = str.trim();
-        return res.equals("") ? 0.0 : Double.parseDouble(res);
-    }
     
     //Edicion, nuevo y cancelacion
     @RequestMapping(method = RequestMethod.POST, value="/edit.json")
@@ -1003,26 +982,26 @@ public class PocPedidosController {
 
             pedidoRequestBuilder.addGridDetalle(
                 PedidoRequest.GridRenglonPedido.newBuilder()
-                    .setId(toInt(iddetalle[i]))
-                    .setToKeep(toInt(eliminado[i]))
-                    .setInvProdId(toInt(idproducto[i]))
-                    .setPresentacionId(toInt(id_presentacion[i]))
-                    .setCantidad(toDouble(cantidad[i]))
-                    .setPrecioUnitario(toDouble(costo[i]))
-                    .setGralImpId(toInt(id_impuesto[i]))
-                    .setValorImp(toDouble(valor_imp[i]))
-                    .setInvProdUnidadId(toInt(select_umedida[i]))
-                    .setGralIepsId(toInt(idIeps[i]))
-                    .setValorIeps(toDouble(tasaIeps[i]))
-                    .setDescto(toDouble(vdescto[i]))
-                    .setCotId(toInt(idcot[i]))
-                    .setCotDetalleId(toInt(iddetcot[i]))
+                    .setId(Helper.toInt(iddetalle[i]))
+                    .setToKeep(Helper.toInt(eliminado[i]))
+                    .setInvProdId(Helper.toInt(idproducto[i]))
+                    .setPresentacionId(Helper.toInt(id_presentacion[i]))
+                    .setCantidad(Helper.toDouble(cantidad[i]))
+                    .setPrecioUnitario(Helper.toDouble(costo[i]))
+                    .setGralImpId(Helper.toInt(id_impuesto[i]))
+                    .setValorImp(Helper.toDouble(valor_imp[i]))
+                    .setInvProdUnidadId(Helper.toInt(select_umedida[i]))
+                    .setGralIepsId(Helper.toInt(idIeps[i]))
+                    .setValorIeps(Helper.toDouble(tasaIeps[i]))
+                    .setDescto(Helper.toDouble(vdescto[i]))
+                    .setCotId(Helper.toInt(idcot[i]))
+                    .setCotDetalleId(Helper.toInt(iddetcot[i]))
                     .setRequiereAut(Boolean.parseBoolean(reqauth[i]))
                     .setAutorizado(Boolean.parseBoolean(stat_reg))
-                    .setPrecioAut(toDouble(precio_autorizado))
-                    .setGralUsrIdAut(toInt(id_user_autoriza))
-                    .setGralImptosRetId(toInt(ret_id[i]))
-                    .setTasaRet(toDouble(ret_tasa[i])));
+                    .setPrecioAut(Helper.toDouble(precio_autorizado))
+                    .setGralUsrIdAut(Helper.toInt(id_user_autoriza))
+                    .setGralImptosRetId(Helper.toInt(ret_id[i]))
+                    .setTasaRet(Helper.toDouble(ret_tasa[i])));
         }
 
         //Serializar el arreglo
@@ -1094,20 +1073,20 @@ public class PocPedidosController {
         pc.cust_df_id = id_df;
         
         pedidoRequestBuilder
-            .setUsuarioId(Integer.parseInt(pc.usuario_id))
-            .setAgenteId(Integer.parseInt(pc.salesman_id))
-            .setClienteId(Integer.parseInt(pc.customer_id))
-            .setClienteDfId(Integer.parseInt(pc.cust_df_id))
-            .setAlmacenId(Integer.parseInt(pc.warehouse_id))
-            .setMonedaId(Integer.parseInt(pc.currency_id))
-            .setProvCrediasId(Integer.parseInt(pc.sup_credays_id))
-            .setCfdiMetPagoId(Integer.parseInt(pc.met_pago_id))
-            .setFormaPagoId(Integer.parseInt(pc.forma_pago_id))
-            .setCfdiUsoId(Integer.parseInt(pc.uso_id))
-            .setPedidoId(Integer.parseInt(pc.pedido_id))
-            .setTasaRetencionImmex(Double.parseDouble(pc.tasaretimmex))
-            .setTipoCambio(Double.parseDouble(pc.currency_val))
-            .setPorcentajeDescto(Double.parseDouble(pc.perc_desc))
+            .setUsuarioId(Helper.toInt(pc.usuario_id))
+            .setAgenteId(Helper.toInt(pc.salesman_id))
+            .setClienteId(Helper.toInt(pc.customer_id))
+            .setClienteDfId(Helper.toInt(pc.cust_df_id))
+            .setAlmacenId(Helper.toInt(pc.warehouse_id))
+            .setMonedaId(Helper.toInt(pc.currency_id))
+            .setProvCrediasId(Helper.toInt(pc.sup_credays_id))
+            .setCfdiMetPagoId(Helper.toInt(pc.met_pago_id))
+            .setFormaPagoId(Helper.toInt(pc.forma_pago_id))
+            .setCfdiUsoId(Helper.toInt(pc.uso_id))
+            .setPedidoId(Helper.toInt(pc.pedido_id))
+            .setTasaRetencionImmex(Helper.toDouble(pc.tasaretimmex))
+            .setTipoCambio(Helper.toDouble(pc.currency_val))
+            .setPorcentajeDescto(Helper.toDouble(pc.perc_desc))
             .setDesctoAllowed(Boolean.parseBoolean(pc.allow_desc))
             .setEnviarObserFac(Boolean.parseBoolean(pc.send_comments))
             .setFleteEnabled(Boolean.parseBoolean(pc.flete_enable))
@@ -1135,7 +1114,7 @@ public class PocPedidosController {
 
             System.out.println(pc.conform_cat_store());
 
-            ManagedChannel channel = ManagedChannelBuilder.forTarget(getGrpcConnString())
+            ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString())
                 .usePlaintext()
                 .build();
             
