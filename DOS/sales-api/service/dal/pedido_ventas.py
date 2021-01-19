@@ -92,6 +92,23 @@ def cancel_pedido(pedido_id, usuario_id):
     return rmsg[0]
 
 
+def auth_pedido(pedido_id, usuario_id):
+
+    """Calls database function in order to authorize a sales order"""
+    sql = """
+            SELECT * FROM pedido_auth(
+                {}::integer,    
+                {}::integer
+            ) AS msg
+            """.format(
+                pedido_id,
+                usuario_id
+            )
+
+    rmsg = run_stored_procedure(sql)
+    return rmsg[0]
+
+
 def convert_to_sql_array_literal(grid_detalle):
     rens_str = "array["
     first = True

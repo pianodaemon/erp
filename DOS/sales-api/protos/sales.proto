@@ -6,14 +6,17 @@ option java_outer_classname = "SalesProto";
 
 package grpc;
 
+// -------------------------------------------------------------------------
 // The sales service definition.
 service Sales {
   rpc EditCot (CotRequest) returns (CotResponse) {}
   rpc EditPedido (PedidoRequest) returns (PedidoResponse) {}
   rpc CancelPedido (PedidoCancelRequest) returns (PedidoCancelResponse) {}
+  rpc AuthPedido (PedidoAuthRequest) returns (PedidoAuthResponse) {}
 }
 
 
+// -------------------------------------------------------------------------
 // The request message containing the quotation's parameters
 message CotRequest {
   int32 usuarioId            = 1;
@@ -57,6 +60,7 @@ message CotResponse {
 }
 
 
+// -------------------------------------------------------------------------
 // The request message containing the sales order's parameters
 message PedidoRequest {
   int32 usuarioId           = 1;
@@ -117,6 +121,7 @@ message PedidoResponse {
 }
 
 
+// -------------------------------------------------------------------------
 // The request message containing the sales order's cancellation parameters
 message PedidoCancelRequest {
   int32 pedidoId  = 1;
@@ -125,5 +130,18 @@ message PedidoCancelRequest {
 
 // The response message containing the sales order's cancellation results
 message PedidoCancelResponse {
+  string valorRetorno = 1;
+}
+
+
+// -------------------------------------------------------------------------
+// The request message containing the sales order's authorization parameters
+message PedidoAuthRequest {
+  int32 pedidoId  = 1;
+  int32 usuarioId = 2;
+}
+
+// The response message containing the sales order's authorization results
+message PedidoAuthResponse {
   string valorRetorno = 1;
 }

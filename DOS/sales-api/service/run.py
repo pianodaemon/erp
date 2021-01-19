@@ -83,6 +83,18 @@ class Sales(sales_pb2_grpc.SalesServicer):
         )
 
 
+    def AuthPedido(self, request, context):
+        print(request)
+
+        valor_retorno = pedido_ventas.auth_pedido(
+            request.pedidoId,
+            request.usuarioId
+        )
+        return sales_pb2.PedidoAuthResponse(
+            valorRetorno='{}'.format(valor_retorno)
+        )
+
+
 def _engage():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     sales_pb2_grpc.add_SalesServicer_to_server(Sales(), server)
