@@ -923,13 +923,6 @@ public class PocPedidosController {
 
         Integer id_usuario = user.getUserId();
         String folio_cot = "";
-        HashMap<String, String> jsonretorno = new HashMap<String, String>();
-        
-        if (accion_proceso.equals("cancelar")) {
-            cancelPedido(id_pedido.intValue(), id_usuario.intValue(), jsonretorno);
-            return jsonretorno;
-        }
-
         String arreglo[] = new String[eliminado.length];
         
         PedidoRequest.Builder pedidoRequestBuilder = PedidoRequest.newBuilder();
@@ -1100,6 +1093,7 @@ public class PocPedidosController {
             .setNumCuenta(pc.account)
             .setFolioCot(pc.no_cot);
 
+        HashMap<String, String> jsonretorno = new HashMap<String, String>();
         HashMap<String, String> success = this.getPocDao().poc_val_cusorder(
             new Integer(id_usuario),
             tipo_cambio,
@@ -1113,6 +1107,11 @@ public class PocPedidosController {
         if ( success.get("success").equals("true") ) {
 
             System.out.println(pc.conform_cat_store());
+
+            if (accion_proceso.equals("cancelar")) {
+                cancelPedido(id_pedido.intValue(), id_usuario.intValue(), jsonretorno);
+                return jsonretorno;
+            }
 
             ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString())
                 .usePlaintext()
