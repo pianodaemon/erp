@@ -20,9 +20,9 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,6 +39,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttributes;
+import com.maxima.sales.cli.grpc.PedidoAuthRequest;
+import com.maxima.sales.cli.grpc.PedidoAuthResponse;
+import com.maxima.sales.cli.grpc.SalesGrpc;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 
 
 @Controller
@@ -237,56 +243,101 @@ public class PocPedidosAutorizaController {
     }
     
     
-    
-    
-    
+    private void autorizarPedido(int pedidoId, int usuarioId, HashMap<String,String> jsonretorno) {
+
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString())
+            .usePlaintext()
+            .build();
+
+        SalesGrpc.SalesBlockingStub blockingStub = SalesGrpc.newBlockingStub(channel);
+
+        PedidoAuthRequest pedidoAuthRequest =
+            PedidoAuthRequest.newBuilder()
+                .setPedidoId(pedidoId)
+                .setUsuarioId(usuarioId)
+                .build();
+        PedidoAuthResponse pedidoAuthResponse;
+
+        try {
+            pedidoAuthResponse = blockingStub.authPedido(pedidoAuthRequest);
+            String valorRetorno = pedidoAuthResponse.getValorRetorno();
+
+            if (valorRetorno.equals("1")) {
+                jsonretorno.put("success", "true");
+                jsonretorno.put("actualizo", valorRetorno);
+
+            } else {
+                jsonretorno.put("success", valorRetorno);
+            }
+            log.log(Level.INFO, "Pedido Auth Response valorRetorno: {0}", valorRetorno);
+
+        } catch (StatusRuntimeException e) {
+            jsonretorno.put("success", "Error en llamada a procedimiento remoto.");
+            log.log(Level.SEVERE, "RPC failed: {0}", e.getStatus());
+
+        } finally {
+            try {
+                channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+
+            } catch (InterruptedException e) {
+                log.log(Level.SEVERE, "Channel shutdown failed.", e);
+            }
+        }
+    }
     
     //edicion y nuevo
     @RequestMapping(method = RequestMethod.POST, value="/edit.json")
-    public @ResponseBody HashMap<String, String> editJson(
-            @RequestParam(value="id_pedido", required=true) Integer id_pedido,
-            @RequestParam(value="accion_proceso", required=true) String accion_proceso,
-            @ModelAttribute("user") UserSessionData user
-            ) {
+    public @ResponseBody HashMap<String, String> editJson (
+        @RequestParam(value="id_pedido", required=true)      Integer id_pedido,
+        @RequestParam(value="accion_proceso", required=true) String accion_proceso,
+        @ModelAttribute("user")                              UserSessionData user)
+    {
+
+        System.out.println(accion_proceso.toUpperCase() + " el Pedido (desde PocPedidosAutorizaController)");
+
+        Integer app_selected = 65;
+        String command_selected = "new";
+        Integer id_usuario = user.getUserId();
+
+        //serializar el arreglo
+        String extra_data_array = extra_data_array = "'sin datos'";
+
+        if (accion_proceso.equals("autorizar") && id_pedido != 0) {
+            command_selected = accion_proceso;
+        }
+
+        if (accion_proceso.equals("cancelar") && id_pedido != 0) {
+            command_selected = accion_proceso;
+        }
+
+        String data_string =
+            app_selected     + "___" +
+            command_selected + "___" +
+            id_usuario       + "___" +
+            id_pedido;
+        //System.out.println("data_string: "+data_string);
+
+        HashMap<String, String> jsonretorno = new HashMap<String, String>();
+        HashMap<String, String> success = this.getPocDao()
+            .selectFunctionValidateAaplicativo(data_string, app_selected, extra_data_array);
+
+        log.log(Level.INFO, "Resultado de validacion Pedido {0}", accion_proceso + ": " + success.get("success"));
+
+        if (success.get("success").equals("true")) {
             
-            System.out.println("Autorizar del Pedido");
-            HashMap<String, String> jsonretorno = new HashMap<String, String>();
-            HashMap<String, String> succes = new HashMap<String, String>();
-            
-            Integer app_selected = 65;
-            String command_selected = "new";
-            Integer id_usuario= user.getUserId();//variable para el id  del usuario
-            
-            //serializar el arreglo
-            String extra_data_array = extra_data_array = "'sin datos'";
-            
-            if(accion_proceso.equals("autorizar") && id_pedido!=0){
-                command_selected = accion_proceso;
+            if (accion_proceso.equals("autorizar")) {
+                autorizarPedido(id_pedido.intValue(), id_usuario.intValue(), jsonretorno);
+                
+            } else if (accion_proceso.equals("cancelar")) {
+                String actualizo = this.getPocDao().selectFunctionForThisApp(data_string, extra_data_array);
+                jsonretorno.put("actualizo", actualizo);
+                jsonretorno.put("success", "true");
             }
             
-            if(accion_proceso.equals("cancelar") && id_pedido!=0){
-                command_selected = accion_proceso;
-            }
-            
-            String data_string = app_selected+"___"+command_selected+"___"+id_usuario+"___"+id_pedido;
-            //System.out.println("data_string: "+data_string);
-            
-            
-            succes = this.getPocDao().selectFunctionValidateAaplicativo(data_string,app_selected,extra_data_array);
-            
-            
-            log.log(Level.INFO, "despues de validacion {0}", String.valueOf(succes.get("success")));
-            String actualizo = "0";
-            
-            
-            if( String.valueOf(succes.get("success")).equals("true") ){
-                actualizo = this.getPocDao().selectFunctionForThisApp(data_string, extra_data_array);
-                jsonretorno.put("actualizo",String.valueOf(actualizo));
-            }
-            
-            jsonretorno.put("success",String.valueOf(succes.get("success")));
-            
-            log.log(Level.INFO, "Salida json {0}", String.valueOf(jsonretorno.get("success")));
+        } else {
+            jsonretorno.put("success", success.get("success"));
+        }
+
         return jsonretorno;
     }
     
