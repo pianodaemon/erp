@@ -4829,16 +4829,17 @@ BEGIN
             
             --verificar si hay que retener iva para este cliente
             SELECT empresa_immex,
-                    (CASE WHEN tasa_ret_immex IS NULL
-                        THEN 0
-                        ELSE tasa_ret_immex / 100
+                   (CASE WHEN tasa_ret_immex IS NULL
+                       THEN 0
+                       ELSE tasa_ret_immex / 100
                     END)
-                FROM cxc_clie
-                WHERE id = _cliente_id
-                INTO retener_iva,
-                    tasa_retencion;
+              FROM cxc_clie
+             WHERE id = _cliente_id
+              INTO retener_iva,
+                   tasa_retencion;
 
             IF _permitir_descto AND suma_descuento > 0 THEN
+
                 IF retener_iva = true THEN 
                     total_retencion        := suma_subtotal_con_descuento * tasa_retencion;
                     total_retencion_global := monto_subtotal_global * tasa_retencion;
@@ -4966,8 +4967,8 @@ BEGIN
                     END IF;
                     
                     SELECT *
-                        from inv_obtiene_costo_promedio_actual(detalle.producto_id, espacio_tiempo_ejecucion)
-                        INTO costo_promedio_actual;
+                      FROM inv_obtiene_costo_promedio_actual(detalle.producto_id, espacio_tiempo_ejecucion)
+                      INTO costo_promedio_actual;
                     
                     --Actualizar los registros en erp_prefacturas_detalles
                     UPDATE erp_prefacturas_detalles
@@ -5018,14 +5019,14 @@ BEGIN
             
             --verificar si hay que retener iva para este cliente
             SELECT empresa_immex,
-                    (CASE WHEN tasa_ret_immex IS NULL
-                        THEN 0
-                        ELSE tasa_ret_immex / 100
+                   (CASE WHEN tasa_ret_immex IS NULL
+                       THEN 0
+                       ELSE tasa_ret_immex / 100
                     END)
-                FROM cxc_clie
-                WHERE id = _cliente_id
-                INTO retener_iva,
-                    tasa_retencion;
+              FROM cxc_clie
+             WHERE id = _cliente_id
+              INTO retener_iva,
+                   tasa_retencion;
 
             IF _permitir_descto AND suma_descuento > 0 THEN
                 IF retener_iva = true THEN
@@ -5124,9 +5125,9 @@ BEGIN
             IF _cliente_id > 1 THEN
                 --Buscar el numero de Adenda asignado al cliente.
                 SELECT cxc_clie_tipo_adenda_id
-                    FROM cxc_clie
-                    WHERE id = _cliente_id
-                    INTO idAdenda;
+                  FROM cxc_clie
+                 WHERE id = _cliente_id
+                  INTO idAdenda;
                 
                 --Varificar si tiene adenda asignada
                 IF idAdenda > 0 THEN 
@@ -5139,9 +5140,9 @@ BEGIN
                             
                             --Buscar la codificacion de la moneda por si el usuario la cambio al momento de actualizar
                             SELECT iso_4217_anterior::character varying
-                                FROM gral_mon
-                                WHERE id = _moneda_id
-                                INTO moneda_iso_4217;
+                              FROM gral_mon
+                             WHERE id = _moneda_id
+                              INTO moneda_iso_4217;
 
                             adenda8 := moneda_iso_4217;
                             
@@ -5150,6 +5151,7 @@ BEGIN
                                   FROM fac_docs_adenda
                                  WHERE prefactura_id = _prefactura_id
                                    AND fac_docs_id = 0) > 0 THEN 
+
                                 --Actualizar datos de la adenda porque ya existe un registro
                                 UPDATE fac_docs_adenda
                                    SET valor1 = _adenda1,
@@ -5201,7 +5203,11 @@ BEGIN
                         --Tipo Documento 1=Factura, 3=Factura de Remision
                         IF _tipo_documento = 1 OR _tipo_documento = 3 THEN 
                             --Verificar si ya hay un registro de la Adenda y que no este ligado a una factura, es decir no ha sido facturado
-                            IF (SELECT count(id) FROM fac_docs_adenda WHERE prefactura_id = _prefactura_id AND fac_docs_id = 0) > 0 THEN 
+                            IF (SELECT count(id)
+                                  FROM fac_docs_adenda
+                                 WHERE prefactura_id = _prefactura_id
+                                   AND fac_docs_id = 0) > 0 THEN 
+
                                 --Actualizar datos de la adenda porque ya existe un registro
                                 UPDATE fac_docs_adenda
                                    SET valor1 = _orden_compra 
@@ -5249,9 +5255,9 @@ BEGIN
                           FROM gral_cons AS sbt
                          WHERE sbt.id = gral_cons.id
                    )
-                WHERE gral_emp_id       = emp_id
-                  AND gral_suc_id       = suc_id
-                  AND gral_cons_tipo_id = id_tipo_consecutivo
+             WHERE gral_emp_id       = emp_id
+               AND gral_suc_id       = suc_id
+               AND gral_cons_tipo_id = id_tipo_consecutivo
             RETURNING prefijo,
                       consecutivo
                  INTO prefijo_consecutivo,
@@ -5263,9 +5269,9 @@ BEGIN
             
             --extraer datos de la Prefactura
             SELECT *
-                FROM erp_prefacturas
-                WHERE id = _prefactura_id
-                INTO prefactura_fila;
+              FROM erp_prefacturas
+             WHERE id = _prefactura_id
+              INTO prefactura_fila;
             
             IF prefactura_fila.moneda_id = 1 THEN
                 --IF prefactura_fila.moneda_id != prefactura_fila.id_moneda_pedido THEN
@@ -5497,14 +5503,14 @@ BEGIN
                     IF idUnidadMedida::integer <> prefactura_detalle.inv_prod_unidad_id THEN
 
                         EXECUTE 'SELECT ''' || nombreUnidadMedida || ''' ~* ''KILO*'';'
-                            INTO match_cadena;
+                           INTO match_cadena;
                         
                         IF match_cadena = true THEN
                             --Convertir a kilos
                             cantUnidadProd := cantUnidadProd::double precision * densidadProd;
                         ELSE
                             EXECUTE 'SELECT ''' || nombreUnidadMedida || ''' ~* ''LITRO*'';'
-                                INTO match_cadena;
+                               INTO match_cadena;
                             
                             IF match_cadena = true THEN 
                                 --Convertir a Litros
@@ -5724,11 +5730,11 @@ BEGIN
                         
                         --Obtener el id del pedido que se esta facturando
                         SELECT id
-                            FROM poc_pedidos
-                            WHERE folio = prefactura_fila.folio_pedido
-                            ORDER BY id DESC
-                            LIMIT 1
-                            INTO id_pedido;
+                          FROM poc_pedidos
+                         WHERE folio = prefactura_fila.folio_pedido
+                         ORDER BY id DESC
+                         LIMIT 1
+                          INTO id_pedido;
                         
                         IF id_pedido IS NULL THEN
                             id_pedido := 0;
@@ -5776,15 +5782,15 @@ BEGIN
             --por lo tanto hay que eliminar el movimiento de inventario
             IF bandera_tipo_4 = TRUE THEN 
                 DELETE FROM inv_mov
-                    WHERE id = identificador_nuevo_movimiento;
+                 WHERE id = identificador_nuevo_movimiento;
             END IF;
             
             IF (SELECT count(prefact_det.id)
-                    FROM erp_prefacturas_detalles AS prefact_det
-                    JOIN inv_prod ON inv_prod.id = prefact_det.producto_id
-                    WHERE prefact_det.prefacturas_id = _prefactura_id
-                    AND inv_prod.tipo_de_producto_id <> 4
-                    AND prefact_det.facturado = false) >= 1 THEN
+                  FROM erp_prefacturas_detalles AS prefact_det
+                  JOIN inv_prod ON inv_prod.id = prefact_det.producto_id
+                 WHERE prefact_det.prefacturas_id      = _prefactura_id
+                   AND inv_prod.tipo_de_producto_id   <> 4
+                   AND prefact_det.facturado = false) >= 1 THEN
 
                 actualizar_proceso := false;
             END IF;
