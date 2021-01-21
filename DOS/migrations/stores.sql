@@ -4408,3 +4408,1418 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
+
+
+CREATE TYPE grid_renglon_prefactura AS (
+    to_keep integer,                    --str_filas[1]  eliminado
+    id integer,                         --str_filas[2]  iddetalle
+    producto_id integer,                --str_filas[3]  idproducto
+    presentacion_id integer,            --str_filas[4]  id_presentacion
+    tipo_impuesto_id integer,           --str_filas[5]  id_impuesto
+    cantidad double precision,          --str_filas[6]  cantidad
+    precio_unitario double precision,   --str_filas[7]  costo
+    valor_imp double precision,         --str_filas[8]  valor_impuesto
+    remision_id integer,                --str_filas[9]  id_remision
+    costo_promedio double precision,    --str_filas[10] costo_promedio
+    inv_prod_unidad_id integer,         --str_filas[11] idUnidad
+    gral_ieps_id integer,               --str_filas[12] id_ieps
+    valor_ieps double precision,        --str_filas[13] tasa_ieps
+    descto double precision,            --str_filas[14] vdescto
+    gral_imptos_ret_id integer,         --str_filas[15] retencion_id
+    tasa_ret double precision           --str_filas[16] retencion_tasa    
+);
+
+CREATE FUNCTION prefactura_edit(
+    _usuario_id integer,                --str_data[3]
+    _prefactura_id integer,             --str_data[4]  id_prefactura
+    _cliente_id integer,                --str_data[5]  id_cliente
+    _moneda_id integer,                 --str_data[6]  id_moneda
+    _observaciones text,                --str_data[7]  observaciones
+    _tipo_cambio double precision,      --str_data[8]  tipo_cambio_vista
+    _vendedor_id integer,               --str_data[9]  id_vendedor
+    _condiciones_id integer,            --str_data[10] id_condiciones
+    _orden_compra character varying,    --str_data[11] orden_compra
+    _refacturar boolean,                --str_data[12] refacturar
+    _metodo_pago_id integer,            --str_data[13] id_metodo_pago
+    _no_cuenta character varying,       --str_data[14] no_cuenta
+    _tipo_documento smallint,           --str_data[15] select_tipo_documento
+    _moneda_original_id integer,        --str_data[18] id_moneda_original
+    _adenda1 character varying,         --str_data[20]
+    _adenda2 character varying,         --str_data[21]
+    _adenda3 character varying,         --str_data[22]
+    _adenda4 character varying,         --str_data[23]
+    _adenda5 character varying,         --str_data[24]
+    _adenda6 character varying,         --str_data[25]
+    _adenda7 character varying,         --str_data[26]
+    _adenda8 character varying,         --str_data[27]
+    _permitir_descto boolean,           --str_data[29]
+    _grid_detalle grid_renglon_prefactura[]
+)
+RETURNS character varying
+AS $$
+
+DECLARE
+
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    -- >> Name:     Prefactura                                                     >>
+    -- >> Version:  MAZINGER                                                       >>
+    -- >> Date:     20/Ene/2021                                                    >>
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+    detalle grid_renglon_prefactura;
+    --Total de elementos de arreglo
+    total_filas integer;
+    --Contador de filas o posiciones del arreglo
+    cont_fila integer;
+    
+    valor_retorno character varying       := '';
+    ultimo_id integer                     := 0;
+    ultimo_id_det integer                 := 0 ;
+    id_tipo_consecutivo integer           := 0;
+    prefijo_consecutivo character varying := '';
+    nuevo_consecutivo bigint              := 0;
+    nuevo_folio character varying         := '';
+    ultimo_id_proceso integer             := 0;
+
+    tipo_de_documento integer := 0;
+    fila_fac_rem_doc record;
+    
+    -- Prefacturas(Facturacion):
+    app_selected integer        := 13;
+    usuario_ejecutor integer    := 0;
+    emp_id integer              := 0;
+    suc_id integer              := 0;
+    --sucursal de donde se tomara el consecutivo:
+    suc_id_consecutivo integer  := 0;
+    id_almacen integer;
+    espacio_tiempo_ejecucion timestamp with time zone = now();
+    ano_actual integer          := 0;
+    mes_actual integer          := 0;
+    prefactura_fila record;
+    prefactura_detalle record;
+    identificador_nuevo_movimiento integer;
+    tipo_movimiento_id integer  := 0;
+    exis integer                := 0;
+    sql_update text;
+    sql_select text;
+    sql_select2 character varying     := '';
+    --bandera que identifica si el producto es tipo 4, true=tipo 4, false=No es tipo4
+    bandera_tipo_4 boolean;
+    serie_folio_fac character varying := '';
+    refact character varying          := '';
+    tipo_cam double precision         := 0;
+    
+    numero_dias_credito integer       := 0;
+    fecha_de_vencimiento timestamp with time zone;
+    
+    importe_del_descto_partida double precision  := 0;
+    importe_partida_con_descto double precision  := 0;
+    suma_descuento double precision              := 0;
+    suma_subtotal_con_descuento double precision := 0;
+    
+    importe_partida double precision                    := 0;
+    importe_ieps_partida double precision               := 0;
+    impuesto_partida double precision                   := 0;
+    monto_subtotal double precision                     := 0;
+    suma_ieps double precision                          := 0;
+    suma_total double precision                         := 0;
+    monto_impuesto double precision                     := 0;
+    total_retencion double precision                    := 0;
+    retener_iva boolean                                 := false;
+    tasa_retencion double precision                     := 0;
+    retencion_partida double precision                  := 0;
+    suma_retencion_de_partidas double precision         := 0;
+    suma_retencion_de_partidas_globlal double precision := 0;
+    
+    --Estas variables se utilizan en caso de que se facture un pedido en otra moneda
+    suma_descuento_global double precision              := 0;
+    suma_subtotal_con_descuento_global double precision := 0;
+    monto_subtotal_global double precision              := 0;
+    suma_ieps_global double precision                   := 0;
+    monto_impuesto_global double precision              := 0;
+    total_retencion_global double precision             := 0;
+    suma_total_global double precision                  := 0;
+    cant_original double precision                      := 0;
+    
+    costo_promedio_actual double precision   := 0;
+    costo_referencia_actual double precision := 0;
+    
+    id_osal integer                    := 0;
+    nuevo_folio_osal character varying := '';
+    facpar record;--parametros de Facturacion
+    
+    cantPresAsignado double precision       := 0;
+    cantPresReservAnterior double precision := 0;
+    
+    --Variable que indica  si se debe controlar Existencias por Presentacion
+    controlExisPres boolean;
+    --Variable que indica si la cantidad de la partida ya fue facturada en su totalidad
+    partida_facturada boolean;
+    --Indica si hay que actualizar el flujo del proceso. El proceso se debe actualizar cuando ya no quede partidas vivas
+    actualizar_proceso boolean;
+    --Id del Pedido que se esta facturando
+    id_pedido integer;
+    --Id de la unidad de medida del producto
+    idUnidadMedida integer               := 0;
+    --Nombre de la unidad de medida del producto
+    nombreUnidadMedida character varying := 0;
+    --Densidad del producto
+    densidadProd double precision        := 0;
+    --Cantidad en la unidad del producto
+    cantUnidadProd double precision      := 0;
+    match_cadena boolean                 := false;
+    
+    --Numero de Adenda
+    idAdenda integer                  := 0;
+    moneda_iso_4217 character varying := '';
+    adenda8 character varying := '';
+
+BEGIN
+    -- usuario que utiliza el aplicativo
+    usuario_ejecutor := _usuario_id;
+    
+    SELECT EXTRACT(YEAR FROM espacio_tiempo_ejecucion) INTO ano_actual;
+    SELECT EXTRACT(MONTH FROM espacio_tiempo_ejecucion) INTO mes_actual;
+    
+    --obtener id de empresa, sucursal
+    SELECT gral_suc.empresa_id, gral_usr_suc.gral_suc_id
+      FROM gral_usr_suc 
+      JOIN gral_suc ON gral_suc.id = gral_usr_suc.gral_suc_id
+     WHERE gral_usr_suc.gral_usr_id = usuario_ejecutor
+      INTO emp_id, suc_id;
+    
+    --Obtener parametros para la facturacion
+    SELECT *
+      FROM fac_par
+     WHERE gral_suc_id = suc_id
+      INTO facpar;
+    
+    --tomar el id del almacen para ventas
+    id_almacen := facpar.inv_alm_id;
+    
+    --éste consecutivo es para el folio de Remisión y folio para BackOrder(poc_ped_bo)
+    suc_id_consecutivo := facpar.gral_suc_id_consecutivo;
+
+    --query para verificar si la Empresa actual incluye Modulo de Produccion y control de Existencias por Presentacion
+    SELECT control_exis_pres
+      FROM gral_emp
+     WHERE id = emp_id
+      INTO controlExisPres;
+    
+    --Inicializar en cero
+    id_pedido := 0;
+
+
+    --Aqui entra antes de generar Remision y Factura
+    IF _prefactura_id > 0 THEN
+        /*
+        Aquí se actualizan los datos de la PREFACTURA, esto es antes de facturar, terminando este proceso se genera la FACTURA
+        Solo se actualizan los datos del header de la prefactura, lo datos del grid se deja  como viene del pedido
+        */
+        --str_data[3]    id_usuario
+        --str_data[4]    id_prefactura
+        --str_data[5]    id_cliente
+        --str_data[6]    id_moneda
+        --str_data[7]    observaciones
+        --str_data[8]    tipo_cambio_vista
+        --str_data[9]    id_vendedor
+        --str_data[10]   id_condiciones
+        --str_data[11]   orden_compra
+        --str_data[12]   refacturar
+        --str_data[13]   id_metodo_pago
+        --str_data[14]   no_cuenta
+        --str_data[15]   select_tipo_documento
+        --str_data[16]   folio_pedido
+        --str_data[17]   select_almacen
+        --str_data[18]   id_moneda_original
+        
+        --Actualizar tabla erp_prefacturas
+        UPDATE erp_prefacturas
+           SET moneda_id                = _moneda_id,
+               observaciones            = _observaciones,
+               tipo_cambio              = _tipo_cambio,
+               empleado_id              = _vendedor_id,
+               terminos_id              = _condiciones_id,
+               orden_compra             = _orden_compra,
+               refacturar               = _refacturar,
+               fac_metodos_pago_id      = _metodo_pago_id,
+               no_cuenta                = _no_cuenta,
+               tipo_documento           = _tipo_documento,
+               id_moneda_pedido         = _moneda_original_id,
+               id_usuario_actualizacion = usuario_ejecutor,
+               momento_actualizacion    = espacio_tiempo_ejecucion
+         WHERE id = _prefactura_id;
+
+        suma_descuento              := 0;
+        suma_subtotal_con_descuento := 0;
+        suma_retencion_de_partidas  := 0;
+        
+        --Verificar si la moneda del Pedido es diferente a la moneda de la Prefactura
+        IF _moneda_id <> _moneda_original_id THEN
+            --eliminar los registros de erp_prefacturas_detalles
+            --delete from erp_prefacturas_detalles where prefacturas_id=_prefactura_id;
+
+            --Inicializar variables
+            monto_subtotal_global              := 0;
+            monto_impuesto_global              := 0;
+            total_retencion_global             := 0;
+            suma_total_global                  := 0;
+            suma_ieps_global                   := 0;
+            suma_descuento_global              := 0;
+            suma_subtotal_con_descuento_global := 0;
+            
+            --si es diferente hay que actualizar los registros de prefacturas detalles
+            --Esto es para que se conserve la Moneda seleccionada al momento de Realizar la Facturacion
+            total_filas := array_length(_grid_detalle, 1);--obtiene total de elementos del arreglo
+            cont_fila   := 1;
+
+            FOR cont_fila IN 1 .. total_filas LOOP
+
+                detalle := _grid_detalle[cont_fila];
+
+                retencion_partida := 0;
+                
+                --1: se conserva, 0: se elimina
+                IF detalle.to_keep <> 0 THEN
+                    --str_filas[2]    iddetalle
+                    --str_filas[3]    idproducto
+                    --str_filas[4]    id_presentacion
+                    --str_filas[5]    id_impuesto
+                    --str_filas[6]    cantidad
+                    --str_filas[7]    costo
+                    --str_filas[8]    valor_impuesto
+                    --str_filas[9]    id_remision
+                    --str_filas[10]    costo_promedio
+                    --str_filas[11]    idUnidad
+                    --str_filas[12]    id_ieps
+                    --str_filas[13]    tasa_ieps
+                    --str_filas[14]    vdescto
+                    --str_filas[15]    retencion_id
+                    --str_filas[16]    retencion_tasa
+                    
+                    SELECT *
+                      FROM inv_obtiene_costo_promedio_actual(detalle.producto_id, espacio_tiempo_ejecucion)
+                      INTO costo_promedio_actual;
+                    
+                    --Inicializar
+                    cant_original := 0;
+
+                    --Tasa del ieps de la partida
+                    IF detalle.valor_ieps > 0 THEN 
+                        detalle.valor_ieps := detalle.valor_ieps / 100;
+                    END IF;
+                    
+                    --Tasa retencion de la partida
+                    IF detalle.tasa_ret > 0 THEN 
+                        detalle.tasa_ret := detalle.tasa_ret / 100;
+                    END IF;
+                    
+                    --Actualizar los registros en erp_prefacturas_detalles
+                    UPDATE erp_prefacturas_detalles
+                       SET cant_facturar   = detalle.cantidad,
+                           valor_imp       = detalle.valor_imp,
+                           precio_unitario = detalle.precio_unitario 
+                     WHERE id = detalle.id 
+                    RETURNING cantidad
+                         INTO cant_original;
+                    
+                    IF cant_original IS NULL THEN
+                        cant_original := 0;
+                    END IF;
+                    
+                    --crear registros en erp_prefacturas_detalles
+                    --INSERT INTO erp_prefacturas_detalles(prefacturas_id, producto_id, presentacion_id, tipo_impuesto_id, cant_facturar, precio_unitario, valor_imp, costo_promedio)
+                    --VALUES(_prefactura_id, detalle.producto_id, detalle.presentacion_id, detalle.tipo_impuesto_id, detalle.cantidad, detalle.precio_unitario, detalle.valor_imp, costo_promedio_actual);
+                    
+                    --Inicializar variables para rautilizar en calculo de totales de lo que se va a facturar
+                    importe_partida             := 0;
+                    impuesto_partida            := 0;
+                    importe_ieps_partida        := 0;
+                    suma_descuento              := 0;
+                    suma_subtotal_con_descuento := 0;
+                    
+                    --Calcular y Redondear el importe de la partida
+                    importe_partida := round((detalle.cantidad * detalle.precio_unitario)::numeric, 4)::double precision;
+                    
+                    --Calcular y redondear el IEPS de la partida
+                    importe_ieps_partida := round((importe_partida::double precision * detalle.valor_ieps)::numeric, 4)::double precision;
+                    
+                    --Calcula el IVA de la Partida
+                    impuesto_partida := round(((importe_partida::double precision + importe_ieps_partida::double precision) * detalle.valor_imp)::numeric, 4)::double precision;
+
+                    --Calcular el importe de la retencion de la partida si existe la tasa de retencion
+                    IF detalle.tasa_ret > 0 THEN 
+                        retencion_partida := round((importe_partida::double precision * detalle.tasa_ret)::numeric, 4)::double precision;
+                    END IF;
+                    
+                    IF _permitir_descto THEN
+                        IF detalle.descto > 0 THEN
+                            importe_del_descto_partida := round((importe_partida * (detalle.descto / 100))::numeric, 4)::double precision;
+
+                            importe_partida_con_descto := round((importe_partida - importe_del_descto_partida)::numeric, 4)::double precision;
+                            
+                            --Recalcular el IEPS de la partida tomando el importe_partida_con_descto
+                            importe_ieps_partida := round((importe_partida_con_descto::double precision * detalle.valor_ieps)::numeric, 4)::double precision;
+                            
+                            --Recalcular el IVA de la Partida tomando el importe_partida_con_descto
+                            impuesto_partida := round(((importe_partida_con_descto::double precision + importe_ieps_partida::double precision) * detalle.valor_imp)::numeric, 4)::double precision;
+
+                            --Reclacular el nuevo el importe de la retencion de la partida si existe la tasa de retencion
+                            IF detalle.tasa_ret > 0 THEN 
+                                retencion_partida := round((importe_partida_con_descto::double precision * detalle.tasa_ret)::numeric, 4)::double precision;
+                            END IF;
+                        END IF;
+                    END IF;
+                    
+                    suma_descuento              := suma_descuento + importe_del_descto_partida::double precision;
+                    suma_subtotal_con_descuento := suma_subtotal_con_descuento + importe_partida_con_descto::double precision;
+
+                    monto_subtotal             := monto_subtotal + importe_partida::double precision;
+                    suma_ieps                  := suma_ieps + importe_ieps_partida::double precision; 
+                    monto_impuesto             := monto_impuesto + impuesto_partida::double precision;
+                    suma_retencion_de_partidas := suma_retencion_de_partidas + retencion_partida::double precision;
+                    
+                    
+                    --Inicializar variables para reutilizar en calculo de totales General
+                    importe_partida      := 0;
+                    impuesto_partida     := 0;
+                    importe_ieps_partida := 0;
+                    retencion_partida    := 0;
+                    
+                    importe_partida := round((cant_original::double precision * detalle.precio_unitario)::numeric, 4)::double precision;
+                    
+                    --Calcular y redondear el IEPS de la partida
+                    importe_ieps_partida := round((importe_partida::double precision * detalle.valor_ieps)::numeric, 4)::double precision;
+                    
+                    --Calcula el IVA de la Partida
+                    impuesto_partida := (importe_partida::double precision + importe_ieps_partida::double precision) * detalle.valor_imp;
+                    
+                    --Calcular el importe de la retencion de la partida si existe la tasa de retencion
+                    IF detalle.tasa_ret > 0 THEN 
+                        retencion_partida := round((importe_partida::double precision * detalle.tasa_ret)::numeric, 4)::double precision;
+                    END IF;
+                    
+                    IF _permitir_descto THEN
+                        IF detalle.descto > 0 THEN
+                            importe_del_descto_partida := round((importe_partida * (detalle.descto / 100))::numeric, 4)::double precision;
+
+                            importe_partida_con_descto := round((importe_partida - importe_del_descto_partida)::numeric, 4)::double precision;
+                            
+                            --Recalcular el IEPS de la partida tomando el importe_partida_con_descto
+                            importe_ieps_partida := round((importe_partida_con_descto::double precision * detalle.valor_ieps)::numeric, 4)::double precision;
+                            
+                            --Recalcular el IVA de la Partida tomando el importe_partida_con_descto
+                            impuesto_partida := round(((importe_partida_con_descto::double precision + importe_ieps_partida::double precision) * detalle.valor_imp)::numeric, 4)::double precision;
+
+                            --Calcular el importe de la retencion de la partida si existe la tasa de retencion
+                            IF detalle.tasa_ret > 0 THEN 
+                                retencion_partida := round((importe_partida_con_descto::double precision * detalle.tasa_ret)::numeric, 4)::double precision;
+                            END IF;
+                        END IF;
+                    END IF;
+                    
+                    suma_descuento_global              := suma_descuento_global + importe_del_descto_partida::double precision;
+                    suma_subtotal_con_descuento_global := suma_subtotal_con_descuento_global + importe_partida_con_descto::double precision;
+                    monto_subtotal_global              := monto_subtotal_global + importe_partida::double precision;
+                    suma_ieps_global                   := suma_ieps_global + importe_ieps_partida::double precision; 
+                    monto_impuesto_global              := monto_impuesto_global + impuesto_partida::double precision;
+                    suma_retencion_de_partidas_globlal := suma_retencion_de_partidas_globlal + retencion_partida::double precision;
+                END IF;
+            END LOOP;
+            
+            --verificar si hay que retener iva para este cliente
+            SELECT empresa_immex,
+                    (CASE WHEN tasa_ret_immex IS NULL
+                        THEN 0
+                        ELSE tasa_ret_immex / 100
+                    END)
+                FROM cxc_clie
+                WHERE id = _cliente_id
+                INTO retener_iva,
+                    tasa_retencion;
+
+            IF _permitir_descto AND suma_descuento > 0 THEN
+                IF retener_iva = true THEN 
+                    total_retencion        := suma_subtotal_con_descuento * tasa_retencion;
+                    total_retencion_global := monto_subtotal_global * tasa_retencion;
+                ELSE
+                    total_retencion        := 0;
+                    total_retencion_global := 0;
+                END IF;
+                
+                IF suma_retencion_de_partidas > 0 THEN 
+                    total_retencion := round((total_retencion + suma_retencion_de_partidas)::numeric, 4)::double precision;
+                END IF;
+                
+                IF suma_retencion_de_partidas_globlal > 0 THEN 
+                    total_retencion_global := round((total_retencion_global + suma_retencion_de_partidas_globlal)::numeric, 4)::double precision;
+                END IF;
+                
+                --Calcula el total de lo que se esta facturando
+                suma_total := suma_subtotal_con_descuento + suma_ieps + monto_impuesto - total_retencion::double precision;
+                
+                --Calcula el total global de la Prefactura
+                suma_total_global := suma_subtotal_con_descuento_global + suma_ieps_global + monto_impuesto_global - total_retencion_global::double precision;
+                
+                --Actualiza campos subtotal, monto_ieps, impuesto, retencion, total de tabla erp_prefacturas
+                UPDATE erp_prefacturas
+                   SET subtotal             = suma_subtotal_con_descuento_global,
+                       monto_ieps           = suma_ieps_global,
+                       impuesto             = monto_impuesto_global,
+                       monto_retencion      = total_retencion_global,
+                       total                = suma_total_global,
+                       monto_descto         = suma_descuento_global,
+                       fac_subtotal         = suma_subtotal_con_descuento,
+                       fac_monto_ieps       = suma_ieps,
+                       fac_impuesto         = monto_impuesto,
+                       fac_monto_retencion  = total_retencion,
+                       fac_total            = suma_total,
+                       tasa_retencion_immex = tasa_retencion,
+                       fac_monto_descto     = suma_descuento 
+                 WHERE id = _prefactura_id;
+            ELSE
+                IF retener_iva = true THEN
+                    total_retencion        := monto_subtotal * tasa_retencion;
+                    total_retencion_global := monto_subtotal_global * tasa_retencion;
+                ELSE
+                    total_retencion        := 0;
+                    total_retencion_global := 0;
+                END IF;
+                
+                IF suma_retencion_de_partidas > 0 THEN 
+                    total_retencion := round((total_retencion + suma_retencion_de_partidas)::numeric, 4)::double precision;
+                END IF;
+                
+                IF suma_retencion_de_partidas_globlal > 0 THEN 
+                    total_retencion_global := round((total_retencion_global + suma_retencion_de_partidas_globlal)::numeric, 4)::double precision;
+                END IF;
+                
+                --Calcula el total de lo que se esta facturando
+                suma_total := monto_subtotal + suma_ieps + monto_impuesto - total_retencion::double precision;
+                
+                --Calcula el total global de la Prefactura
+                suma_total_global := monto_subtotal_global + suma_ieps_global + monto_impuesto_global - total_retencion_global::double precision;
+                
+                --Actualiza campos subtotal, monto_ieps, impuesto, retencion, total de tabla erp_prefacturas
+                UPDATE erp_prefacturas
+                   SET subtotal             = monto_subtotal_global,
+                       monto_ieps           = suma_ieps_global,
+                       monto_descto         = 0,
+                       impuesto             = monto_impuesto_global,
+                       monto_retencion      = total_retencion_global,
+                       total                = suma_total_global,
+                       fac_subtotal         = monto_subtotal,
+                       fac_monto_ieps       = suma_ieps,
+                       fac_impuesto         = monto_impuesto,
+                       fac_monto_retencion  = total_retencion,
+                       fac_total            = suma_total,
+                       tasa_retencion_immex = tasa_retencion,
+                       fac_monto_descto     = 0 
+                 WHERE id = _prefactura_id;
+            END IF;
+            
+        ELSE
+            suma_retencion_de_partidas         := 0;
+            suma_retencion_de_partidas_globlal := 0;
+            
+            --Si la moneda de la prefactura es igual a la Moneda del pedido, entonces solo debemos actualizar las cantidades a facturar
+            total_filas := array_length(_grid_detalle, 1);--obtiene total de elementos del arreglo
+            cont_fila   := 1;
+
+            FOR cont_fila IN 1 .. total_filas LOOP
+
+                detalle := _grid_detalle[cont_fila];
+                
+                --1: se conserva, 0: se elimina
+                IF detalle.to_keep <> 0 THEN
+                    --str_filas[2]    iddetalle
+                    --str_filas[3]    idproducto
+                    --str_filas[4]    id_presentacion
+                    --str_filas[5]    id_impuesto
+                    --str_filas[6]    cantidad
+                    --str_filas[7]    costo
+                    --str_filas[8]    valor_impuesto
+                    --str_filas[9]    id_remision
+                    --str_filas[10]    costo_promedio
+                    
+                    --str_filas[12]    id_ieps
+                    --str_filas[13]    tasa_ieps
+                    --str_filas[14]    vdescto
+                    --str_filas[15]    retencion_id
+                    --str_filas[16]    retencion_tasa
+
+                    importe_partida            := 0;
+                    importe_ieps_partida       := 0;
+                    impuesto_partida           := 0;
+                    importe_del_descto_partida := 0;
+                    importe_partida_con_descto := 0;
+                    retencion_partida          := 0;
+
+                    --Tasa de IEPS
+                    IF detalle.valor_ieps > 0 THEN 
+                        detalle.valor_ieps := detalle.valor_ieps / 100;
+                    END IF;
+
+                    --Tasa retencion de IVA de la partida
+                    IF detalle.tasa_ret > 0 THEN 
+                        detalle.tasa_ret := detalle.tasa_ret / 100;
+                    END IF;
+                    
+                    SELECT *
+                        from inv_obtiene_costo_promedio_actual(detalle.producto_id, espacio_tiempo_ejecucion)
+                        INTO costo_promedio_actual;
+                    
+                    --Actualizar los registros en erp_prefacturas_detalles
+                    UPDATE erp_prefacturas_detalles
+                       SET cant_facturar = detalle.cantidad
+                     WHERE id = detalle.id;
+                    
+                    --Calcular y Redondear el importe de la partida
+                    importe_partida := round((detalle.cantidad * detalle.precio_unitario)::numeric, 4)::double precision;
+                    
+                    --Calcular y redondear el IEPS de la partida
+                    importe_ieps_partida := round((importe_partida::double precision * detalle.valor_ieps)::numeric, 4)::double precision;
+                    
+                    --Calcula el IVA de la Partida
+                    impuesto_partida := (importe_partida::double precision + importe_ieps_partida::double precision) * detalle.valor_imp;
+                    
+                    --Calcular el importe de la retencion de la partida si existe la tasa de retencion
+                    IF detalle.tasa_ret > 0 THEN 
+                        retencion_partida := round((importe_partida::double precision * detalle.tasa_ret)::numeric, 4)::double precision;
+                    END IF;
+                    
+                    IF _permitir_descto THEN
+                        IF detalle.descto > 0 THEN
+                            importe_del_descto_partida := round((importe_partida * (detalle.descto / 100))::numeric, 4)::double precision;
+
+                            importe_partida_con_descto := round((importe_partida - importe_del_descto_partida)::numeric, 4)::double precision;
+                            
+                            --Recalcular el IEPS de la partida tomando el importe_partida_con_descto
+                            importe_ieps_partida := round((importe_partida_con_descto::double precision * detalle.valor_ieps)::numeric, 4)::double precision;
+                            
+                            --Recalcular el IVA de la Partida tomando el importe_partida_con_descto
+                            impuesto_partida := round(((importe_partida_con_descto::double precision + importe_ieps_partida::double precision) * detalle.valor_imp)::numeric, 4)::double precision;
+
+                            --Reclacular el nuevo el importe de la retencion de la partida si existe la tasa de retencion
+                            IF detalle.tasa_ret > 0 THEN 
+                                retencion_partida := round((importe_partida_con_descto::double precision * detalle.tasa_ret)::numeric, 4)::double precision;
+                            END IF;
+                        END IF;
+                    END IF;
+
+                    suma_descuento              := suma_descuento + importe_del_descto_partida::double precision;
+                    suma_subtotal_con_descuento := suma_subtotal_con_descuento + importe_partida_con_descto::double precision;
+                    monto_subtotal              := monto_subtotal + importe_partida::double precision;
+                    suma_ieps                   := suma_ieps + importe_ieps_partida::double precision; 
+                    monto_impuesto              := monto_impuesto + impuesto_partida::double precision;
+                    suma_retencion_de_partidas  := suma_retencion_de_partidas + retencion_partida::double precision;
+                END IF;
+            END LOOP;
+            
+            --verificar si hay que retener iva para este cliente
+            SELECT empresa_immex,
+                    (CASE WHEN tasa_ret_immex IS NULL
+                        THEN 0
+                        ELSE tasa_ret_immex / 100
+                    END)
+                FROM cxc_clie
+                WHERE id = _cliente_id
+                INTO retener_iva,
+                    tasa_retencion;
+
+            IF _permitir_descto AND suma_descuento > 0 THEN
+                IF retener_iva = true THEN
+                    total_retencion := suma_subtotal_con_descuento * tasa_retencion;
+                ELSE
+                    total_retencion := 0;
+                END IF;
+
+                IF suma_retencion_de_partidas > 0 THEN 
+                    total_retencion := round((total_retencion + suma_retencion_de_partidas)::numeric, 4)::double precision;
+                END IF;
+                
+                --Calcula el monto de la prefactura
+                suma_total := suma_subtotal_con_descuento::double precision + suma_ieps::double precision + monto_impuesto::double precision - total_retencion::double precision;
+                
+                --Actualiza campos subtotal, impuesto, retencion, total de tabla erp_prefacturas
+                UPDATE erp_prefacturas
+                   SET fac_subtotal         = suma_subtotal_con_descuento,
+                       fac_monto_ieps       = suma_ieps,
+                       fac_impuesto         = monto_impuesto,
+                       fac_monto_retencion  = total_retencion,
+                       fac_total            = suma_total,
+                       tasa_retencion_immex = tasa_retencion,
+                       fac_monto_descto     = suma_descuento  
+                 WHERE id = _prefactura_id;
+            ELSE
+                IF retener_iva = true THEN
+                    total_retencion := monto_subtotal * tasa_retencion;
+                ELSE
+                    total_retencion := 0;
+                END IF;
+
+                IF suma_retencion_de_partidas > 0 THEN 
+                    total_retencion := round((total_retencion + suma_retencion_de_partidas)::numeric, 4)::double precision;
+                END IF;
+                
+                --Calcula el monto de la prefactura
+                suma_total := monto_subtotal::double precision + suma_ieps::double precision + monto_impuesto::double precision - total_retencion::double precision;
+                
+                --Actualiza campos subtotal, impuesto, retencion, total de tabla erp_prefacturas
+                UPDATE erp_prefacturas
+                   SET fac_subtotal         = monto_subtotal,
+                       fac_monto_ieps       = suma_ieps,
+                       fac_impuesto         = monto_impuesto,
+                       fac_monto_retencion  = total_retencion,
+                       fac_total            = suma_total,
+                       tasa_retencion_immex = tasa_retencion
+                 WHERE id = _prefactura_id;
+            END IF;
+
+            
+
+            
+            
+            /*
+            Verificar si se está llevando control de existencias por Presentaciones. 
+            Si no se lleva control de presentaciones, por ningun motivo podrá ser cambiada la presentacion, por lo tanto no es necesario actualizar
+            */
+            IF controlExisPres = true THEN
+
+                IF facpar.validar_pres_pedido = false THEN 
+                    total_filas := array_length(_grid_detalle, 1);--obtiene total de elementos del arreglo
+                    cont_fila := 1;
+
+                    FOR cont_fila IN 1 .. total_filas LOOP
+
+                        detalle := _grid_detalle[cont_fila];
+                        
+                        --1: se conserva, 0: se elimina
+                        IF detalle.to_keep <> 0 THEN
+
+                            --Aquí se actualiza la presentación porque puede que haya cambiado antes de facturar o remisionar
+                            UPDATE erp_prefacturas_detalles
+                               SET presentacion_id = detalle.presentacion_id 
+                             WHERE id = detalle.id;
+
+                        END IF;
+
+                    END LOOP;
+
+                END IF;
+
+            END IF;
+
+        END IF;
+        
+        
+        
+        --RAISE EXCEPTION '%','facpar.incluye_adenda: '||facpar.incluye_adenda;
+        
+        --:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        --Inicia gaurdar datos para la Adenda
+        --Primero se verifica si en los parametros indica que se debe incluir la Adenda
+        IF facpar.incluye_adenda THEN
+            --Verificar que exista un id de cliente valido
+            IF _cliente_id > 1 THEN
+                --Buscar el numero de Adenda asignado al cliente.
+                SELECT cxc_clie_tipo_adenda_id
+                    FROM cxc_clie
+                    WHERE id = _cliente_id
+                    INTO idAdenda;
+                
+                --Varificar si tiene adenda asignada
+                IF idAdenda > 0 THEN 
+                    --Verificar el numero de adenda
+                    IF idAdenda = 1 THEN 
+                        --Si el numero de Adenda es 1, entonces solo debe se debe validar datos cuando el tipo de documento es igual a 3.
+                        --Tipo Documento 3=Factura de Remision
+                        IF _tipo_documento = 3 THEN 
+                            --RAISE EXCEPTION '%','str_data[27]: '||str_data[27];
+                            
+                            --Buscar la codificacion de la moneda por si el usuario la cambio al momento de actualizar
+                            SELECT iso_4217_anterior::character varying
+                                FROM gral_mon
+                                WHERE id = _moneda_id
+                                INTO moneda_iso_4217;
+
+                            adenda8 := moneda_iso_4217;
+                            
+                            --Verificar si ya hay un registro de la Adenda y que no este ligado a una factura, es decir no ha sido facturado
+                            IF (SELECT count(id)
+                                  FROM fac_docs_adenda
+                                 WHERE prefactura_id = _prefactura_id
+                                   AND fac_docs_id = 0) > 0 THEN 
+                                --Actualizar datos de la adenda porque ya existe un registro
+                                UPDATE fac_docs_adenda
+                                   SET valor1 = _adenda1,
+                                       valor2 = _adenda2,
+                                       valor3 = _adenda3,
+                                       valor4 = _adenda4,
+                                       valor5 = _adenda5,
+                                       valor6 = _adenda6,
+                                       valor7 = _adenda7,
+                                       valor8 = adenda8 
+                                 WHERE prefactura_id = _prefactura_id
+                                   AND fac_docs_id   = 0;
+                            ELSE
+                                --Crear el registro porque no existe
+                                INSERT INTO fac_docs_adenda(
+                                    prefactura_id,
+                                    fac_docs_id,
+                                    cxc_clie_adenda_tipo_id,
+                                    valor1,
+                                    valor2,
+                                    valor3,
+                                    valor4,
+                                    valor5,
+                                    valor6,
+                                    valor7,
+                                    valor8
+                                ) VALUES (
+                                    _prefactura_id,
+                                    0,
+                                    idAdenda,
+                                    _adenda1,
+                                    _adenda2,
+                                    _adenda3,
+                                    _adenda4,
+                                    _adenda5,
+                                    _adenda6,
+                                    _adenda7,
+                                    adenda8
+                                );
+                            END IF;
+                        END IF;
+                    END IF;
+                    --Termina Addenda FEMSA-QUIMIPRODUCTOS
+                    
+                    
+                    --Addenda SUN CHEMICAL
+                    IF idAdenda = 2 THEN
+                        
+                        --Tipo Documento 1=Factura, 3=Factura de Remision
+                        IF _tipo_documento = 1 OR _tipo_documento = 3 THEN 
+                            --Verificar si ya hay un registro de la Adenda y que no este ligado a una factura, es decir no ha sido facturado
+                            IF (SELECT count(id) FROM fac_docs_adenda WHERE prefactura_id = _prefactura_id AND fac_docs_id = 0) > 0 THEN 
+                                --Actualizar datos de la adenda porque ya existe un registro
+                                UPDATE fac_docs_adenda
+                                   SET valor1 = _orden_compra 
+                                 WHERE prefactura_id = _prefactura_id
+                                   AND fac_docs_id   = 0;
+                            ELSE
+                                --Crear el registro porque no existe
+                                INSERT INTO fac_docs_adenda(
+                                    prefactura_id,
+                                    fac_docs_id,
+                                    cxc_clie_adenda_tipo_id,
+                                    valor1
+                                ) VALUES (
+                                    _prefactura_id,
+                                    0,
+                                    idAdenda,
+                                    _orden_compra
+                                );
+                            END IF;
+                        END IF;
+                    END IF;
+                    --Termina Addenda SUN CHEMICAL
+                END IF;
+            END IF;
+        END IF;
+        --Termina Guardar datos Adenda
+        --:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        
+        
+        
+        
+        
+        --RAISE EXCEPTION '%','tipo_documento: '||str_data[15];
+        --::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        --:::::: AQUI ENTRA PARA GENERAR UNA REMISION:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        --::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        IF _tipo_documento = 2 THEN
+
+            id_tipo_consecutivo := 10;--Folio Remision de Clientes
+            
+            --aqui entra para tomar el consecutivo del folio de la remision de la sucursal actual
+            UPDATE gral_cons
+               SET consecutivo = (
+                        SELECT sbt.consecutivo + 1
+                          FROM gral_cons AS sbt
+                         WHERE sbt.id = gral_cons.id
+                   )
+                WHERE gral_emp_id       = emp_id
+                  AND gral_suc_id       = suc_id
+                  AND gral_cons_tipo_id = id_tipo_consecutivo
+            RETURNING prefijo,
+                      consecutivo
+                 INTO prefijo_consecutivo,
+                      nuevo_consecutivo;
+            --suc_id_consecutivo
+            
+            --concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio del pedido
+            nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+            
+            --extraer datos de la Prefactura
+            SELECT *
+                FROM erp_prefacturas
+                WHERE id = _prefactura_id
+                INTO prefactura_fila;
+            
+            IF prefactura_fila.moneda_id = 1 THEN
+                --IF prefactura_fila.moneda_id != prefactura_fila.id_moneda_pedido THEN
+                --    tipo_cam:=prefactura_fila.tipo_cambio;
+                --ELSE
+                tipo_cam := 1;
+                --END IF;
+            ELSE
+                tipo_cam := prefactura_fila.tipo_cambio;
+            END IF;
+            
+            INSERT INTO fac_rems(
+                folio,                  --nuevo_folio,
+                folio_pedido,           --prefactura_fila.folio_pedido,
+                cxc_clie_id,            --prefactura_fila.cliente_id,
+                moneda_id,              --prefactura_fila.moneda_id,
+                subtotal,               --prefactura_fila.fac_subtotal,
+                monto_ieps,             --prefactura_fila.fac_monto_ieps,
+                impuesto,               --prefactura_fila.fac_impuesto,
+                monto_retencion,        --prefactura_fila.fac_monto_retencion,
+                total,                  --prefactura_fila.fac_total,
+                tasa_retencion_immex,   --prefactura_fila.tasa_retencion_immex,
+                tipo_cambio,            --tipo_cam,
+                fac_metodos_pago_id,    --prefactura_fila.fac_metodos_pago_id,
+                no_cuenta,              --prefactura_fila.no_cuenta,
+                proceso_id,             --prefactura_fila.proceso_id,
+                cxc_agen_id,            --prefactura_fila.empleado_id,
+                cxc_clie_credias_id,    --prefactura_fila.terminos_id,
+                orden_compra,           --prefactura_fila.orden_compra,
+                observaciones,          --prefactura_fila.observaciones,
+                inv_alm_id,             --prefactura_fila.inv_alm_id,
+                cxc_clie_df_id,         --prefactura_fila.cxc_clie_df_id,
+                momento_creacion,       --espacio_tiempo_ejecucion,
+                gral_usr_id_creacion,   --usuario_ejecutor
+                monto_descto,           --prefactura_fila.fac_monto_descto 
+                motivo_descto           --prefactura_fila.motivo_descto 
+            ) VALUES (
+                nuevo_folio,
+                prefactura_fila.folio_pedido,
+                prefactura_fila.cliente_id,
+                prefactura_fila.moneda_id,
+                prefactura_fila.fac_subtotal,
+                prefactura_fila.fac_monto_ieps,
+                prefactura_fila.fac_impuesto,
+                prefactura_fila.fac_monto_retencion,
+                prefactura_fila.fac_total,
+                prefactura_fila.tasa_retencion_immex,
+                tipo_cam,
+                prefactura_fila.fac_metodos_pago_id,
+                prefactura_fila.no_cuenta,
+                prefactura_fila.proceso_id,
+                prefactura_fila.empleado_id,
+                prefactura_fila.terminos_id,
+                prefactura_fila.orden_compra,
+                prefactura_fila.observaciones,
+                prefactura_fila.inv_alm_id,
+                prefactura_fila.cxc_clie_df_id,
+                espacio_tiempo_ejecucion,
+                usuario_ejecutor,
+                prefactura_fila.fac_monto_descto,
+                prefactura_fila.motivo_descto
+            )
+            RETURNING id INTO ultimo_id;
+            
+            tipo_movimiento_id  := 5;--Salida por Venta
+            id_tipo_consecutivo := 21; --Folio Orden de Salida
+            id_almacen          := prefactura_fila.inv_alm_id;
+            
+            --aqui entra para tomar el consecutivo del folio  la sucursal actual
+            UPDATE gral_cons
+               SET consecutivo = (
+                      SELECT sbt.consecutivo + 1
+                        FROM gral_cons AS sbt
+                       WHERE sbt.id = gral_cons.id
+                   )
+             WHERE gral_emp_id       = emp_id
+               AND gral_suc_id       = suc_id
+               AND gral_cons_tipo_id = id_tipo_consecutivo
+            RETURNING prefijo,
+                      consecutivo
+                 INTO prefijo_consecutivo,
+                      nuevo_consecutivo;
+            --suc_id_consecutivo
+            
+            --Concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+            nuevo_folio_osal := prefijo_consecutivo || nuevo_consecutivo::character varying;
+            
+            --Crea registro en tabla inv_osal(Orden de Salida)
+            INSERT INTO inv_osal(
+                folio,
+                estatus,
+                erp_proceso_id,
+                inv_mov_tipo_id,
+                tipo_documento,
+                folio_documento,
+                fecha_exp,
+                gral_app_id,
+                cxc_clie_id,
+                inv_alm_id,
+                subtotal,
+                monto_iva,
+                monto_retencion,
+                monto_total,
+                folio_pedido,
+                orden_compra,
+                moneda_id,
+                tipo_cambio,
+                momento_creacion,
+                gral_usr_id_creacion,
+                gral_emp_id,
+                gral_suc_id,
+                monto_ieps
+            ) VALUES (
+                nuevo_folio_osal,
+                0,
+                prefactura_fila.proceso_id,
+                tipo_movimiento_id,
+                _tipo_documento,
+                nuevo_folio,
+                espacio_tiempo_ejecucion,
+                app_selected,
+                prefactura_fila.cliente_id,
+                id_almacen,
+                prefactura_fila.subtotal,
+                prefactura_fila.impuesto,
+                prefactura_fila.monto_retencion,
+                prefactura_fila.total,
+                prefactura_fila.folio_pedido,
+                prefactura_fila.orden_compra,
+                prefactura_fila.moneda_id,
+                tipo_cam,
+                espacio_tiempo_ejecucion,
+                usuario_ejecutor,
+                emp_id,
+                suc_id,
+                prefactura_fila.monto_ieps
+            )
+            RETURNING id INTO id_osal;
+            
+            --Crea registro del movimiento
+            INSERT INTO inv_mov(
+                observacion,
+                momento_creacion,
+                gral_usr_id,
+                gral_app_id,
+                inv_mov_tipo_id,
+                referencia,
+                fecha_mov
+            ) VALUES (
+                prefactura_fila.observaciones,
+                espacio_tiempo_ejecucion,
+                usuario_ejecutor,
+                app_selected,
+                tipo_movimiento_id,
+                nuevo_folio,
+                espacio_tiempo_ejecucion
+            )
+            RETURNING id INTO identificador_nuevo_movimiento;
+            
+            --bandera que identifica si el producto es tipo 4
+            --si es tipo 4 no debe existir movimientos en inventario
+            bandera_tipo_4 := TRUE;
+
+            --Bandera que indica si se debe actualizar el flujo del proceso.
+            --El proceso solo debe actualizarse cuando no quede ni una sola partida viva
+            actualizar_proceso := true;
+            
+            --Extraer datos de erp_prefacturas_detalles
+            sql_select := '
+            SELECT  erp_prefacturas_detalles.id AS id_det,
+                    erp_prefacturas_detalles.producto_id,
+                    erp_prefacturas_detalles.presentacion_id,
+                    erp_prefacturas_detalles.cantidad AS cant_pedido,
+                    erp_prefacturas_detalles.cant_facturado,
+                    erp_prefacturas_detalles.cant_facturar AS cantidad,
+                    erp_prefacturas_detalles.tipo_impuesto_id,
+                    erp_prefacturas_detalles.valor_imp,
+                    erp_prefacturas_detalles.precio_unitario,
+                    inv_prod.tipo_de_producto_id AS tipo_producto,
+                    erp_prefacturas_detalles.costo_promedio,
+                    erp_prefacturas_detalles.reservado,
+                    erp_prefacturas_detalles.reservado AS nuevo_reservado,
+                    0::double precision AS descontar_reservado,
+                    (CASE WHEN inv_prod_presentaciones.id IS NULL
+                        THEN 0
+                        ELSE inv_prod_presentaciones.cantidad
+                        END) AS cant_equiv,
+                    (CASE WHEN inv_prod_unidades.id IS NULL
+                        THEN 0
+                        ELSE inv_prod_unidades.decimales
+                        END) AS no_dec,
+                    inv_prod.unidad_id AS id_uni_prod,
+                    inv_prod.densidad AS densidad_prod,
+                    inv_prod_unidades.titulo AS nombre_unidad,
+                    erp_prefacturas_detalles.inv_prod_unidad_id,
+                    erp_prefacturas_detalles.gral_ieps_id, 
+                    erp_prefacturas_detalles.valor_ieps,
+                    (CASE WHEN erp_prefacturas_detalles.descto IS NULL
+                        THEN 0
+                        ELSE erp_prefacturas_detalles.descto
+                        END) AS descto,
+                    erp_prefacturas_detalles.gral_imptos_ret_id, 
+                    erp_prefacturas_detalles.tasa_ret 
+                FROM erp_prefacturas_detalles 
+                JOIN inv_prod                     ON inv_prod.id                = erp_prefacturas_detalles.producto_id
+                LEFT JOIN inv_prod_unidades       ON inv_prod_unidades.id       = inv_prod.unidad_id
+                LEFT JOIN inv_prod_presentaciones ON inv_prod_presentaciones.id = erp_prefacturas_detalles.presentacion_id 
+                WHERE erp_prefacturas_detalles.cant_facturar>0 
+                AND erp_prefacturas_detalles.prefacturas_id = ' || _prefactura_id || ';';
+            
+            FOR prefactura_detalle IN EXECUTE (sql_select) LOOP
+                --Inicializar valores
+                cantPresReservAnterior := 0;
+                cantPresAsignado       := 0;
+                partida_facturada      := false;
+                cantUnidadProd         := 0;
+                
+                idUnidadMedida     := prefactura_detalle.id_uni_prod;
+                densidadProd       := prefactura_detalle.densidad_prod;
+                nombreUnidadMedida := prefactura_detalle.nombre_unidad;
+                
+                IF densidadProd IS NULL OR densidadProd = 0 THEN
+                    densidadProd := 1;
+                END IF;
+                
+                cantUnidadProd := prefactura_detalle.cantidad::double precision;
+                
+                IF facpar.cambiar_unidad_medida THEN
+                    IF idUnidadMedida::integer <> prefactura_detalle.inv_prod_unidad_id THEN
+
+                        EXECUTE 'SELECT ''' || nombreUnidadMedida || ''' ~* ''KILO*'';'
+                            INTO match_cadena;
+                        
+                        IF match_cadena = true THEN
+                            --Convertir a kilos
+                            cantUnidadProd := cantUnidadProd::double precision * densidadProd;
+                        ELSE
+                            EXECUTE 'SELECT ''' || nombreUnidadMedida || ''' ~* ''LITRO*'';'
+                                INTO match_cadena;
+                            
+                            IF match_cadena = true THEN 
+                                --Convertir a Litros
+                                cantUnidadProd := cantUnidadProd::double precision / densidadProd;
+                            END IF;
+                        END IF;
+                    END IF;
+                END IF;
+                
+                prefactura_detalle.cant_pedido     := round(prefactura_detalle.cant_pedido::numeric,prefactura_detalle.no_dec)::double precision;
+                prefactura_detalle.cant_facturado  := round(prefactura_detalle.cant_facturado::numeric,prefactura_detalle.no_dec)::double precision;
+                prefactura_detalle.cantidad        := round(prefactura_detalle.cantidad::numeric,prefactura_detalle.no_dec)::double precision;
+                prefactura_detalle.reservado       := round(prefactura_detalle.reservado::numeric,prefactura_detalle.no_dec)::double precision;
+                prefactura_detalle.nuevo_reservado := round(prefactura_detalle.nuevo_reservado::numeric,prefactura_detalle.no_dec)::double precision;
+                cantUnidadProd := round(cantUnidadProd::numeric, prefactura_detalle.no_dec)::double precision;
+                
+                IF (cantUnidadProd::double precision <= prefactura_detalle.reservado::double precision) THEN 
+                    --Asignar la cantidad para descontar de reservado
+                    prefactura_detalle.reservado := cantUnidadProd::double precision;
+                END IF;
+                
+                --Calcular la nueva cantidad reservada
+                prefactura_detalle.nuevo_reservado := prefactura_detalle.nuevo_reservado::double precision - prefactura_detalle.reservado::double precision;
+                
+                --Redondaer la nueva cantidad reservada
+                prefactura_detalle.nuevo_reservado := round(prefactura_detalle.nuevo_reservado::numeric, prefactura_detalle.no_dec)::double precision;
+                
+                --Obtener costo promedio actual del producto
+                SELECT *
+                    FROM inv_obtiene_costo_promedio_actual(prefactura_detalle.producto_id, espacio_tiempo_ejecucion)
+                    INTO costo_promedio_actual;
+                
+                --Verificar que no tenga valor null
+                IF costo_promedio_actual IS NULL OR costo_promedio_actual <= 0 THEN
+                    costo_promedio_actual := 0;
+                END IF;
+                
+                --Obtener el costo ultimo actual del producto. Este costo es convertido a pesos
+                sql_select2 := 'SELECT (CASE WHEN gral_mon_id_' || mes_actual || ' = 1 
+                                            THEN costo_ultimo_' || mes_actual || ' 
+                                            ELSE costo_ultimo_' || mes_actual || ' *
+                                                (CASE WHEN gral_mon_id_' || mes_actual || ' = 1 
+                                                    THEN 1 
+                                                    ELSE tipo_cambio_' || mes_actual || ' 
+                                                    END)
+                                        END) AS costo_ultimo
+                                    FROM inv_prod_cost_prom 
+                                    WHERE inv_prod_id = ' || prefactura_detalle.producto_id || ' 
+                                    AND ano = ' || ano_actual || ';';
+
+                EXECUTE sql_select2 INTO costo_referencia_actual;
+                --RAISE EXCEPTION '%',cadena_sql;
+                
+                --Verificar que no tenga valor null
+                IF costo_referencia_actual IS NULL OR costo_referencia_actual <= 0 THEN
+                    costo_referencia_actual := 0;
+                END IF;
+                
+                --Crea registros para tabla fac_rems_detalles
+                INSERT INTO fac_rems_detalles(
+                    fac_rems_id,
+                    inv_prod_id,
+                    inv_prod_presentacion_id,
+                    gral_imp_id,
+                    valor_imp,
+                    cantidad,
+                    precio_unitario,
+                    costo_promedio,
+                    costo_referencia,
+                    inv_prod_unidad_id,
+                    gral_ieps_id,
+                    valor_ieps,
+                    descto,
+                    gral_imptos_ret_id,
+                    tasa_ret
+                ) VALUES (
+                    ultimo_id,
+                    prefactura_detalle.producto_id,
+                    prefactura_detalle.presentacion_id,
+                    prefactura_detalle.tipo_impuesto_id,
+                    prefactura_detalle.valor_imp,
+                    prefactura_detalle.cantidad,
+                    prefactura_detalle.precio_unitario,
+                    costo_promedio_actual,
+                    costo_referencia_actual,
+                    prefactura_detalle.inv_prod_unidad_id,
+                    prefactura_detalle.gral_ieps_id,
+                    prefactura_detalle.valor_ieps,
+                    prefactura_detalle.descto,
+                    prefactura_detalle.gral_imptos_ret_id,
+                    prefactura_detalle.tasa_ret
+                );
+                
+                --RAISE EXCEPTION '%','prefactura_detalle.tipo_producto: '||prefactura_detalle.tipo_producto;
+                --Si el tipo de producto es diferente de 4, hay que descontar existencias y generar Movimientos
+                --tipo=4 Servicios
+                --para el tipo servicios NO debe generar movimientos NI descontar existencias
+                IF prefactura_detalle.tipo_producto::integer <> 4 THEN
+
+                    --indica que por lo menos un producto es diferente de tipo4, por lo tanto debe generarse movimientos
+                    bandera_tipo_4 := FALSE;
+                    
+                    --tipo=1 Normal o Terminado
+                    --tipo=2 Subensable o Formulacion o Intermedio
+                    --tipo=5 Refacciones
+                    --tipo=6 Accesorios
+                    --tipo=7 Materia Prima
+                    --tipo=8 Prod. en Desarrollo
+                    IF  prefactura_detalle.tipo_producto = 1 OR
+                        prefactura_detalle.tipo_producto = 2 OR
+                        prefactura_detalle.tipo_producto = 5 OR
+                        prefactura_detalle.tipo_producto = 6 OR
+                        prefactura_detalle.tipo_producto = 7 OR
+                        prefactura_detalle.tipo_producto = 8 THEN
+                        --genera registro en detalles del movimiento
+                        INSERT INTO inv_mov_detalle(
+                            producto_id,
+                            alm_origen_id,
+                            alm_destino_id,
+                            cantidad,
+                            inv_mov_id,
+                            costo,
+                            inv_prod_presentacion_id
+                        ) VALUES (
+                            prefactura_detalle.producto_id,
+                            id_almacen,
+                            0,
+                            cantUnidadProd,
+                            identificador_nuevo_movimiento,
+                            costo_promedio_actual,
+                            prefactura_detalle.presentacion_id
+                        );
+                        
+                        --query para descontar producto de existencias y descontar existencia reservada porque ya se Remisionó
+                        sql_update := 'UPDATE inv_exi
+                                          SET salidas_'        || mes_actual || ' = (salidas_' || mes_actual || ' + ' || cantUnidadProd || '), 
+                                              reservado                           = (reservado::double precision - ' || prefactura_detalle.reservado || '::double precision),
+                                              momento_salida_' || mes_actual || ' = ''' || espacio_tiempo_ejecucion || '''
+                                        WHERE inv_alm_id  = ' || id_almacen                     || '::integer 
+                                          AND inv_prod_id = ' || prefactura_detalle.producto_id || '::integer
+                                          AND ano         = ' || ano_actual                     || '::integer;';
+
+                        EXECUTE sql_update;
+                        
+                        --Crear registro en orden salida detalle, se crea el registo con la cantidad en unidad de venta
+                        INSERT INTO inv_osal_detalle(
+                            inv_osal_id,
+                            inv_prod_id,
+                            inv_prod_presentacion_id,
+                            cantidad,
+                            precio_unitario,
+                            inv_prod_unidad_id,
+                            gral_ieps_id,
+                            valor_ieps
+                        ) VALUES (
+                            id_osal,
+                            prefactura_detalle.producto_id,
+                            prefactura_detalle.presentacion_id,
+                            prefactura_detalle.cantidad,
+                            prefactura_detalle.precio_unitario,
+                            prefactura_detalle.inv_prod_unidad_id,
+                            prefactura_detalle.gral_ieps_id,
+                            prefactura_detalle.valor_ieps
+                        );
+                        
+                        --Verificar si se está llevando el control de existencias por Presentaciones
+                        IF controlExisPres = true THEN 
+                            --Si la configuracion indica que se validan Presentaciones desde el Pedido,entonces significa que hay reservados, por lo tanto hay que descontarlos
+                            IF facpar.validar_pres_pedido = true THEN 
+                                --Convertir la cantidad reservada a su equivalente en presentaciones
+                                cantPresReservAnterior := prefactura_detalle.reservado::double precision / prefactura_detalle.cant_equiv::double precision;
+                                
+                                --redondear la Cantidad de la Presentacion reservada Anteriormente
+                                cantPresReservAnterior := round(cantPresReservAnterior::numeric, prefactura_detalle.no_dec)::double precision; 
+                            END IF;
+                            
+                            --Convertir la cantidad de la partida a su equivalente a presentaciones
+                            cantPresAsignado := cantUnidadProd::double precision / prefactura_detalle.cant_equiv::double precision;
+                            
+                            --Redondear la cantidad de Presentaciones asignado en la partida
+                            cantPresAsignado := round(cantPresAsignado::numeric, prefactura_detalle.no_dec)::double precision;
+                            
+                            --Sumar salidas de inv_exi_pres
+                            UPDATE inv_exi_pres
+                               SET salidas                   = (salidas::double precision + cantPresAsignado::double precision), 
+                                   reservado                 = (reservado::double precision - cantPresReservAnterior::double precision), 
+                                   momento_actualizacion     = espacio_tiempo_ejecucion, 
+                                   gral_usr_id_actualizacion = usuario_ejecutor 
+                             WHERE inv_alm_id               = prefactura_fila.inv_alm_id 
+                               AND inv_prod_id              = prefactura_detalle.producto_id 
+                               AND inv_prod_presentacion_id = prefactura_detalle.presentacion_id;
+                            --Termina sumar salidas
+                        END IF;
+                        
+                        --::Aqui inica calculos para el control de facturacion por partida::::::::
+                        --Calcular la cantidad facturada
+                        prefactura_detalle.cant_facturado := prefactura_detalle.cant_facturado::double precision + prefactura_detalle.cantidad::double precision;
+                        
+                        --Redondear la cantidad facturada
+                        prefactura_detalle.cant_facturado := round(prefactura_detalle.cant_facturado::numeric, prefactura_detalle.no_dec)::double precision;
+                        
+                        IF prefactura_detalle.cant_pedido <= prefactura_detalle.cant_facturado THEN 
+                            partida_facturada  := true;
+                        ELSE
+                            --Si entro aqui quiere decir que por lo menos una partida esta quedando pendiente de facturar por completo.
+                            actualizar_proceso := false;
+                        END IF;
+                        
+                        --Actualizar el registro de la partida
+                        UPDATE erp_prefacturas_detalles
+                           SET cant_facturado = prefactura_detalle.cant_facturado,
+                               facturado      = partida_facturada,
+                               cant_facturar  = 0,
+                               reservado      = prefactura_detalle.nuevo_reservado 
+                         WHERE id = prefactura_detalle.id_det;
+                        
+                        
+                        --Obtener el id del pedido que se esta facturando
+                        SELECT id
+                            FROM poc_pedidos
+                            WHERE folio = prefactura_fila.folio_pedido
+                            ORDER BY id DESC
+                            LIMIT 1
+                            INTO id_pedido;
+                        
+                        IF id_pedido IS NULL THEN
+                            id_pedido := 0;
+                        END IF;
+                        
+                        IF id_pedido <> 0 THEN 
+                            --Actualizar el registro detalle del Pedido
+                            UPDATE poc_pedidos_detalle
+                               SET reservado = prefactura_detalle.nuevo_reservado 
+                             WHERE poc_pedido_id   = id_pedido
+                               AND inv_prod_id     = prefactura_detalle.producto_id
+                               AND presentacion_id = prefactura_detalle.presentacion_id;
+                        END IF;
+                        
+                    END IF;--termina tipo producto 1, 2, 7
+                ELSE
+                    
+                    IF prefactura_detalle.tipo_producto::integer = 4 THEN
+                        --Aquí solo entre cuando es un Servicio
+                        --::Aqui inica calculos para el control de remision por partida::::::::
+                        --Calcular la cantidad facturada
+                        prefactura_detalle.cant_facturado := prefactura_detalle.cant_facturado::double precision + prefactura_detalle.cantidad::double precision;
+                        
+                        --Redondear la cantidad facturada
+                        prefactura_detalle.cant_facturado := round(prefactura_detalle.cant_facturado::numeric, prefactura_detalle.no_dec)::double precision;
+                        
+                        IF prefactura_detalle.cant_pedido <= prefactura_detalle.cant_facturado THEN 
+                            partida_facturada := true;
+                        END IF;
+                        
+                        --Actualizar el registro de la partida
+                        UPDATE erp_prefacturas_detalles
+                           SET cant_facturado = prefactura_detalle.cant_facturado,
+                               facturado      = partida_facturada,
+                               cant_facturar  = 0,
+                               reservado      = 0 
+                         WHERE id = prefactura_detalle.id_det;
+                    END IF;
+
+                END IF;
+                
+            END LOOP;
+            
+            --si bandera tipo 4=true, significa el producto que se esta facturando son servicios;
+            --por lo tanto hay que eliminar el movimiento de inventario
+            IF bandera_tipo_4 = TRUE THEN 
+                DELETE FROM inv_mov
+                    WHERE id = identificador_nuevo_movimiento;
+            END IF;
+            
+            IF (SELECT count(prefact_det.id)
+                    FROM erp_prefacturas_detalles AS prefact_det
+                    JOIN inv_prod ON inv_prod.id = prefact_det.producto_id
+                    WHERE prefact_det.prefacturas_id = _prefactura_id
+                    AND inv_prod.tipo_de_producto_id <> 4
+                    AND prefact_det.facturado = false) >= 1 THEN
+
+                actualizar_proceso := false;
+            END IF;
+            
+            --Verificar si hay que actualizar el flujo del proceso
+            IF actualizar_proceso THEN 
+                --Actualiza el flujo del proceso a 5=Remision
+                UPDATE erp_proceso
+                   SET proceso_flujo_id = 5
+                 WHERE id = prefactura_fila.proceso_id;
+            ELSE
+                --Actualiza el flujo del proceso a 8=REMISION PARCIAL
+                UPDATE erp_proceso
+                   SET proceso_flujo_id = 8
+                 WHERE id = prefactura_fila.proceso_id;
+            END IF;
+            
+            --Una vez terminado el Proceso se asignan ceros a estos campos
+            UPDATE erp_prefacturas
+               SET fac_subtotal        = 0,
+                   fac_monto_ieps      = 0,
+                   fac_impuesto        = 0,
+                   fac_monto_retencion = 0,
+                   fac_total           = 0,
+                   fac_monto_descto    = 0
+             WHERE id = _prefactura_id;
+            
+        END IF;
+        --::::::TERMINA GENERACION DE REMISION:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        
+        valor_retorno := '1:' || nuevo_folio;
+
+    END IF; --termina edit prefactura
+
+    RETURN valor_retorno;
+
+END;
+$$ LANGUAGE plpgsql;
