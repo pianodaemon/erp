@@ -10,10 +10,11 @@ import (
 
 type (
 	User struct {
-		UID       string `json:"uid"`
-		Username  string `json:"username"`
-		IsActive  bool   `json:"is_active"`
-		CreatedAt int64  `json:"created_at"`
+		UID         string
+		Username    string
+		IsActive    bool
+		CreatedAt   int64
+		Authorities map[string]interface{}
 	}
 
 	PgSqlSettings struct {
@@ -75,28 +76,23 @@ func Authenticate(username, password string) (*User, error) {
 			return nil, fmt.Errorf("Verify your credentials")
 		}
 
+		pseudoSet, err := pullUserAuths(retUsername, db)
+
+		if err != nil {
+
+			return nil, err
+		}
+
 		usr = &User{
-			UID:       uid,
-			Username:  retUsername,
-			IsActive:  enabled,
-			CreatedAt: 12123123,
+			UID:         uid,
+			Username:    retUsername,
+			IsActive:    enabled,
+			CreatedAt:   12123123,
+			Authorities: pseudoSet,
 		}
 	}
 
 	return usr, nil
-}
-
-func GetUserAuthorities(usr *User) (map[string]interface{}, error) {
-
-	db, err := sql.Open("postgres", shapeConnStr())
-	if err != nil {
-
-		return "", fmt.Errorf("Issues when connecting to the long term storage")
-	}
-
-	defer db.Close()
-
-	return pullUserAuths(usr.Username, db)
 }
 
 func pullUserAuths(username string, db *sql.DB) (map[string]interface{}, error) {
