@@ -5475,12 +5475,12 @@ BEGIN
                         END) AS descto,
                     erp_prefacturas_detalles.gral_imptos_ret_id, 
                     erp_prefacturas_detalles.tasa_ret 
-                FROM erp_prefacturas_detalles 
-                JOIN inv_prod                     ON inv_prod.id                = erp_prefacturas_detalles.producto_id
-                LEFT JOIN inv_prod_unidades       ON inv_prod_unidades.id       = inv_prod.unidad_id
-                LEFT JOIN inv_prod_presentaciones ON inv_prod_presentaciones.id = erp_prefacturas_detalles.presentacion_id 
-                WHERE erp_prefacturas_detalles.cant_facturar>0 
-                AND erp_prefacturas_detalles.prefacturas_id = ' || _prefactura_id || ';';
+              FROM erp_prefacturas_detalles 
+              JOIN inv_prod                     ON inv_prod.id                = erp_prefacturas_detalles.producto_id
+              LEFT JOIN inv_prod_unidades       ON inv_prod_unidades.id       = inv_prod.unidad_id
+              LEFT JOIN inv_prod_presentaciones ON inv_prod_presentaciones.id = erp_prefacturas_detalles.presentacion_id 
+             WHERE erp_prefacturas_detalles.cant_facturar  > 0 
+               AND erp_prefacturas_detalles.prefacturas_id = ' || _prefactura_id || ';';
             
             FOR prefactura_detalle IN EXECUTE (sql_select) LOOP
                 --Inicializar valores
@@ -5555,11 +5555,11 @@ BEGIN
                                                 (CASE WHEN gral_mon_id_' || mes_actual || ' = 1 
                                                     THEN 1 
                                                     ELSE tipo_cambio_' || mes_actual || ' 
-                                                    END)
+                                                 END)
                                         END) AS costo_ultimo
-                                    FROM inv_prod_cost_prom 
-                                    WHERE inv_prod_id = ' || prefactura_detalle.producto_id || ' 
-                                    AND ano = ' || ano_actual || ';';
+                                  FROM inv_prod_cost_prom 
+                                 WHERE inv_prod_id = ' || prefactura_detalle.producto_id || ' 
+                                   AND ano         = ' || ano_actual || ';';
 
                 EXECUTE sql_select2 INTO costo_referencia_actual;
                 --RAISE EXCEPTION '%',cadena_sql;

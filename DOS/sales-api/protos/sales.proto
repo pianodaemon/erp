@@ -13,6 +13,7 @@ service Sales {
   rpc EditPedido (PedidoRequest) returns (PedidoResponse) {}
   rpc CancelPedido (PedidoCancelRequest) returns (PedidoCancelResponse) {}
   rpc AuthPedido (PedidoAuthRequest) returns (PedidoAuthResponse) {}
+  rpc EditPrefactura (PrefacturaRequest) returns (PrefacturaResponse) {}
 }
 
 
@@ -143,5 +144,59 @@ message PedidoAuthRequest {
 
 // The response message containing the sales order's authorization results
 message PedidoAuthResponse {
+  string valorRetorno = 1;
+}
+
+
+// -------------------------------------------------------------------------
+// The request message containing the Prefactura edition parameters
+message PrefacturaRequest {
+  int32 usuarioId        = 1;
+  int32 prefacturaId     = 2;
+  int32 clienteId        = 3;
+  int32 monedaId         = 4;
+  string observaciones   = 5;
+  double tipoCambio      = 6;
+  int32 vendedorId       = 7;
+  int32 condicionesId    = 8;
+  string ordenCompra     = 9;
+  bool refacturar        = 10;
+  int32 metodoPagoId     = 11;
+  string noCuenta        = 12;
+  int32 tipoDocumento    = 13;
+  int32 monedaOriginalId = 14;
+  string adenda1         = 15;
+  string adenda2         = 16;
+  string adenda3         = 17;
+  string adenda4         = 18;
+  string adenda5         = 19;
+  string adenda6         = 20;
+  string adenda7         = 21;
+  string adenda8         = 22;
+  bool permitirDescto    = 23;
+
+  message GridRenglonPrefactura {
+    int32 toKeep          = 1;
+    int32 id              = 2;
+    int32 productoId      = 3;
+    int32 presentacionId  = 4;
+    int32 tipoImpuestoId  = 5;
+    double cantidad       = 6;
+    double precioUnitario = 7;
+    double valorImp       = 8;
+    int32 remisionId      = 9;
+    double costoPromedio  = 10;
+    int32 invProdUnidadId = 11;
+    int32 gralIepsId      = 12;
+    double valorIeps      = 13;
+    double descto         = 14;
+    int32 gralImptosRetId = 15;
+    double tasaRet        = 16;
+  }
+  repeated GridRenglonPrefactura gridDetalle = 24;
+}
+
+// The response message containing the Prefactura edition results
+message PrefacturaResponse {
   string valorRetorno = 1;
 }

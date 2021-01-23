@@ -7,6 +7,7 @@ import sales_pb2_grpc
 
 from dal import cotizacion
 from dal import pedido_ventas
+from dal import facturacion
 
 class Sales(sales_pb2_grpc.SalesServicer):
     
@@ -87,6 +88,18 @@ class Sales(sales_pb2_grpc.SalesServicer):
         print(request)
 
         valor_retorno = pedido_ventas.auth_pedido(
+            request.pedidoId,
+            request.usuarioId
+        )
+        return sales_pb2.PedidoAuthResponse(
+            valorRetorno='{}'.format(valor_retorno)
+        )
+
+
+    def EditPrefactura(self, request, context):
+        print("------ edit prefactura:", request)
+
+        valor_retorno = facturacion.edit_prefactura(
             request.pedidoId,
             request.usuarioId
         )
