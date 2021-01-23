@@ -174,3 +174,23 @@ func setUserAuths(userAuths *string, authWeightPerApp int, lastApp, appAuths str
 		}
 	}
 }
+
+func pullUserAuths(username string, db *sql.DB) (map[string]interface{}, error) {
+
+	rows, err := db.Query("select authority from authorities where username = $1;", username)
+	if err != nil {
+		return nil, err
+	}
+
+	pseudoSet := make(map[string]interface{})
+	var authority string
+
+	for rows.Next() {
+		if err := rows.Scan(&authority); err != nil {
+			return nil, err
+		}
+		pseudoSet[authority] = new(struct{})
+	}
+
+	return pseudoSet, nil
+}
