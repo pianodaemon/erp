@@ -19,7 +19,7 @@ type (
 
 	PgSqlSettings struct {
 		Host     string `default:"rdbms_obs"`
-		Db       string `default:"soa"`
+		Db       string `default:"erp"`
 		User     string `default:"postgres"`
 		Password string `default:"postgres"`
 		Port     int    `default:"5432"`
