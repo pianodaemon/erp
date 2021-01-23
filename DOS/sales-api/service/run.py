@@ -97,13 +97,35 @@ class Sales(sales_pb2_grpc.SalesServicer):
 
 
     def EditPrefactura(self, request, context):
-        print("------ edit prefactura:", request)
+        print("------ edit prefactura:\n", request)
 
         valor_retorno = facturacion.edit_prefactura(
-            request.pedidoId,
-            request.usuarioId
+            request.usuarioId,
+            request.prefacturaId,
+            request.clienteId,
+            request.monedaId,
+            request.observaciones,
+            request.tipoCambio,
+            request.vendedorId,
+            request.condicionesId,
+            request.ordenCompra,
+            request.refacturar,
+            request.metodoPagoId,
+            request.noCuenta,
+            request.tipoDocumento,
+            request.monedaOriginalId,
+            request.adenda1,
+            request.adenda2,
+            request.adenda3,
+            request.adenda4,
+            request.adenda5,
+            request.adenda6,
+            request.adenda7,
+            request.adenda8,
+            request.permitirDescto,
+            request.gridDetalle
         )
-        return sales_pb2.PedidoAuthResponse(
+        return sales_pb2.PrefacturaResponse(
             valorRetorno='{}'.format(valor_retorno)
         )
 
