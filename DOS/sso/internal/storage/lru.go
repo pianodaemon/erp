@@ -3,7 +3,9 @@ package storage
 import (
 	"context"
 	"os"
+	"fmt"
 	"time"
+	"strings"
 
 	ton "immortalcrab.com/sso/internal/token"
 
@@ -94,3 +96,50 @@ func setRedisClientUp(rcli **redis.Client) error {
 
 	return err
 }
+
+// Endorses the roles to a set identifier
+func EndorseAuthorites(asetID string, authorities map[string]interface{}) error {
+
+	anumber := len(authorities)
+
+	if anumber == 0 {
+
+		return fmt.Errorf("no authorites feed to endorse")
+	}
+
+	if len(asetID) == 0 {
+
+		return fmt.Errorf("an empty string can not be endorsed")
+	}
+
+	var ctx = context.Background()
+	var cli *redis.Client
+
+	if err := setRedisClientUp(&cli); err != nil {
+
+		return err
+	}
+
+	defer cli.Close()
+
+	roles := make([]string, 0, len(authorities))
+	for role := range authorities {
+
+		roles = append(roles, role)
+	}
+
+	// It blows the previous set of the authorities
+	if err := cli.Do(ctx, "del", asetID).Err(); err != nil {
+
+		return err
+	}
+
+	// The authorities are placed into the set
+	if err := cli.Do(ctx, "sadd", asetID, strings.Join(roles, " ")).Err(); err != nil {
+
+		return err
+	}
+
+	return nil
+}
+
