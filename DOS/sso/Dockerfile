@@ -1,5 +1,5 @@
 # Building stage
-FROM golang:1.14-alpine as builder
+FROM golang:1.15-alpine as builder
 
 LABEL MAINTAINER="Edward Nygma <j4nusx@yahoo.com>"
 
