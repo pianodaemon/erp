@@ -1,4 +1,4 @@
-FROM mhart/alpine-node:11 AS builder
+FROM mhart/alpine-node:12 AS builder
 LABEL maintainer=linuxeron@gmail.com
 
 ARG NODE_ENV
@@ -8,7 +8,7 @@ ARG REACT_APP_HOST_AUTH
 WORKDIR /app
 COPY . .
 RUN npm install react-scripts -g --silent
-RUN yarn install --pure-lockfile
+RUN yarn install
 RUN yarn run build
 
 FROM mhart/alpine-node
