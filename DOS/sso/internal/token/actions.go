@@ -63,9 +63,9 @@ func Generate(privateKey *rsa.PrivateKey, expirationDelta int, userUID string) (
 	token := jwt.New(jwt.SigningMethodRS512)
 
 	token.Claims = jwt.MapClaims{
-		"exp":         time.Now().Add(time.Hour * time.Duration(expirationDelta)).Unix(),
-		"iat":         time.Now().Unix(),
-		"sub":         userUID,
+		"exp": time.Now().Add(time.Hour * time.Duration(expirationDelta)).Unix(),
+		"iat": time.Now().Unix(),
+		"sub": userUID,
 	}
 
 	tokenString, err := token.SignedString(privateKey)

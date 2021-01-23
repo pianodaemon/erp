@@ -2,10 +2,10 @@ package storage
 
 import (
 	"context"
-	"os"
 	"fmt"
-	"time"
+	"os"
 	"strings"
+	"time"
 
 	ton "immortalcrab.com/sso/internal/token"
 
@@ -142,4 +142,3 @@ func EndorseAuthorites(asetID string, authorities map[string]interface{}) error 
 
 	return nil
 }
-
