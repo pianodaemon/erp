@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -46,6 +47,12 @@ import org.springframework.ui.Model;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+import com.maxima.sales.cli.grpc.PrefacturaRequest;
+import com.maxima.sales.cli.grpc.PrefacturaResponse;
+import com.maxima.sales.cli.grpc.SalesGrpc;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 
 /**
  *
@@ -525,64 +532,94 @@ public class PrefacturasController {
     }
     
     
-    
+    private String editarPrefactura(PrefacturaRequest prefacturaRequest) {
+
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString())
+            .usePlaintext()
+            .build();
+
+        SalesGrpc.SalesBlockingStub blockingStub = SalesGrpc.newBlockingStub(channel);
+
+        PrefacturaResponse prefacturaResponse;
+        String valorRetorno = "0:";
+
+        try {
+            prefacturaResponse = blockingStub.editPrefactura(prefacturaRequest);
+            valorRetorno = prefacturaResponse.getValorRetorno();
+            log.log(Level.INFO, "Prefactura edit Response valorRetorno: {0}", valorRetorno);
+
+        } catch (StatusRuntimeException e) {
+            valorRetorno += "Error en llamada a procedimiento remoto.";
+            log.log(Level.SEVERE, "gRPC failed: {0}", e.getStatus());
+
+        } finally {
+            try {
+                channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+
+            } catch (InterruptedException e) {
+                log.log(Level.SEVERE, "Channel shutdown failed.", e);
+            }
+        }
+
+        return valorRetorno;
+    }
     
     //edicion y nuevo
     @RequestMapping(method = RequestMethod.POST, value="/edit.json")
     public @ResponseBody HashMap<String, String> editJson(
-            @RequestParam(value="id_prefactura", required=true) Integer id_prefactura,
-            @RequestParam(value="select_tipo_documento", required=true) Integer select_tipo_documento,
-            @RequestParam(value="id_cliente", required=true) String id_cliente,
-            @RequestParam(value="rfc", required=true) String rfc,
-            @RequestParam(value="moneda", required=true) String id_moneda,
-            @RequestParam(value="moneda_original", required=true) String id_moneda_original,
-            @RequestParam(value="tipo_cambio", required=true) String tipo_cambio_vista,
-            @RequestParam(value="observaciones", required=true) String observaciones,
-            @RequestParam(value="total_tr", required=true) String total_tr,
-            @RequestParam(value="vendedor", required=true) String id_vendedor,
-            @RequestParam(value="condiciones", required=true) String id_condiciones,
-            @RequestParam(value="orden_compra", required=true) String orden_compra,
-            @RequestParam(value="refacturar", required=true) String refacturar,
-            @RequestParam(value="accion", required=true) String accion,
-            @RequestParam(value="select_metodo_pago", required=true) String id_metodo_pago,
-            @RequestParam(value="no_cuenta", required=false) String no_cuenta,
-            @RequestParam(value="folio_pedido", required=false) String folio_pedido,
-            @RequestParam(value="tasa_ret_immex", required=false) String tasa_ret_immex,
-            @RequestParam(value="select_almacen", required=false) String select_almacen,
-            @RequestParam(value="select_tmov", required=false) String select_tmov,
-            @RequestParam(value="pdescto", required=true) String permitir_descto,
-            
-            //Estos son para datos de la Adenda
-            @RequestParam(value="campo1", required=true) String campo_adenda1,
-            @RequestParam(value="campo2", required=true) String campo_adenda2,
-            @RequestParam(value="campo3", required=true) String campo_adenda3,
-            @RequestParam(value="campo4", required=true) String campo_adenda4,
-            @RequestParam(value="campo5", required=true) String campo_adenda5,
-            @RequestParam(value="campo6", required=true) String campo_adenda6,
-            @RequestParam(value="campo7", required=true) String campo_adenda7,
-            @RequestParam(value="campo8", required=true) String campo_adenda8,
-            
-            @RequestParam(value="eliminado", required=false) String[] eliminado,
-            @RequestParam(value="iddetalle", required=false) String[] iddetalle,
-            @RequestParam(value="idproducto", required=false) String[] idproducto,
-            @RequestParam(value="idUnidad", required=false) String[] idUnidad,
-            @RequestParam(value="id_presentacion", required=false) String[] id_presentacion,
-            @RequestParam(value="id_imp_prod", required=false) String[] id_impuesto,
-            @RequestParam(value="valor_imp", required=false) String[] valor_imp,
-            @RequestParam(value="cantidad", required=false) String[] cantidad,
-            @RequestParam(value="costo_promedio", required=false) String[] costo_promedio,
-            @RequestParam(value="costo", required=false) String[] costo,
-            @RequestParam(value="idIeps", required=false) String[] idIeps,
-            @RequestParam(value="tasaIeps", required=false) String[] tasaIeps,
-            @RequestParam(value="vdescto", required=false) String[] vdescto,
-            @RequestParam(value="ret_id", required=false) String[] ret_id,
-            @RequestParam(value="ret_tasa", required=false) String[] ret_tasa,
-            
-            @RequestParam(value="id_remision", required=false) String[] id_remision,
-            @RequestParam(value="id_df", required=false) String id_df,
-            
-            @ModelAttribute("user") UserSessionData user
-        ) throws Exception {
+        @RequestParam(value="id_prefactura", required=true) Integer id_prefactura,
+        @RequestParam(value="select_tipo_documento", required=true) Integer select_tipo_documento,
+        @RequestParam(value="id_cliente", required=true) String id_cliente,
+        @RequestParam(value="rfc", required=true) String rfc,
+        @RequestParam(value="moneda", required=true) String id_moneda,
+        @RequestParam(value="moneda_original", required=true) String id_moneda_original,
+        @RequestParam(value="tipo_cambio", required=true) String tipo_cambio_vista,
+        @RequestParam(value="observaciones", required=true) String observaciones,
+        @RequestParam(value="total_tr", required=true) String total_tr,
+        @RequestParam(value="vendedor", required=true) String id_vendedor,
+        @RequestParam(value="condiciones", required=true) String id_condiciones,
+        @RequestParam(value="orden_compra", required=true) String orden_compra,
+        @RequestParam(value="refacturar", required=true) String refacturar,
+        @RequestParam(value="accion", required=true) String accion,
+        @RequestParam(value="select_metodo_pago", required=true) String id_metodo_pago,
+        @RequestParam(value="no_cuenta", required=false) String no_cuenta,
+        @RequestParam(value="folio_pedido", required=false) String folio_pedido,
+        @RequestParam(value="tasa_ret_immex", required=false) String tasa_ret_immex,
+        @RequestParam(value="select_almacen", required=false) String select_almacen,
+        @RequestParam(value="select_tmov", required=false) String select_tmov,
+        @RequestParam(value="pdescto", required=true) String permitir_descto,
+
+        //Estos son para datos de la Adenda
+        @RequestParam(value="campo1", required=true) String campo_adenda1,
+        @RequestParam(value="campo2", required=true) String campo_adenda2,
+        @RequestParam(value="campo3", required=true) String campo_adenda3,
+        @RequestParam(value="campo4", required=true) String campo_adenda4,
+        @RequestParam(value="campo5", required=true) String campo_adenda5,
+        @RequestParam(value="campo6", required=true) String campo_adenda6,
+        @RequestParam(value="campo7", required=true) String campo_adenda7,
+        @RequestParam(value="campo8", required=true) String campo_adenda8,
+
+        @RequestParam(value="eliminado", required=false) String[] eliminado,
+        @RequestParam(value="iddetalle", required=false) String[] iddetalle,
+        @RequestParam(value="idproducto", required=false) String[] idproducto,
+        @RequestParam(value="idUnidad", required=false) String[] idUnidad,
+        @RequestParam(value="id_presentacion", required=false) String[] id_presentacion,
+        @RequestParam(value="id_imp_prod", required=false) String[] id_impuesto,
+        @RequestParam(value="valor_imp", required=false) String[] valor_imp,
+        @RequestParam(value="cantidad", required=false) String[] cantidad,
+        @RequestParam(value="costo_promedio", required=false) String[] costo_promedio,
+        @RequestParam(value="costo", required=false) String[] costo,
+        @RequestParam(value="idIeps", required=false) String[] idIeps,
+        @RequestParam(value="tasaIeps", required=false) String[] tasaIeps,
+        @RequestParam(value="vdescto", required=false) String[] vdescto,
+        @RequestParam(value="ret_id", required=false) String[] ret_id,
+        @RequestParam(value="ret_tasa", required=false) String[] ret_tasa,
+
+        @RequestParam(value="id_remision", required=false) String[] id_remision,
+        @RequestParam(value="id_df", required=false) String id_df,
+
+        @ModelAttribute("user") UserSessionData user) throws Exception
+    {
         
         HashMap<String, String> jsonretorno = new HashMap<String, String>();
 
@@ -600,14 +637,19 @@ public class PrefacturasController {
         String arreglo[];
         arreglo = new String[eliminado.length];
         
+        PrefacturaRequest.Builder prefacturaRequestBuilder = PrefacturaRequest.newBuilder();
+        
         for (int i = 0; i < eliminado.length; i++) {
+
+            String _costo = StringHelper.removerComas(costo[i]);
+
             arreglo[i] = "'" + eliminado[i] + "___"
                     + iddetalle[i] + "___"
                     + idproducto[i] + "___"
                     + id_presentacion[i] + "___"
                     + id_impuesto[i] + "___"
                     + cantidad[i] + "___"
-                    + StringHelper.removerComas(costo[i]) + "___"
+                    + _costo + "___"
                     + valor_imp[i] + "___"
                     + id_remision[i] + "___"
                     + costo_promedio[i] + "___"
@@ -617,6 +659,26 @@ public class PrefacturasController {
                     + vdescto[i] + "___"
                     + ret_id[i] + "___"
                     + ret_tasa[i] + "'";
+
+            prefacturaRequestBuilder.addGridDetalle(
+                PrefacturaRequest.GridRenglonPrefactura.newBuilder()
+                    .setToKeep(Helper.toInt(eliminado[i]))
+                    .setId(Helper.toInt(iddetalle[i]))
+                    .setProductoId(Helper.toInt(idproducto[i]))
+                    .setPresentacionId(Helper.toInt(id_presentacion[i]))
+                    .setTipoImpuestoId(Helper.toInt(id_impuesto[i]))
+                    .setCantidad(Helper.toDouble(cantidad[i]))
+                    .setPrecioUnitario(Helper.toDouble(_costo))
+                    .setValorImp(Helper.toDouble(valor_imp[i]))
+                    .setRemisionId(Helper.toInt(id_remision[i]))
+                    .setCostoPromedio(Helper.toDouble(costo_promedio[i]))
+                    .setInvProdUnidadId(Helper.toInt(idUnidad[i]))
+                    .setGralIepsId(Helper.toInt(idIeps[i]))
+                    .setValorIeps(Helper.toDouble(tasaIeps[i]))
+                    .setDescto(Helper.toDouble(vdescto[i]))
+                    .setGralImptosRetId(Helper.toInt(ret_id[i]))
+                    .setTasaRet(Helper.toDouble(ret_tasa[i]))
+            );
         }
         //serializar el arreglo
         String extra_data_array = StringUtils.join(arreglo, ",");
@@ -628,44 +690,71 @@ public class PrefacturasController {
 
         select_tmov = StringHelper.verificarSelect(select_tmov);
         
-        String data_string = app_selected + "___"
-                + command_selected + "___"
-                + id_usuario + "___"
-                + id_prefactura + "___"
-                + id_cliente + "___"
-                + id_moneda + "___"
-                + observaciones.toUpperCase() + "___"
-                + tipo_cambio_vista + "___"
-                + id_vendedor + "___"
-                + id_condiciones + "___"
-                + orden_compra.toUpperCase() + "___"
-                + refacturar + "___"
-                + id_metodo_pago + "___"
-                + no_cuenta + "___"
-                + select_tipo_documento + "___"
-                + folio_pedido + "___"
-                + select_almacen + "___"
-                + id_moneda_original + "___"
-                + id_df + "___"
-                + campo_adenda1.toUpperCase() + "___"
-                + campo_adenda2.toUpperCase() + "___"
-                + campo_adenda3 + "___"
-                + campo_adenda4.toUpperCase() + "___"
-                + campo_adenda5.toUpperCase() + "___"
-                + campo_adenda6.toUpperCase() + "___"
-                + campo_adenda7.toUpperCase() + "___"
-                + campo_adenda8.toUpperCase() + "___"
-                + rfc.toUpperCase().trim() + "___"
-                + permitir_descto + "___" + select_tmov;
+        String data_string =
+            app_selected                + "___" +
+            command_selected            + "___" +
+            id_usuario                  + "___" +
+            id_prefactura               + "___" +
+            id_cliente                  + "___" +
+            id_moneda                   + "___" +
+            observaciones.toUpperCase() + "___" +
+            tipo_cambio_vista           + "___" +
+            id_vendedor                 + "___" +
+            id_condiciones              + "___" +
+            orden_compra.toUpperCase()  + "___" +
+            refacturar                  + "___" +
+            id_metodo_pago              + "___" +
+            no_cuenta                   + "___" +
+            select_tipo_documento       + "___" +
+            folio_pedido                + "___" +
+            select_almacen              + "___" +
+            id_moneda_original          + "___" +
+            id_df                       + "___" +
+            campo_adenda1.toUpperCase() + "___" +
+            campo_adenda2.toUpperCase() + "___" +
+            campo_adenda3               + "___" +
+            campo_adenda4.toUpperCase() + "___" +
+            campo_adenda5.toUpperCase() + "___" +
+            campo_adenda6.toUpperCase() + "___" +
+            campo_adenda7.toUpperCase() + "___" +
+            campo_adenda8.toUpperCase() + "___" +
+            rfc.toUpperCase().trim()    + "___" +
+            permitir_descto             + "___" +
+            select_tmov;
 
-        HashMap<String, String> succes = this.getPdao().selectFunctionValidateAaplicativo(data_string, app_selected, extra_data_array);
+        prefacturaRequestBuilder
+            .setUsuarioId(id_usuario.intValue())
+            .setPrefacturaId(id_prefactura.intValue())
+            .setClienteId(Helper.toInt(id_cliente))
+            .setMonedaId(Helper.toInt(id_moneda))
+            .setObservaciones(observaciones.toUpperCase())
+            .setTipoCambio(Helper.toDouble(tipo_cambio_vista))
+            .setVendedorId(Helper.toInt(id_vendedor))
+            .setCondicionesId(Helper.toInt(id_condiciones))
+            .setOrdenCompra(orden_compra.toUpperCase())
+            .setRefacturar(Boolean.parseBoolean(refacturar))
+            .setMetodoPagoId(Helper.toInt(id_metodo_pago))
+            .setNoCuenta(no_cuenta)
+            .setTipoDocumento(select_tipo_documento.intValue())
+            .setMonedaOriginalId(Helper.toInt(id_moneda_original))
+            .setAdenda1(campo_adenda1.toUpperCase())
+            .setAdenda2(campo_adenda2.toUpperCase())
+            .setAdenda3(campo_adenda3)
+            .setAdenda4(campo_adenda4.toUpperCase())
+            .setAdenda5(campo_adenda5.toUpperCase())
+            .setAdenda6(campo_adenda6.toUpperCase())
+            .setAdenda7(campo_adenda7.toUpperCase())
+            .setAdenda8(campo_adenda8.toUpperCase())
+            .setPermitirDescto(Boolean.parseBoolean(permitir_descto));
+
+        HashMap<String, String> success = this.getPdao()
+            .selectFunctionValidateAaplicativo(data_string, app_selected, extra_data_array);
         
-        log.log(Level.INFO, TimeHelper.getFechaActualYMDH()+"Despues de validacion {0}", String.valueOf(succes.get("success")));
+        log.log(Level.INFO, TimeHelper.getFechaActualYMDH()+"Resultado de validacion {0}", success.get("success"));
 
+        if (success.get("success").equals("true")) {
 
-
-        if (String.valueOf(succes.get("success")).equals("true")) {
-            retorno = this.getPdao().selectFunctionForThisApp(data_string, extra_data_array);
+            retorno = editarPrefactura(prefacturaRequestBuilder.build());
 
             //retorna un 1, si se  actualizo correctamente
             actualizo = retorno.split(":")[0];
@@ -676,7 +765,7 @@ public class PrefacturasController {
                 jsonretorno.put("folio", folio);
             }
 
-            jsonretorno.put("actualizo", String.valueOf(actualizo));
+            jsonretorno.put("actualizo", actualizo);
         }
 
         // Workaround to avoid race conditions when requesting serie and folio
@@ -737,30 +826,29 @@ public class PrefacturasController {
                     }
 
                 } else {
-                    if (accion.equals("new")) {
-                        valorRespuesta = "true";
-                        msjRespuesta = "El registro se gener&oacute; con &eacute;xito, puede proceder a Facturar.";
-                    }
+                    valorRespuesta = "true";
+                    msjRespuesta = "El registro se gener&oacute; con &eacute;xito, puede proceder a Facturar.";
                 }
 
-                System.out.println("Folio: " + String.valueOf(jsonretorno.get("folio")));
+                System.out.println("Folio: " + jsonretorno.get("folio"));
 
             } else {
                 if (actualizo.equals("0")) {
-                    jsonretorno.put("actualizo", String.valueOf(actualizo));
+                    jsonretorno.put("actualizo", actualizo);
+                    msjRespuesta = retorno.split(":")[1];
                 }
             }
         }
-        jsonretorno.put("success", succes.get("success"));
+        jsonretorno.put("success", success.get("success"));
         jsonretorno.put("valor", valorRespuesta);
         jsonretorno.put("msj", msjRespuesta);
 
         Logger.getLogger(PrefacturasController.class.getName()).log(
-                Level.INFO, "Validacion: " + String.valueOf(jsonretorno.get("success")));
+                Level.INFO, "Validacion: " + jsonretorno.get("success"));
         Logger.getLogger(PrefacturasController.class.getName()).log(
-                Level.INFO, "valorRespuesta: " + String.valueOf(valorRespuesta));
+                Level.INFO, "valorRespuesta: " + valorRespuesta);
         Logger.getLogger(PrefacturasController.class.getName()).log(
-                Level.INFO, "msjRespuesta: " + String.valueOf(msjRespuesta));
+                Level.INFO, "msjRespuesta: " + msjRespuesta);
         return jsonretorno;
     }
     
