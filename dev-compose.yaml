@@ -60,6 +60,8 @@ services:
           - operational_network
     sales_ui:
         container_name: 'sales_ui'
+        volumes:
+          - ./DOS/sales-api/protos:/sales-api-protos
         build:
           context: './DOS/sales-ui'
           args:
