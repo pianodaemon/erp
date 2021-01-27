@@ -142,16 +142,18 @@ class FacXml(BuilderGen):
         """
         SQL = """SELECT
             upper(cxc_clie.razon_social) as razon_social,
-            upper(cxc_clie.rfc) as rfc
+            upper(cxc_clie.rfc) as rfc,
+            cfdi_usos.numero_control as uso
             FROM erp_prefacturas
-            LEFT JOIN cxc_clie ON cxc_clie.id=erp_prefacturas.cliente_id
-            WHERE erp_prefacturas.id="""
-        for row in self.pg_query(conn, "{0}{1}".format(SQL, prefact_id)):
+            LEFT JOIN cxc_clie ON cxc_clie.id = erp_prefacturas.cliente_id
+            LEFT JOIN cfdi_usos ON cfdi_usos.id = erp_prefacturas.cfdi_usos_id
+            WHERE erp_prefacturas.id = {}"""
+        for row in self.pg_query(conn, SQL.format(prefact_id)):
             # Just taking first row of query result
             return {
                 'RFC': row['rfc'],
                 'RAZON_SOCIAL': unidecode.unidecode(row['razon_social']),
-                'USO_CFDI':'P01'
+                'USO_CFDI': row['uso']
             }
 
     def __q_conceptos(self, conn, prefact_id):
