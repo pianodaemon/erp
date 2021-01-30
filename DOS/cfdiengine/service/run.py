@@ -1,40 +1,32 @@
 #!/usr/bin/python3
 
 import os
-from logging.handlers import TimedRotatingFileHandler
 import multiprocessing
 import traceback
 import argparse
 import logging
 import sys
 from bbgum.server import BbGumServer
+from custom.profile import env_property
+from logging.handlers import TimedRotatingFileHandler
 
 
-def listener_configurer(log_path, debug):
+def listener_configurer(debug):
     # if no name is specified, return a logger
     # which is the root logger of the hierarchy.
     root = logging.getLogger()
 
-    # create file handler which logs even debug messages
-    fh = TimedRotatingFileHandler(log_path, when="d",
-                                  interval=1, backupCount=7)
-    fh.setLevel(logging.DEBUG if debug else logging.INFO)
-
     # create console handler with a higher log level
     ch = logging.StreamHandler()
-    ch.setLevel(logging.WARNING)
+    ch.setLevel(debug)
 
     # create formats and add them to the handlers
-    fh_formatter = logging.Formatter(
-        '%(asctime)s %(processName)-10s %(name)s %(levelname)-8s %(message)s')
     ch_formatter = logging.Formatter(
-        '%(processName)-10s %(name)s %(levelname)-8s - %(filename)s - Line: %(lineno)d - %(message)s')
-    fh.setFormatter(fh_formatter)
+        '%(asctime)s %(processName)-10s %(name)s %(levelname)-8s %(message)s')
     ch.setFormatter(ch_formatter)
 
     # add the handlers to root
     root.addHandler(ch)
-    root.addHandler(fh)
 
 
 def listener_process(queue, configurer, log_path, debug=False):
@@ -60,54 +52,43 @@ def listener_process(queue, configurer, log_path, debug=False):
                 traceback.print_exc(file=sys.stderr)
 
 
-def parse_cmdline():
-    """parses the command line arguments at the call."""
-
-    psr_desc = "cfdi engine service interface"
-    psr_epi = "select a config profile to specify defaults"
-
-    psr = argparse.ArgumentParser(
-        description=psr_desc, epilog=psr_epi)
-
-    psr.add_argument('-d', action='store_true', dest='debug',
-                     help='print debug information')
-
-    psr.add_argument('-c', '--config', action='store',
-                     dest='config', help='load an specific config profile')
-
-    psr.add_argument('-p', '--port', action='store',
-                     dest='port', help='launches service on specific port')
-
-    return psr.parse_args()
-
-
 if __name__ == "__main__":
 
-    args = parse_cmdline()
+    debug = eval('logging.' + env_property('MS_DEBUG'))
 
-    RESOURCES_DIR = '{}/resources'.format(os.environ['ERP_ROOT'])
-    PROFILES_DIR = '{}/profiles'.format(RESOURCES_DIR)
-    LOGS_DIR = '{}/logs'.format(RESOURCES_DIR)
-    LOG_NAME = 'blcore'
-    DEFAULT_PORT = 10080
-    DEFAULT_PROFILE = 'default.json'
+    resources_dir = os.path.join(env_property('ERP_ROOT'), 'resources')
 
-    log_path = '{}/{}.log'.format(LOGS_DIR, LOG_NAME)
-    profile_path = '{}/{}'.format(PROFILES_DIR,
-                                  args.config if args.config else DEFAULT_PROFILE)
-    port = int(args.port) if args.port else DEFAULT_PORT
+    if not os.path.isdir(resources_dir):
+        msg = 'We can not go ahead without a resource directory'
+        sys.exit(msg)
+
+    profiles_dir = os.path.join(resources_dir, 'profiles')
+
+    if not os.path.isdir(profiles_dir):
+        msg = 'We can not go ahead without a profile directory'
+        sys.exit(msg)
+
+    profile_path = os.path.join(profiles_dir, env_property('MS_PROFILE'))
+
+    if not os.path.exists(profile_path):
+        msg = 'We can not go ahead without a profile'
+        sys.exit(msg)
 
     queue = multiprocessing.Queue(-1)
     listener = multiprocessing.Process(target=listener_process,
-                                       args=(queue, listener_configurer, log_path, args.debug))
+                                       args=(queue, listener_configurer, debug))
     listener.start()
 
     try:
+        port = env_property('MS_PORT', int)
+
         server = BbGumServer(queue, profile_path, port)
-        server.start(args.debug)
+        server.start(debug)
     except KeyboardInterrupt:
         print('Exiting')
     except:
+        queue.put_nowait(None)
+        listener.join()
         if args.debug:
             print('Whoops! Problem in server:', file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
