@@ -2,7 +2,6 @@ import logging
 import sys
 import os
 import psycopg2
-import importlib
 from docmaker.gen import BuilderGen
 from custom.profile import ProfileReader
 from misc.helperpg import HelperPg
@@ -37,15 +36,11 @@ class DocPipeLine(object):
 
         try:
             self.logger.debug("attempting the import of {0} library".format(b))
-            self.logger.debug("Current sys.path content {}".format(sys.path))
-            importlib.invalidate_caches()
-            doc_mod = importlib.__import__(b)
+            doc_mod = __import__(b)
 
             if not hasattr(doc_mod, "impt_class"):
                 msg = "module {0} has no impt_class attribute".format(b)
                 raise DocBuilderImptError(msg)
-
-            self.logger.debug("library {0} succesfully imported".format(b))
 
             cname = getattr(doc_mod, "impt_class")
 

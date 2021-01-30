@@ -67,7 +67,7 @@ class BbGumServer(object):
         h = logging.handlers.QueueHandler(queue)
         root = logging.getLogger()
         root.addHandler(h)
-        root.setLevel(logging.DEBUG if debug else logging.INFO)
+        root.setLevel(debug)
 
     def conn_delegate(self, conns_queue, profile_path, queue, configurer, debug):
         """deals with an active connection"""
@@ -101,7 +101,7 @@ class BbGumServer(object):
             except FrameError as e:
                 logger.exception(e)
             except KeyboardInterrupt:
-                # SIGINT is masked in the child processes. 
+                # SIGINT is masked in the child processes.
                 # that's why this workaround is required
                 # to exit reliably
                 logger.debug('Finishing worker {}'.format(name))
