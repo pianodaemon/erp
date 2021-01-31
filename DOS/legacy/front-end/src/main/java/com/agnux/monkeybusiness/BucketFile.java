@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.apache.commons.text.StringSubstitutor;
 
-public class BucketFile {
+public class BucketFile implements StrangeStreamSource {
 
     Runtime runtime;
     String cmd;
@@ -24,15 +24,18 @@ public class BucketFile {
         return p.getInputStream();
     }
 
+    @Override
     public InputStream getInputStream() throws IOException {
 
         return BucketFile.TurnPipeIntoStream(this.cmd, this.runtime);
     }
 
+    @Override
     public int calcSize() {
         return 0;
     }
 
+    @Override
     public String getMimeType() {
 
         return "hola mundo";
