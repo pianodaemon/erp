@@ -54,7 +54,7 @@ def listener_process(queue, configurer, log_path, debug=False):
 
 if __name__ == "__main__":
 
-    debug = eval('logging.' + env_property('MS_DEBUG'))
+    debug = logging.DEBUG
 
     RESOURCES_DIR = '/resources'
 
