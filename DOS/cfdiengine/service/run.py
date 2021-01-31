@@ -56,13 +56,13 @@ if __name__ == "__main__":
 
     debug = eval('logging.' + env_property('MS_DEBUG'))
 
-    resources_dir = os.path.join(env_property('ERP_ROOT'), 'resources')
+    RESOURCES_DIR = '/resources'
 
-    if not os.path.isdir(resources_dir):
+    if not os.path.isdir(RESOURCES_DIR):
         msg = 'We can not go ahead without a resource directory'
         sys.exit(msg)
 
-    profiles_dir = os.path.join(resources_dir, 'profiles')
+    profiles_dir = os.path.join(RESOURCES_DIR, 'profiles')
 
     if not os.path.isdir(profiles_dir):
         msg = 'We can not go ahead without a profile directory'
@@ -80,9 +80,9 @@ if __name__ == "__main__":
     listener.start()
 
     try:
-        port = env_property('MS_PORT', int)
+        PORT = 10080
 
-        server = BbGumServer(queue, profile_path, port)
+        server = BbGumServer(queue, profile_path, PORT)
         server.start(debug)
     except KeyboardInterrupt:
         print('Exiting')
