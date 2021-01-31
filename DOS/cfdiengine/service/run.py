@@ -29,10 +29,10 @@ def listener_configurer(debug):
     root.addHandler(ch)
 
 
-def listener_process(queue, configurer, log_path, debug=False):
+def listener_process(queue, configurer, debug=False):
     '''process that receives log traces from connection process'''
 
-    configurer(log_path, debug)
+    configurer(debug)
     while True:
         try:
             record = queue.get()
