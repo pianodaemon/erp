@@ -62,15 +62,15 @@ if __name__ == "__main__":
         msg = 'We can not go ahead without a resource directory'
         sys.exit(msg)
 
-    profiles_dir = os.path.join(RESOURCES_DIR, 'profiles')
+    PROFILES_DIR = os.path.join(RESOURCES_DIR, 'profiles')
 
-    if not os.path.isdir(profiles_dir):
+    if not os.path.isdir(PROFILES_DIR):
         msg = 'We can not go ahead without a profile directory'
         sys.exit(msg)
 
-    profile_path = os.path.join(profiles_dir, env_property('MS_PROFILE'))
+    PROFILE_PATH = os.path.join(PROFILES_DIR, 'cfdiengine.json')
 
-    if not os.path.exists(profile_path):
+    if not os.path.exists(PROFILE_PATH):
         msg = 'We can not go ahead without a profile'
         sys.exit(msg)
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     try:
         PORT = 10080
 
-        server = BbGumServer(queue, profile_path, PORT)
+        server = BbGumServer(queue, PROFILE_PATH, PORT)
         server.start(debug)
     except KeyboardInterrupt:
         print('Exiting')
