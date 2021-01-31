@@ -72,6 +72,15 @@ services:
           - '80:80'
         networks:
           - operational_network
+    cfdiengine:
+        container_name: 'cfdiengine'
+        build: './DOS/cfdiengine'
+        ports:
+          - '10080:10080'
+        environment: *commonEnv
+        networks:
+          - operational_network
+
 
 networks:
     operational_network:
