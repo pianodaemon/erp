@@ -75,6 +75,8 @@ services:
     cfdiengine:
         container_name: 'cfdiengine'
         build: './DOS/cfdiengine'
+        volumes:
+          - '${ERP_ROOT}/resources:/resources'
         ports:
           - '10080:10080'
         environment: *commonEnv

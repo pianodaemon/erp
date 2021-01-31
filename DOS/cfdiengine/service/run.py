@@ -89,7 +89,7 @@ if __name__ == "__main__":
     except:
         queue.put_nowait(None)
         listener.join()
-        if args.debug:
+        if debug:
             print('Whoops! Problem in server:', file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
         sys.exit(1)
