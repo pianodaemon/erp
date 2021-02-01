@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     debug = logging.DEBUG
 
-    RESOURCES_DIR = '/resources'
+    RESOURCES_DIR = os.path.join(env_property('BASE_DIR'), 'resources')
 
     if not os.path.isdir(RESOURCES_DIR):
         msg = 'We can not go ahead without a resource directory'
