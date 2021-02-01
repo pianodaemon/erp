@@ -140,7 +140,7 @@ def dopago(logger, pt, req):
         q = """UPDATE erp_pagos set aux_no_fac = '{}'
             WHERE erp_pagos.numero_transaccion = {}""".format(filename.replace('.xml', ''), pag_id)
         try:
-            HelperPg.onfly_update(pt.dbms.pgsql_conn, q)
+            HelperPg.onfly_update(q)
         except:
             logger.error(dump_exception())
             return ErrorCode.DBMS_SQL_ISSUES
@@ -158,7 +158,7 @@ def dopago(logger, pt, req):
             AND fac_cfds_conf_folios.fac_cfds_conf_id=fac_cfds_conf.id
             AND USR_SUC.gral_usr_id = {}""".format(usr_id)
         try:
-            HelperPg.onfly_update(pt.dbms.pgsql_conn, q)
+            HelperPg.onfly_update(q)
         except:
             logger.error(dump_exception())
             return ErrorCode.DBMS_SQL_ISSUES
@@ -173,8 +173,7 @@ def dopago(logger, pt, req):
         _rfc = None
 
         try:
-            _rfc = __get_emisor_rfc(logger, req.get('usr_id', None),
-                    pt.dbms.pgsql_conn)
+            _rfc = __get_emisor_rfc(logger, req.get('usr_id', None))
         except:
             rc = ErrorCode.DBMS_SQL_ISSUES
 
