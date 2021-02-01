@@ -284,7 +284,7 @@ def facturar(logger, pt, req):
         q = "{0}{1}".format(sql, usr_id)
         logger.debug("Performing query: {}".format(q))
         try:
-            for row in HelperPg.onfly_query(pt.dbms.pgsql_conn, q):
+            for row in HelperPg.onfly_query(q):
                 return ErrorCode.SUCCESS, dict(rfc=row['rfc'], no_id=row['no_id'])
         except:
             logger.error(dump_exception())
@@ -332,7 +332,7 @@ def facturar(logger, pt, req):
         logger.debug("Performing query: {}".format(q))
         try:
             s_out = None
-            for row in HelperPg.onfly_query(pt.dbms.pgsql_conn, q, True):
+            for row in HelperPg.onfly_query(q, True):
                 # Just taking first row of query result
                 s_out = row['fac_save_xml']
                 break
