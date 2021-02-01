@@ -480,7 +480,7 @@ def undonota(logger, pt, req):
             FROM fac_nota_credito
             WHERE fac_nota_credito.id = {}""".format(ncr_id)
 
-        for row in HelperPg.onfly_query(pt.dbms.pgsql_conn, q, True):
+        for row in HelperPg.onfly_query(q, True):
             # Just taking first row of query result
             return row['filename'] + '.xml'
 
@@ -492,7 +492,7 @@ def undonota(logger, pt, req):
     _rfc = None
 
     try:
-        _rfc = __get_emisor_rfc(logger, usr_id, pt.dbms.pgsql_conn)
+        _rfc = __get_emisor_rfc(logger, usr_id)
     except:
         return ErrorCode.DBMS_SQL_ISSUES.value
 
@@ -523,5 +523,5 @@ def undonota(logger, pt, req):
         mode          #  _mode
     )
 
-    rc = __run_sp_ra(logger, q_do, pt.dbms.pgsql_conn)
+    rc = __run_sp_ra(logger, q_do)
     return rc.value
