@@ -406,7 +406,7 @@ def donota(logger, pt, req):
         )
         logger.debug("Performing query: {}".format(q))
         try:
-            res = HelperPg.onfly_query(pt.dbms.pgsql_conn, q, True)
+            res = HelperPg.onfly_query(q, True)
             if len(res) != 1:
                 raise Exception('unexpected result regarding execution of store')
 
@@ -441,8 +441,7 @@ def donota(logger, pt, req):
         _rfc = None
 
         try:
-            _rfc = __get_emisor_rfc(logger, req.get('usr_id', None),
-                    pt.dbms.pgsql_conn)
+            _rfc = __get_emisor_rfc(logger, req.get('usr_id', None))
         except:
             rc = ErrorCode.DBMS_SQL_ISSUES
 
