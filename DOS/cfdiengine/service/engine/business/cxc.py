@@ -234,7 +234,7 @@ def undofacturar(logger, pt, req):
             FROM fac_docs
             WHERE fac_docs.id="""
 
-        for row in HelperPg.onfly_query(pt.dbms.pgsql_conn, "{0}{1}".format(q, fact_id), True):
+        for row in HelperPg.onfly_query("{0}{1}".format(q, fact_id), True):
             # Just taking first row of query result
             return row['filename'] + '.xml'
 
@@ -247,7 +247,7 @@ def undofacturar(logger, pt, req):
     _rfc = None
 
     try:
-        _rfc = __get_emisor_rfc(logger, usr_id, pt.dbms.pgsql_conn)
+        _rfc = __get_emisor_rfc(logger, usr_id)
     except:
         return ErrorCode.DBMS_SQL_ISSUES.value
 
@@ -261,7 +261,7 @@ def undofacturar(logger, pt, req):
     except:
         return ErrorCode.RESOURCE_NOT_FOUND.value
 
-    rc = __run_sp_ra(logger, q_val, pt.dbms.pgsql_conn, tmode = False)
+    rc = __run_sp_ra(logger, q_val, tmode = False)
     if rc != ErrorCode.SUCCESS:
         return rc.value
 
@@ -269,7 +269,7 @@ def undofacturar(logger, pt, req):
     if rc != ErrorCode.SUCCESS:
         return rc.value
 
-    rc = __run_sp_ra(logger, q_do, pt.dbms.pgsql_conn)
+    rc = __run_sp_ra(logger, q_do)
     return rc.value
 
 
