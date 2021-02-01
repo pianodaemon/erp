@@ -28,9 +28,7 @@ def __get_emisor_rfc(logger, usr_id, pgsql_conf):
 
 def __run_builder(logger, pt, f_outdoc, resdir, dm_builder, **kwargs):
     try:
-        dpl = DocPipeLine(logger, resdir,
-            rdirs_conf=pt.res.dirs,
-            pgsql_conf=pt.dbms.pgsql_conn)
+        dpl = DocPipeLine(logger, resdir, rdirs_conf=pt.res.dirs)
         dpl.run(dm_builder, f_outdoc, **kwargs)
         return ErrorCode.SUCCESS
     except:
