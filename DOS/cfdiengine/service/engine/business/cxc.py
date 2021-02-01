@@ -36,12 +36,12 @@ def __run_builder(logger, pt, f_outdoc, resdir, dm_builder, **kwargs):
         return ErrorCode.DOCMAKER_ERROR
 
 
-def __run_sp_ra(logger, q, pgsql_conf, tmode = True):
+def __run_sp_ra(logger, q, tmode = True):
     """Runs a store procedure with rich answer"""
 
     def run_store():
         logger.debug("Performing query: {}".format(q))
-        r = HelperPg.onfly_query(pgsql_conf, q, True)
+        r = HelperPg.onfly_query(q, True)
 
         # For this case we are just expecting one row
         if len(r) != 1:
