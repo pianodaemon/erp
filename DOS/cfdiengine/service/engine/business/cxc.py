@@ -11,7 +11,7 @@ from docmaker.pipeline import DocPipeLine
 from misc.helperstr import HelperStr
 
 
-def __get_emisor_rfc(logger, usr_id, pgsql_conf):
+def __get_emisor_rfc(logger, usr_id):
 
     q = """select upper(EMP.rfc) as rfc
         FROM gral_suc AS SUC
@@ -21,7 +21,7 @@ def __get_emisor_rfc(logger, usr_id, pgsql_conf):
         WHERE USR_SUC.gral_usr_id = {}""".format(usr_id)
 
     logger.debug("Performing query: {}".format(q))
-    for row in HelperPg.onfly_query(pgsql_conf, q, True):
+    for row in HelperPg.onfly_query(q, True):
         # Just taking first row of query result
         return row['rfc']
 
