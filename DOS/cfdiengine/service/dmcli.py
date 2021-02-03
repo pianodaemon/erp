@@ -57,8 +57,8 @@ def dmcli(args, logger):
     logging.basicConfig(level=logging.DEBUG if args.dm_debug else logging.INFO)
     logger.debug(args)
 
-    DEFAULT_RESDIR = '{}/resources'.format(os.environ['ERP_ROOT'])
-    DEFAULT_PROFILE = 'default.json'
+    DEFAULT_RESDIR = os.path.join(os.environ['BASE_DIR'], 'resources')
+    DEFAULT_PROFILE = 'cfdiengine.json'
 
     resdir = args.resdir if args.resdir else DEFAULT_RESDIR
     profiles_dir = '{}/profiles'.format(resdir)
