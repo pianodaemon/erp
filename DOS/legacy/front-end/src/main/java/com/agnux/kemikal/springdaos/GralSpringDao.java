@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+import java.io.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -22,7 +24,25 @@ public class GralSpringDao implements GralInterfaceDao{
     public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
-    
+
+    @Override
+    public String getInvoicesPath() {
+        Properties prop = new Properties();
+        String invoicePath="NO SE ENCONTRO LA RUTA AL ARCHIVO DE CONFIGURACIONES agnux.properties en WEB-INF";
+        InputStream is = null;
+
+        try {
+            is = this.getClass().getClassLoader().getResourceAsStream("agnux.properties");
+            prop.load(is);
+            invoicePath=prop.getProperty("INVOICES_PATH");
+        } catch(IOException e) {
+            System.out.println(e.toString());
+        }
+
+        System.out.println("INVOICES_PATH="+invoicePath);
+        return invoicePath;
+    }
+
     @Override
     public String getCfdEmitidosDir() {
         String cfdemitidosdir = System.getenv("ERP_ROOT") + "/" + "resources" + "/"+"cfd" + "/"+"emitidos" + "/";

@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.agnux.kemikal.springdaos;
 
 import com.agnux.cfd.v2.Base64Coder;
@@ -9,19 +5,17 @@ import com.agnux.common.helpers.StringHelper;
 import com.agnux.kemikal.controllers.PotCatCusorder;
 import com.agnux.kemikal.interfacedaos.PocInterfaceDao;
 import java.sql.ResultSet;
+import java.sql.Types;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Date;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-/**
- *
- * @author Noé Martinez
- * gpmarsan@gmail.com
- * 21/junio/2012
- */
+
+
 public class PocSpringDao implements PocInterfaceDao{
     private JdbcTemplate jdbcTemplate;
 
@@ -3670,5 +3664,239 @@ public class PocSpringDao implements PocInterfaceDao{
         return data;
     }
     
-    
+    //NLE: Insertar/Actualizar Registro Remisión IMSS
+    @Override
+    public HashMap<String, String> setRemisionIMSS(String data_string, int app_selected) {
+        int row=0;
+        HashMap<String, String> success = new HashMap<String, String>();
+        String strSql = "";
+        
+        try{
+            String param[] = data_string.split("___");
+            String id = param[0]!=null?param[0].trim():"";
+            
+            if(id.isEmpty()){
+                //Insertar
+                StringHelper sh = new StringHelper();
+                Date fecha1 = sh.parseDate(param[5]);
+                Date fecha2 = sh.parseDate(param[6]);
+                strSql = "INSERT INTO erp_remisiones_imss (numero_contrato, folio_imss, cliente, importe, fecha_expedicion, fecha_pago, id_status, doc1, doc2, doc3, doc4, doc5, doc6, doc7, doc8, doc9, doc10, usuario_id, momento_actualizacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
+                System.out.println("strSql: "+strSql);
+
+                // define query arguments
+                Object[] params = new Object[] { new String(param[1]), new String(param[2]), new String(param[3]), new Double(param[4]), fecha1, fecha2, new Integer(param[7]), new String(param[8]), new String(param[9]), new String(param[10]), new String(param[11]), new String(param[12]), new String(param[13]), new String(param[14]), new String(param[15]), new String(param[16]), new String(param[17]), new Integer(param[18]) };
+
+                // define SQL types of the arguments
+                int[] types = new int[] { Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.DOUBLE, Types.DATE, Types.DATE, Types.INTEGER, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.INTEGER };
+
+                // execute insert query to insert the data
+                // return number of row / rows processed by the executed query
+                row = this.getJdbcTemplate().update(strSql, params, types);
+                
+                success.put("sucess", "true");
+                
+            }else if(!id.isEmpty()){
+                
+                strSql = "UPDATE erp_remisiones_imss SET numero_contrato=?, folio_imss=?, cliente=?, importe=?, fecha_expedicion=?, fecha_pago=?, id_status=?, doc1=?, doc2=?, doc3=?, doc4=?, doc5=?, doc6=?, doc7=?, doc8=?, doc9=?, doc10=?, usuario_id=?, momento_actualizacion=now() WHERE id=?;";
+                System.out.println("strSql: "+strSql);
+                
+                // define query arguments
+                Object[] params = new Object[] { new String(param[1]), new String(param[2]), new String(param[3]), new Double(param[4]), StringHelper.parseDate(param[5]), StringHelper.parseDate(param[6]), new Integer(param[7]), new String(param[8]), new String(param[9]), new String(param[10]), new String(param[11]), new String(param[12]), new String(param[13]), new String(param[14]), new String(param[15]), new String(param[16]), new String(param[17]), new Integer(param[18]), new Integer(param[0]) };
+
+                // define SQL types of the arguments
+                int[] types = new int[] { Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.DOUBLE, Types.DATE, Types.DATE, Types.INTEGER, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.INTEGER };
+
+                // execute insert query to insert the data
+                // return number of row / rows processed by the executed query
+                row = this.getJdbcTemplate().update(strSql, params, types);
+                
+                success.put("sucess", "true");
+            }
+            
+            //System.out.println(row + " row inserted.");
+        } catch (Exception e) {
+            System.out.println("ERROR: "+e.getMessage());
+            row=0;
+            success.put("sucess", "false");
+        }
+        
+        return success;
+    }
+
+    @Override
+    public HashMap<String, String> logicDeleteRemisionIMSS(String data_string, int app_selected) {
+        int row=0;
+        HashMap<String, String> success = new HashMap<String, String>();
+        String strSql = "";
+        
+        try{
+            String param[] = data_string.split("___");
+            String id = param[0]!=null?param[0].trim():"";
+            
+            if(!id.isEmpty()){
+                System.out.println("=====Entrando a Borrado Lógico=====");
+                strSql = "UPDATE erp_remisiones_imss SET borrado_logico=true WHERE id=?;";
+                System.out.println("Borrado Lógico de Contra Recibo IMMS id="+param[3]);
+                System.out.println("strSql: "+strSql);
+                
+                // define query arguments
+                Object[] params = new Object[] { new Integer(param[3]) };
+
+                // define SQL types of the arguments
+                int[] types = new int[] { Types.INTEGER };
+
+                // execute insert query to insert the data
+                // return number of row / rows processed by the executed query
+                row = this.getJdbcTemplate().update(strSql, params, types);
+                
+                success.put("sucess", "true");
+            }
+            
+            //System.out.println(row + " row inserted.");
+        } catch (Exception e) {
+            System.out.println("ERROR: "+e.getMessage());
+            row=0;
+            success.put("sucess", "false");
+        }
+        
+        return success;
+    }
+
+    //NLE: Obtiene los Estatus de Remisiones de IMSS
+    @Override
+    public ArrayList<HashMap<String, String>> getStatusRemisionIMSS() {
+	String sql_query = "SELECT id, descripcion FROM erp_status_remisiones_imss order by id;";
+        ArrayList<HashMap<String, String>> hm = (ArrayList<HashMap<String, String>>) this.jdbcTemplate.query(
+            sql_query,
+            new Object[]{}, new RowMapper() {
+                @Override
+                public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    HashMap<String, String> row = new HashMap<String, String>();
+                    row.put("id",rs.getString("id"));
+                    row.put("descripcion",rs.getString("descripcion"));
+                    return row;
+                }
+            }
+        );
+        return hm;
+    }
+
+    @Override
+    public ArrayList<HashMap<String, Object>> getRemisionesIMSS_PaginaGrid(String data_string, int offset, int pageSize, String orderBy, String asc) {
+        
+        System.out.println("Entrando a getCotizacion_PaginaGrid...");
+        System.out.println("data_string="+data_string);
+        System.out.println("offset="+offset);
+        System.out.println("pageSize="+pageSize);
+        System.out.println("orderBy="+orderBy);
+        System.out.println("asc="+asc);   
+        String cad[]=data_string.split("___");
+        
+        System.out.println("cad[].length"+cad.length);
+        for (int i=0;i<cad.length;i++) {
+            System.out.println("cad["+i+"]="+cad[i]);
+            cad[i]=cad[i].replace("'","");
+        }
+
+        System.out.println("app_selected    cad[0]="+cad[0]);
+        System.out.println("id_usuario      cad[1]="+cad[1]);
+        System.out.println("folio           cad[2]="+cad[2]);
+        System.out.println("cliente         cad[3]="+cad[3]);
+        System.out.println("fecha_inicial   cad[4]="+cad[4]);
+        System.out.println("fecha_final     cad[5]="+cad[5]);
+        System.out.println("tipo            cad[6]="+cad[6]);
+        System.out.println("incluye_crm     cad[7]="+cad[7]);
+        System.out.println("folioIMSS       cad[8]="+cad[8]);
+        System.out.println("numContrato     cad[9]="+cad[9]);
+        System.out.println("status          cad[10]="+cad[10]);
+        //System.out.println("cad[10]="+cad[10]);
+        
+        String sql_to_query="";
+        //String sql_busqueda = "select id from gral_bus_catalogos(?) as foo (id integer)";
+        String sql_busqueda = "";
+        sql_busqueda += cad[2].isEmpty()?"":"AND erp_remisiones_imss.id::character varying ILIKE '%"+cad[2]+"%' ";            
+        sql_busqueda += cad[3].isEmpty()?"":"AND erp_remisiones_imss.cliente ILIKE '%"+cad[3]+"%' ";
+        sql_busqueda += cad[4].isEmpty()?"":"AND erp_remisiones_imss.fecha_expedicion::date = '"+cad[4]+"' ";
+        sql_busqueda += cad[5].isEmpty()?"":"AND erp_remisiones_imss.fecha_pago::date = '"+cad[5]+"' ";
+        sql_busqueda += cad[8].isEmpty()?"":"AND erp_remisiones_imss.folio_imss ILIKE '%"+cad[8]+"%' ";
+        sql_busqueda += cad[9].isEmpty()?"":"AND erp_remisiones_imss.numero_contrato ILIKE '%"+cad[9]+"%' ";
+        sql_busqueda += cad[10].isEmpty()?"":"AND erp_status_remisiones_imss.id::character varying ILIKE '%"+cad[10]+"%' ";
+        System.out.println("sql_busqueda="+sql_busqueda);
+
+        if (cad[6].equals("1")){
+            sql_to_query = "SELECT DISTINCT erp_remisiones_imss.id, erp_remisiones_imss.cliente, erp_remisiones_imss.fecha_expedicion, erp_remisiones_imss.fecha_pago, erp_remisiones_imss.folio_imss, erp_remisiones_imss.numero_contrato, erp_status_remisiones_imss.id, erp_status_remisiones_imss.descripcion, erp_remisiones_imss.doc1, erp_remisiones_imss.doc2, erp_remisiones_imss.doc3, erp_remisiones_imss.doc4, erp_remisiones_imss.doc5, erp_remisiones_imss.doc6, erp_remisiones_imss.doc7, erp_remisiones_imss.doc8, erp_remisiones_imss.doc9, erp_remisiones_imss.doc10 "
+                    +"FROM erp_remisiones_imss, erp_status_remisiones_imss "
+                    +"WHERE erp_status_remisiones_imss.id=erp_remisiones_imss.id_status AND erp_remisiones_imss.borrado_logico=false "
+                    +sql_busqueda+" "
+                    +"order by "+orderBy+" "+asc+" limit "+pageSize+" OFFSET "+offset;
+        }else{
+            /*if (cad[7].equals("false")){
+            }else{
+            }*/
+        }
+        
+        System.out.println("data_string: "+data_string);
+        System.out.println("PaginaGrid: "+sql_to_query);
+        ArrayList<HashMap<String, Object>> hm = (ArrayList<HashMap<String, Object>>) this.jdbcTemplate.query(
+            sql_to_query,
+            //new Object[]{new String(data_string),new Integer(pageSize),new Integer(offset)}, new RowMapper() {
+                new Object[]{}, new RowMapper() {
+                @Override
+                public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    HashMap<String, Object> row = new HashMap<String, Object>();
+                    row.put("id",rs.getInt("id"));
+                    row.put("folio",rs.getInt("id"));
+                    row.put("folio_imss",rs.getString("folio_imss"));
+                    //row.put("tipo",rs.getString("tipo"));
+                    row.put("cliente",rs.getString("cliente"));
+                    row.put("numero_contrato",rs.getString("numero_contrato"));
+                    row.put("fecha_expedicion",rs.getString("fecha_expedicion"));
+                    row.put("fecha_pago",rs.getString("fecha_pago"));
+                    //row.put("nombre_agente",rs.getString("nombre_agente"));
+                    row.put("descripcion",rs.getString("descripcion"));
+                    return row;
+                }
+            }
+        );
+        return hm;
+    }
+
+    //obtiene las condiciones comerciales que se mostraran en el pdf de la cotizacion
+    @Override
+    public HashMap<String, String> getFormRemisionIMSS(Integer identificador) {
+        String  sql_query = "SELECT DISTINCT erp_remisiones_imss.id, erp_remisiones_imss.cliente, erp_remisiones_imss.fecha_expedicion, erp_remisiones_imss.fecha_pago, erp_remisiones_imss.folio_imss, erp_remisiones_imss.importe, erp_remisiones_imss.numero_contrato, erp_status_remisiones_imss.id as id_status, erp_status_remisiones_imss.descripcion, erp_remisiones_imss.doc1, erp_remisiones_imss.doc2, erp_remisiones_imss.doc3, erp_remisiones_imss.doc4, erp_remisiones_imss.doc5, erp_remisiones_imss.doc6, erp_remisiones_imss.doc7, erp_remisiones_imss.doc8, erp_remisiones_imss.doc9, erp_remisiones_imss.doc10 ";
+                sql_query += "FROM erp_remisiones_imss, erp_status_remisiones_imss ";
+                sql_query +="WHERE erp_status_remisiones_imss.id=erp_remisiones_imss.id_status AND erp_remisiones_imss.id="+identificador+" AND erp_remisiones_imss.borrado_logico=false ";
+                System.out.println("sql_query="+sql_query);
+        HashMap<String, String> hm = (HashMap<String, String>) this.jdbcTemplate.queryForObject(
+                sql_query,
+            new Object[]{}, new RowMapper() {
+                @Override
+                public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    HashMap<String, String> row = new HashMap<String, String>();
+                    row.put("id",String.valueOf(rs.getInt("id")));
+                    row.put("cliente",String.valueOf(rs.getString("cliente")));
+                    row.put("fecha_expedicion",String.valueOf(rs.getDate("fecha_expedicion")));
+                    row.put("fecha_pago",String.valueOf(rs.getDate("fecha_pago")));
+                    row.put("folio_imss",String.valueOf(rs.getString("folio_imss")));
+                    row.put("numero_contrato",String.valueOf(rs.getString("numero_contrato")));
+                    row.put("id_status",String.valueOf(rs.getString("id_status")));
+                    row.put("importe",String.valueOf(rs.getString("importe")));
+                    row.put("descripcion",String.valueOf(rs.getString("descripcion")));
+                    row.put("doc1",String.valueOf(rs.getString("doc1")));
+                    row.put("doc2",String.valueOf(rs.getString("doc2")));
+                    row.put("doc3",String.valueOf(rs.getString("doc3")));
+                    row.put("doc4",String.valueOf(rs.getString("doc4")));
+                    row.put("doc5",String.valueOf(rs.getString("doc5")));
+                    row.put("doc6",String.valueOf(rs.getString("doc6")));
+                    row.put("doc7",String.valueOf(rs.getString("doc7")));
+                    row.put("doc8",String.valueOf(rs.getString("doc8")));
+                    row.put("doc9",String.valueOf(rs.getString("doc9")));
+                    row.put("doc10",String.valueOf(rs.getString("doc10")));
+                    return row;
+                }
+            }
+        );
+        return hm;
+    }
 }

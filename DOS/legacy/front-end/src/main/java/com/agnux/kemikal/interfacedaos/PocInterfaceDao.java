@@ -73,6 +73,12 @@ public interface PocInterfaceDao{
     public HashMap<String, String> getRemisiones_DatosPdf(Integer id_remision);
     public ArrayList<HashMap<String, String>> getRemisiones_ConceptosPdf(Integer id_remision, String rfc_empresa);
 
+    //NLE: Métodos para Remisiones IMSS
+    public ArrayList<HashMap<String, String>> getStatusRemisionIMSS();
+    public HashMap<String, String> setRemisionIMSS(String data_string, int app_selected);
+    public HashMap<String, String> logicDeleteRemisionIMSS(String data_string, int app_selected);
+    public ArrayList<HashMap<String, Object>> getRemisionesIMSS_PaginaGrid(String data_string, int offset, int pageSize, String orderBy, String asc);
+    public HashMap<String, String> getFormRemisionIMSS(Integer id_remision);
 
     //metodos para generar reporte Pedidos
     public ArrayList<HashMap<String,String>>getReportePedidos(Integer opcion, Integer agente, String cliente, String fecha_inicial, String fecha_final,Integer id_empresa);
