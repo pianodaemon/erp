@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
+import os
 import sys
+import traceback
 import docker
 import boto3
 import gzip
 from datetime import datetime
 
 
-class PgDumpCloud(object):
+class _PgDumpCloud(object):
 
     _TRANSITIVE_CMD_FMT = """pg_dump -h localhost -U postgres --create {}"""
     _DUMP_FILENAME_FMT = """{}-dump-{}.sql.gz"""
@@ -24,7 +26,8 @@ class PgDumpCloud(object):
         placer(data, self._sthree_fname)
 
     @classmethod
-    def bucketize(cls, db_container, db_instance, target_bucket):
+    def bucketize(cls, db_container, db_instance, profile, target_bucket):
+        boto3.setup_default_session(profile_name=profile)
         dumper = cls._gear_up_dump(db_container)
         placer = cls._placement(target_bucket)
         ic = cls()
@@ -33,7 +36,7 @@ class PgDumpCloud(object):
         ic(dumper, placer)
 
     @staticmethod
-    def _placement(target_bucket)
+    def _placement(target_bucket):
         sthree_res = boto3.resource('s3')
         return lambda data, fname: sthree_res.Bucket(target_bucket).put_object(Key=fname, Body=gzip.compress(data))
 
@@ -45,10 +48,20 @@ class PgDumpCloud(object):
 
 if __name__ == "__main__":
 
+    def lookup(prop):
+        """It looks up enviroment variable content"""
+        val = os.environ.get(prop)
+        if val is None:
+            raise FatalError("Enviroment variable {} has not been set !!".format(prop))
+        return val
 
     try:
-        PgDumpCloud.bucketize('rdbms_dos', 'erp', 'medica-dumps')
+        _PgDumpCloud.bucketize('rdbms_dos', # It is kept hardcoded for every erp implementation
+                               lookup('MS_DBMS_DB'),
+                               '{}-s3'.format(lookup('ERP_CUSTOMER')),
+                               '{}-dumps'.format(lookup('ERP_CUSTOMER')))
     except KeyboardInterrupt:
         print('Exiting')
     except:
+        traceback.print_exc()
         sys.exit(1)
