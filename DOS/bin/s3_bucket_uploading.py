@@ -24,31 +24,30 @@ class PgDumpCloud(object):
         placer(data, self._sthree_fname)
 
     @classmethod
-    def bucketize(cls, db_container, db_instance, target_bucket, prefix):
+    def bucketize(cls, db_container, db_instance, target_bucket):
         dumper = cls._gear_up_dump(db_container)
         placer = cls._placement(target_bucket)
         ic = cls()
         ic._sthree_fname = cls._DUMP_FILENAME_FMT.format(db_instance, datetime.now().strftime('%Y-%m-%d'))
         ic._tcmd = cls._TRANSITIVE_CMD_FMT.format(db_instance)
-        return ic
+        ic(dumper, placer)
 
-    @classmethod
-    def _placement(cls, target_bucket)
+    @staticmethod
+    def _placement(target_bucket)
         sthree_res = boto3.resource('s3')
         return lambda data, fname: sthree_res.Bucket(target_bucket).put_object(Key=fname, Body=gzip.compress(data))
 
-    @classmethod
-    def _gear_up_dump(cls, db_container):
+    @staticmethod
+    def _gear_up_dump(db_container):
         client = docker.from_env()
         container = client.containers.get(db_container)
         return lambda tcmd: container.exec_run(tcmd)
 
 if __name__ == "__main__":
 
-    pgdc = PgDumpCloud.bucketize('rdbms_dos', 'erp', 'medica-dumps')
 
     try:
-        pgdc()
+        PgDumpCloud.bucketize('rdbms_dos', 'erp', 'medica-dumps')
     except KeyboardInterrupt:
         print('Exiting')
     except:
