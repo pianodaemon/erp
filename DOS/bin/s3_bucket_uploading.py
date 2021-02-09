@@ -27,7 +27,7 @@ class PgDumpCloud(object):
     def bucketize(cls, db_container, db_instance, target_bucket, prefix):
         dumper = cls._gear_up_dump(db_container)
         placer = cls._placement(target_bucket)
-        ic = cls(dumper, placer)
+        ic = cls()
         ic._sthree_fname = cls._DUMP_FILENAME_FMT.format(db_instance, datetime.now().strftime('%Y-%m-%d'))
         ic._tcmd = cls._TRANSITIVE_CMD_FMT.format(db_instance)
         return ic
