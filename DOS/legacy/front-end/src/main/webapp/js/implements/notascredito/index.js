@@ -1224,7 +1224,12 @@ $(function() {
 			//if(parseInt($select_tmov.val())>0){
 				if($motivo_cancelacion.val()!=null && $motivo_cancelacion.val()!=""){
 					var input_json = document.location.protocol + '//' + document.location.host + '/'+controller+'/cancelarNotaCredito.json';
-					var $arreglo = {'id_nota':id_to_show,'tmov':$select_tmov.val(),'motivo':$motivo_cancelacion.val(),iu};
+					var $arreglo = {
+                                            'id_nota': id_to_show,
+                                            'tmov': $select_tmov.val(),
+                                            'motivo': $motivo_cancelacion.val()
+                                            /*,iu: ???*/
+                                        };
 					
 					$.post(input_json,$arreglo,function(entry){
 						var cad = entry['success'].split(":");

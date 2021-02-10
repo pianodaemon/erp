@@ -9,7 +9,8 @@ import com.agnux.common.obj.UserSessionData;
 import com.agnux.kemikal.interfacedaos.GralInterfaceDao;
 import com.agnux.kemikal.interfacedaos.HomeInterfaceDao;
 import com.agnux.kemikal.interfacedaos.PocInterfaceDao;
-import com.agnux.kemikal.reportes.pdfCotizacion;
+//import com.agnux.kemikal.reportes.pdfCotizacion;
+import com.agnux.kemikal.reportes.PdfCotizacion;
 import com.itextpdf.text.DocumentException;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -853,7 +854,7 @@ public class CotizacionesController {
         String dirImgProd = this.getGralDao().getProdImgDir()+rfc_empresa+"/";
         
         //ruta del la imagen del Logotipo
-        String rutaLogoEmpresa = this.getGralDao().getImagesDir()+rfc_empresa+"_logo.png";
+        String rutaLogoEmpresa = this.getGralDao().getImagesDir()+rfc_empresa+"_logo.jpg";
         
         
         String file_name = "COT_"+rfc_empresa+".pdf";
@@ -934,8 +935,18 @@ public class CotizacionesController {
         datosReceptor.put("clieContacto", datosCliPros.get(0).get("contacto"));
         datosReceptor.put("clieRazonSocial", datosCliPros.get(0).get("razon_social"));
                 
-        pdfCotizacion pdf = new pdfCotizacion(HeaderFooter, datosEmisor, datos,datosReceptor,lista_productos, condiciones_comerciales, politicas_pago, incoterms);
-        pdf.ViewPDF();
+//        pdfCotizacion pdf = new pdfCotizacion(HeaderFooter, datosEmisor, datos,datosReceptor,lista_productos, condiciones_comerciales, politicas_pago, incoterms);
+//        pdf.ViewPDF();
+        PdfCotizacion pdf = new PdfCotizacion(
+                HeaderFooter,
+                datosEmisor,
+                datos,
+                datosReceptor,
+                lista_productos,
+                condiciones_comerciales,
+                politicas_pago,
+                incoterms);
+        pdf.createPDF();
         
         
         System.out.println("Recuperando archivo: " + fileout);
