@@ -19,7 +19,6 @@ public class PdfCotizacion {
     private ArrayList<HashMap<String, String>> politicas_pago = new ArrayList<HashMap<String, String>>();
     private ArrayList<HashMap<String, String>> incoterms = new ArrayList<HashMap<String, String>>();
     private String logoPath;
-    private String outputFile;
     private String dirImgProd;
     private String incluyeImgDesc;
     
@@ -74,7 +73,6 @@ public class PdfCotizacion {
         this.setPoliticas_pago(politicas_pago);
         this.setIncoterms(incoterms);
         this.setLogoPath(datos.get("ruta_logo"));
-        this.setOutputFile(datos.get("file_out"));
         this.setDirImgProd(datos.get("dirImagenes"));
         
         this.setTipoDoc(HeaderFooter.get("titulo_reporte"));
@@ -122,14 +120,14 @@ public class PdfCotizacion {
         this.setClieTel(datosCliente.get("clieTel"));
     }
 
-    public void createPDF() throws FileNotFoundException, JRException {
+    public byte[] createPDF() throws FileNotFoundException, JRException {
 
         JasperReport jasperReport = getJasperReport();
         Map<String, Object> parameters = getParameters();
         JRDataSource dataSource = getDataSource();
 
         JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
-        JasperExportManager.exportReportToPdfFile(jasperPrint, outputFile);
+        return JasperExportManager.exportReportToPdf(jasperPrint);
     }
     
     private JasperReport getJasperReport() throws FileNotFoundException, JRException {
@@ -140,18 +138,18 @@ public class PdfCotizacion {
 
     private Map<String, Object> getParameters() {
         
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         String emisorMunicipioEstado = String.format("%s, %s", emisorMunicipio, emisorEstado);
         
         parameters.put("logoPath", logoPath);
-        parameters.put("lugarFechaLetra", String.format("%s, a %s", emisorMunicipioEstado, convertirFechaALetra()));
+        parameters.put("lugarFechaLetra", String.format("%s, a %s", emisorMunicipioEstado, convertirFechaALetra(fecha)));
         parameters.put("clienteRazonSocial", clieRazonSocial);
         parameters.put("clienteMunicipioEstado", String.format("%s, %s", clieMunicipio, clieEstado));
         parameters.put("clienteContacto", clieContacto);
         parameters.put("saludo", saludo);
-        parameters.put("subtotal", subtotal);
-        parameters.put("impuesto", impuesto);
-        parameters.put("total", total);
+        parameters.put("subtotal", addSeparadorMiles(subtotal, ","));
+        parameters.put("impuesto", addSeparadorMiles(impuesto, ","));
+        parameters.put("total", addSeparadorMiles(total, ","));
         parameters.put("despedida", despedida);
         parameters.put("nombreUsuario", nombreUsuario);
         parameters.put("emisorRazonSocial", emisorRazonSocial);
@@ -163,20 +161,20 @@ public class PdfCotizacion {
 
     private JRDataSource getDataSource() {
 
-        List<DetalleCotizacion> detalleCotGrid = new ArrayList<DetalleCotizacion>();
+        List<DetalleCotizacion> detalleCotGrid = new ArrayList<>();
 
         for (HashMap<String, String> m : lista_productos) {
             detalleCotGrid.add(new DetalleCotizacion(
                     String.format("%s, %s", m.get("producto"), m.get("presentacion")),
-                    m.get("cantidad"),
-                    m.get("precio_unitario"),
-                    m.get("importe")));
+                    addSeparadorMiles(m.get("cantidad"), ","),
+                    addSeparadorMiles(m.get("precio_unitario"), ","),
+                    addSeparadorMiles(m.get("importe"), ",")));
         }
 
         return new JRBeanCollectionDataSource(detalleCotGrid);
     }
     
-    private String convertirFechaALetra() {
+    private static String convertirFechaALetra(String fecha) {
         
         String[] fechaLetra = fecha.split("-");
         String mes;
@@ -197,6 +195,34 @@ public class PdfCotizacion {
             default: mes = ""; break;
         }
         return String.format("%s de %s de %s", fechaLetra[2], mes, fechaLetra[0]);
+    }
+    
+    private static String addSeparadorMiles(String input, String sep) {
+        String output = "";
+        String[] arr = input.split("\\.");
+        String s = arr[0];
+        int cantGrupos = s.length() / 3;
+        int cantCifras = s.length() % 3;
+        int pos = 0;
+
+        if (cantCifras != 0) {
+            output += s.substring(0, cantCifras);
+            if (cantGrupos > 0) {
+                output += sep;
+            }
+            pos = cantCifras;
+        }
+        for (int i = 1; i <= cantGrupos; i++) {
+            output += s.substring(pos, pos + 3);
+            if (i < cantGrupos) {
+                output += sep;
+            }
+            pos += 3;
+        }
+        if (arr.length > 1) {
+            output += "." + arr[1];
+        }
+        return output;
     }
 
     public ArrayList<HashMap<String, String>> getCondiciones_comerciales() {
@@ -373,14 +399,6 @@ public class PdfCotizacion {
 
     public void setEmisorPais(String emisorPais) {
         this.emisorPais = emisorPais;
-    }
-
-    public String getOutputFile() {
-        return outputFile;
-    }
-
-    public void setOutputFile(String outputFile) {
-        this.outputFile = outputFile;
     }
 
     public String getFolio() {

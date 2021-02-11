@@ -9,13 +9,11 @@ import com.agnux.common.obj.UserSessionData;
 import com.agnux.kemikal.interfacedaos.GralInterfaceDao;
 import com.agnux.kemikal.interfacedaos.HomeInterfaceDao;
 import com.agnux.kemikal.interfacedaos.PocInterfaceDao;
-//import com.agnux.kemikal.reportes.pdfCotizacion;
 import com.agnux.kemikal.reportes.PdfCotizacion;
 import com.itextpdf.text.DocumentException;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -847,20 +845,15 @@ public class CotizacionesController {
         String rfc_empresa = this.getGralDao().getRfcEmpresaEmisora(id_empresa);
         String razon_social_empresa = this.getGralDao().getRazonSocialEmpresaEmisora(id_empresa);
         
-        //obtener el directorio temporal
-        String dir_tmp = this.getGralDao().getTmpDir();
-        
+
         //directorio de imagenes de productos
         String dirImgProd = this.getGralDao().getProdImgDir()+rfc_empresa+"/";
         
         //ruta del la imagen del Logotipo
         String rutaLogoEmpresa = this.getGralDao().getImagesDir()+rfc_empresa+"_logo.jpg";
         
+        String finalFilename = String.format("COT_%s.pdf", rfc_empresa);
         
-        String file_name = "COT_"+rfc_empresa+".pdf";
-        
-        //ruta de archivo de salida
-        String fileout = dir_tmp + file_name;
         
         datosEmisor.put("emp_razon_social", razon_social_empresa);
         datosEmisor.put("emp_rfc", this.getGralDao().getRfcEmpresaEmisora(id_empresa));
@@ -893,7 +886,6 @@ public class CotizacionesController {
         
         lista_productos = this.getPocDao().getCotizacion_DatosGrid(id_cotizacion);
         datos.put("ruta_logo", rutaLogoEmpresa);
-        datos.put("file_out", fileout);
         datos.put("dirImagenes", dirImgProd);
         datos.put("tipo", datosCotizacion.get(0).get("tipo"));
         datos.put("folio", datosCotizacion.get(0).get("folio"));
@@ -935,8 +927,6 @@ public class CotizacionesController {
         datosReceptor.put("clieContacto", datosCliPros.get(0).get("contacto"));
         datosReceptor.put("clieRazonSocial", datosCliPros.get(0).get("razon_social"));
                 
-//        pdfCotizacion pdf = new pdfCotizacion(HeaderFooter, datosEmisor, datos,datosReceptor,lista_productos, condiciones_comerciales, politicas_pago, incoterms);
-//        pdf.ViewPDF();
         PdfCotizacion pdf = new PdfCotizacion(
                 HeaderFooter,
                 datosEmisor,
@@ -946,26 +936,17 @@ public class CotizacionesController {
                 condiciones_comerciales,
                 politicas_pago,
                 incoterms);
-        pdf.createPDF();
-        
-        
-        System.out.println("Recuperando archivo: " + fileout);
-        File file = new File(fileout);
-        int size = (int) file.length(); // Tamaño del archivo
-        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-        response.setBufferSize(size);
-        response.setContentLength(size);
+
+        byte[] pdfBytes = pdf.createPDF();
+        ByteArrayInputStream pdfInputStream = new ByteArrayInputStream(pdfBytes);
+
+        response.setBufferSize(pdfBytes.length);
+        response.setContentLength(pdfBytes.length);
         response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition","attachment; filename=\"" + file.getName() +"\"");
-        FileCopyUtils.copy(bis, response.getOutputStream());  	
+        response.setHeader("Content-Disposition","attachment; filename=\"" + finalFilename +"\"");
+        FileCopyUtils.copy(pdfInputStream, response.getOutputStream());
         response.flushBuffer();
         
-        FileHelper.delete(fileout);
-        
         return null;
-        
     }
-    
-    
-    
 }
