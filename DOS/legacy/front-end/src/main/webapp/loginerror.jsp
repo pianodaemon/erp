@@ -37,13 +37,13 @@
                 font-size: 30px;
             }
             .formato{
-                font-family: fantasy;
+                font-family: monospace;
                 font-size: 45px;
                 color: #ffcc33;
                 text-shadow: black 0.1em 0.1em 0.2em
             }
             .fuente{
-                font-family: fantasy;
+                font-family: monospace;
                 font-size: 20px;
                 color: #ffcc33;
                 text-shadow: black 0.1em 0.1em 0.2em
