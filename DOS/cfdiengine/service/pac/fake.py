@@ -1,5 +1,4 @@
 from pac.adapter import Adapter
-from misc.helperstr import HelperStr
 
 
 __complement = '''
@@ -22,7 +21,7 @@ eFiscalDigital" />
 
 _fakeit = lambda input_xml: input_xml.replace('</cfdi:Comprobante>', __complement)
 
-class FakePac.py(Adapter):
+class Fake(Adapter):
     """
     Current Fake API
     """
