@@ -11,7 +11,7 @@ def setup_pac(logger, conf):
         # Here you should subscribe any newer
         # adapter implementation (AKA pac adapter)
         'servisim': dict(test=(Servisim, conf.test), real=(Servisim, conf.real)),
-        'fake': dict(test=(Fake, conf.test), real=(Servisim, conf.real))
+        'fake': dict(test=(Fake, conf.test), real=(Fake, conf.real))
     }
 
     name = ProfileReader.get_content(conf.name, ProfileReader.PNODE_UNIQUE)

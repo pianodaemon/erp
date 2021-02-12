@@ -41,7 +41,6 @@ class Fake(Adapter):
         """
         return _fakeit(xml)
 
-
     def fetch(self, xid):
         """
         Obtencion de cfdi previamente timbrado mediante
