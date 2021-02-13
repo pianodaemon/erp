@@ -1,6 +1,7 @@
 from custom.profile import ProfileReader
 from misc.tricks import dict_params
 from pac.servisim import Servisim
+from pac.fake import Fake
 
 
 def setup_pac(logger, conf):
@@ -10,7 +11,8 @@ def setup_pac(logger, conf):
     support = {
         # Here you should subscribe any newer
         # adapter implementation (AKA pac adapter)
-        'servisim': dict(test=(Servisim, conf.test), real=(Servisim, conf.real))
+        'servisim': dict(test=(Servisim, conf.test), real=(Servisim, conf.real)),
+        'fake': dict(test=(Fake, conf.test), real=(Fake, conf.real))
     }
 
     name = ProfileReader.get_content(conf.name, ProfileReader.PNODE_UNIQUE)
