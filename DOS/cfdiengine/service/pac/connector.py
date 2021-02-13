@@ -1,6 +1,7 @@
 from custom.profile import ProfileReader
 from misc.tricks import dict_params
 from pac.servisim import Servisim
+from pac.fake import Fake
 
 
 def setup_pac(logger, conf):
