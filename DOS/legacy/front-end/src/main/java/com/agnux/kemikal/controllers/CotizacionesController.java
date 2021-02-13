@@ -853,8 +853,12 @@ public class CotizacionesController {
         String dirImgProd = this.getGralDao().getProdImgDir()+rfc_empresa+"/";
         
         //ruta del la imagen del Logotipo
-        String rutaLogoEmpresa = this.getGralDao().getImagesDir()+rfc_empresa+"_logo.png";
-        
+        String rutaLogoEmpresa = String.format("%s%s_logo.jpg", this.getGralDao().getImagesDir(), rfc_empresa);
+        File logoFile = new File(rutaLogoEmpresa);
+
+        if (!logoFile.exists()) {
+            rutaLogoEmpresa = rutaLogoEmpresa.replace(".jpg", ".png");
+        }
         
         String file_name = "COT_"+rfc_empresa+".pdf";
         
