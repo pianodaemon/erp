@@ -82848,7 +82848,7 @@ CREATE TABLE public.gral_emp (
     gral_impto_id integer DEFAULT 1 NOT NULL,
     control_exis_pres boolean DEFAULT false,
     lista_precio_clientes boolean DEFAULT false NOT NULL,
-    tipo_facturacion character varying DEFAULT ''::character varying NOT NULL,
+    cubeta_facturacion character varying DEFAULT ''::character varying NOT NULL,
     pac_facturacion integer DEFAULT 0 NOT NULL,
     ambiente_facturacion boolean DEFAULT false NOT NULL,
     transportista boolean DEFAULT false NOT NULL,
