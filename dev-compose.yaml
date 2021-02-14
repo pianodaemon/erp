@@ -83,6 +83,14 @@ services:
         environment: *commonEnv
         networks:
           - operational_network
+    cxc_api:
+        container_name: 'cxc_api'
+        build: './DOS/cxc-api'
+        ports:
+          - '10110:10110'
+        environment: *commonEnv
+        networks:
+          - operational_network
 
 
 networks:
