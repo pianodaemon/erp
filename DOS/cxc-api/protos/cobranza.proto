@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.maxima.cobranza.client.grpc";
+option java_outer_classname = "CobranzaProto";
+
+package grpc;
+
+// -------------------------------------------------------------------------
+// Definición del servicio de Cobranza.
+service Cobranza {
+  rpc RegistrarPago (PagoRequest) returns (PagoResponse) {}
+}
+
+// -------------------------------------------------------------------------
+// Request message con los parámetros del Pago.
+message PagoRequest {
+  int32  usuarioId               = 1;
+  int32  clienteId               = 2;
+  int32  moneda                  = 3;
+  string fechaHora               = 4;
+  int32  banco                   = 5;
+  string observaciones           = 6;
+  string formaPago               = 7;
+  string cheque                  = 8;
+  string referencia              = 9;
+  string tarjeta                 = 10;
+  double montoPago               = 11;
+  string fechaDeposito           = 12;
+  string fichaMovimientoDeposito = 13;
+  int32  fichaCuentaDeposito     = 14;
+  int32  fichaBancoKemikal       = 15;
+  double tipoCambio              = 16;
+  double anticipoGastado         = 17;
+  int64  noTransaccionAnticipo   = 18;
+  double saldoAFavor             = 19;
+
+  message GridRenglonPago {
+    string serieFolio = 1;
+    bool   saldado    = 2;
+    double cantidad   = 3;
+    double tipoCambio = 4;
+  }
+  repeated GridRenglonPago gridDetalle = 20;
+}
+
+// Response message con los resultados del Pago.
+message PagoResponse {
+  string valorRetorno = 1;
+}
