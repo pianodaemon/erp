@@ -83,9 +83,9 @@ services:
         environment: *commonEnv
         networks:
           - operational_network
-    cxc_api:
-        container_name: 'cxc_api'
-        build: './DOS/cxc-api'
+    cobranza_api:
+        container_name: 'cobranza_api'
+        build: './DOS/cobranza-api'
         ports:
           - '10110:10110'
         environment: *commonEnv

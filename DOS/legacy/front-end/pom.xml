@@ -21,7 +21,13 @@
            <groupId>com.maxima</groupId>
            <artifactId>sales-grpc-jcli</artifactId>
            <version>GREAT-DRAGON-GAIKING</version>
-            <scope>compile</scope>
+           <scope>compile</scope>
+        </dependency>
+        <dependency>
+           <groupId>com.maxima</groupId>
+           <artifactId>cobranza-grpc-jcli</artifactId>
+           <version>GREAT-DRAGON-GAIKING</version>
+           <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.maxima</groupId>

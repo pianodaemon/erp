@@ -11,5 +11,6 @@
         <module>../front-end</module>
         <module>../bbgum-impt</module>
         <module>../sales-grpc-jcli</module>
+        <module>../cobranza-grpc-jcli</module>
     </modules>
 </project>
