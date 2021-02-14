@@ -21,8 +21,8 @@ all: build copy
 build: image
 	@[ -d $(SALES_LEGACY_CLI_DIR) ] || (mkdir -p $(SALES_LEGACY_CLI_DIR))
 	@cp -f $(SALES_SRV_PROTO_DIR)/*.proto  $(SALES_LEGACY_CLI_DIR)/
-        @[ -d $(COBRANZA_LEGACY_CLI_DIR) ] || (mkdir -p $(COBRANZA_LEGACY_CLI_DIR))
-        @cp -f $(COBRANZA_SRV_PROTO_DIR)/*.proto $(COBRANZA_LEGACY_CLI_DIR)/
+	@[ -d $(COBRANZA_LEGACY_CLI_DIR) ] || (mkdir -p $(COBRANZA_LEGACY_CLI_DIR))
+	@cp -f $(COBRANZA_SRV_PROTO_DIR)/*.proto $(COBRANZA_LEGACY_CLI_DIR)/
 	docker run --rm -v$(shell pwd):/yield --user ${EXPUID}:${EXPGID} ${BIMG} /maven/apache-maven-3.6.3/bin/mvn package -DskipTests
 
 copy:
