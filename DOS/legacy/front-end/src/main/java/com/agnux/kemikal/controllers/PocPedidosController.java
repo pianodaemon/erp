@@ -799,7 +799,7 @@ public class PocPedidosController {
     
     private void cancelPedido(int pedidoId, int usuarioId, HashMap<String,String> jsonretorno) {
 
-        ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString())
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString("SALES"))
             .usePlaintext()
             .build();
             
@@ -1113,7 +1113,7 @@ public class PocPedidosController {
                 return jsonretorno;
             }
 
-            ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString())
+            ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString("SALES"))
                 .usePlaintext()
                 .build();
             

@@ -534,7 +534,7 @@ public class PrefacturasController {
     
     private String editarPrefactura(PrefacturaRequest prefacturaRequest) {
 
-        ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString())
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString("SALES"))
             .usePlaintext()
             .build();
 

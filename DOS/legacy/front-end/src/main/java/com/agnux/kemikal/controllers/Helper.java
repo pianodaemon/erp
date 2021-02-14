@@ -3,10 +3,10 @@ package com.agnux.kemikal.controllers;
 
 public class Helper {
     
-    public static String getGrpcConnString() {
+    public static String getGrpcConnString(String modulo) {
 
-        String grpcHost = System.getenv("GRPC_HOST"),
-               grpcPort = System.getenv("GRPC_PORT");
+        String grpcHost = System.getenv(modulo + "_GRPC_HOST"),
+               grpcPort = System.getenv(modulo + "_GRPC_PORT");
 
          if (grpcHost == null || grpcPort == null) {
              grpcHost = "127.0.0.1";

@@ -734,7 +734,7 @@ public class CotizacionesController {
 
         if(success.get("success").equals("true")) {
             
-            ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString())
+            ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString("SALES"))
                 .usePlaintext()
                 .build();
             
