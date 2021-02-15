@@ -11,9 +11,9 @@ from docmaker.pipeline import DocPipeLine
 from misc.helperstr import HelperStr
 
 
-def __get_emisor_rfc(logger, usr_id):
+def __get_emp_attributes(logger, usr_id):
 
-    q = """select upper(EMP.rfc) as rfc
+    q = """select upper(EMP.rfc) as rfc, EMP.cubeta_facturacion,
         FROM gral_suc AS SUC
         LEFT JOIN gral_usr_suc AS USR_SUC ON USR_SUC.gral_suc_id = SUC.id
         LEFT JOIN gral_emp AS EMP ON EMP.id = SUC.empresa_id
@@ -23,8 +23,15 @@ def __get_emisor_rfc(logger, usr_id):
     logger.debug("Performing query: {}".format(q))
     for row in HelperPg.onfly_query(q, True):
         # Just taking first row of query result
-        return row['rfc']
+        return row['rfc'], row['cubeta_facturacion']
 
+def __get_emisor_rfc(logger, usr_id):
+    rfc, _ = __get_emp_attributes(logger, usr_id)
+    return rfc
+
+def __get_emisor_bucket(logger, usr_id):
+    _, bucket = __get_emp_attributes(logger, usr_id)
+    return bucket
 
 def __run_builder(logger, pt, f_outdoc, resdir, dm_builder, **kwargs):
     try:
