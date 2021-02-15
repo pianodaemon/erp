@@ -2,6 +2,7 @@ import tempfile
 import os
 from engine.error import ErrorCode
 from misc.helperpg import HelperPg
+from misc.helpercfdibucket import HelperCfdiBucket
 from engine.common import fetch_rdirs
 from pac.connector import setup_pac
 from misc.tricks import dump_exception
