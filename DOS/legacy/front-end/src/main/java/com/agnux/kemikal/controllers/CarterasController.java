@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -45,6 +46,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttributes;
+import com.maxima.cobranza.client.grpc.PagoRequest;
+import com.maxima.cobranza.client.grpc.PagoResponse;
+import com.maxima.cobranza.client.grpc.CobranzaGrpc;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 
 
 @Controller
@@ -388,6 +395,38 @@ public class CarterasController {
     }
 
 
+    private String registrarPago(PagoRequest pagoRequest) {
+
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString("COBRANZA"))
+            .usePlaintext()
+            .build();
+
+        CobranzaGrpc.CobranzaBlockingStub blockingStub = CobranzaGrpc.newBlockingStub(channel);
+
+        PagoResponse pagoResponse;
+        String valorRetorno = "0___";
+
+        try {
+            pagoResponse = blockingStub.registrarPago(pagoRequest);
+            valorRetorno = pagoResponse.getValorRetorno();
+            log.log(Level.INFO, "Registrar pago Response valorRetorno: {0}", valorRetorno);
+
+        } catch (StatusRuntimeException e) {
+            valorRetorno += "Error en llamada a procedimiento remoto.";
+            log.log(Level.SEVERE, "gRPC failed: {0}", e.getStatus());
+
+        } finally {
+            try {
+                channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+
+            } catch (InterruptedException e) {
+                log.log(Level.SEVERE, "Channel shutdown failed.", e);
+            }
+        }
+
+        return valorRetorno;
+    }
+
     //registro de pagos
     @RequestMapping(method = RequestMethod.POST, value="/registra_pagos.json")
     public @ResponseBody HashMap<String, String> editJson(
@@ -414,120 +453,167 @@ public class CarterasController {
             @RequestParam(value="no_transaccion_anticipo", required=true) String no_transaccion_anticipo,
             @RequestParam(value="iu", required=true) String id_user,
             @RequestParam(value="saldo_a_favor", required=true) String saldo_a_favor,
-            Model model
-            ) throws BbgumProxyError, IOException {
+            Model model) throws BbgumProxyError, IOException
+    {
+        Integer app_selected = 14;
+        String command_selected = "pago";
 
-            Integer id=0;//esta variable solo se declaro para pasar al procedimiento
-            Integer app_selected = 14;
-            String command_selected = "pago";
+        System.out.println("Registro de pago");
 
-            System.out.println("Registro de pago");
+        //decodificar id de usuario
+        Integer id_usuario = Integer.parseInt(Base64Coder.decodeString(id_user));
 
-            //decodificar id de usuario
-            Integer id_usuario = Integer.parseInt(Base64Coder.decodeString(id_user));
+        System.out.println("monto_pago:" + monto_pago +
+                "     anticipo_gastado: " + anticipo_gastado +
+                "     no_transaccion_anticipo:" + no_transaccion_anticipo);
 
+        String[] arreglo = cadena_valores.split("&");
+        
+        PagoRequest.Builder pagoRequestBuilder = PagoRequest.newBuilder();
 
-            System.out.println("monto_pago:"+monto_pago +"     anticipo_gastado: "+anticipo_gastado +"     no_transaccion_anticipo:"+no_transaccion_anticipo);
+        for(int i = 0; i < arreglo.length; i++) {
 
+            String[] gridDetalle = arreglo[i].split("___");
 
-            String[] arreglo = cadena_valores.split("&");
+            pagoRequestBuilder.addGridDetalle(
+                PagoRequest.GridRenglonPago.newBuilder()
+                    .setSerieFolio(gridDetalle[0])
+                    .setSaldado(Boolean.parseBoolean(gridDetalle[1]))
+                    .setCantidad(Helper.toDouble(gridDetalle[2]))
+                    .setTipoCambio(Helper.toDouble(gridDetalle[3]))
+            );
+            
+            arreglo[i] = "'" + arreglo[i] + "'";
+        }
 
-            for(int i=0; i<arreglo.length; i++) arreglo[i] = "'"+arreglo[i]+"'";
+        Calendar calendario = Calendar.getInstance();
+        int hora =calendario.get(Calendar.HOUR_OF_DAY);
+        int minutos = calendario.get(Calendar.MINUTE);
+        int segundos = calendario.get(Calendar.SECOND);
 
-            Calendar calendario = Calendar.getInstance();
-            int hora =calendario.get(Calendar.HOUR_OF_DAY);
-            int minutos = calendario.get(Calendar.MINUTE);
-            int segundos = calendario.get(Calendar.SECOND);
+        //serializar el arreglo
+        String extra_data_array = StringUtils.join(arreglo, ",");
 
-            //serializar el arreglo
-            String extra_data_array = StringUtils.join(arreglo, ",");
+        HashMap<String, String> jsonretorno = new HashMap<String, String>();
+        HashMap<String, String> success;
+        String fechaHora = fecha + " " + hora + ":" + minutos + ":" + segundos;
 
-            HashMap<String, String> jsonretorno = new HashMap<String, String>();
+        String data_string =
+            app_selected                + "___" +    //1
+            command_selected            + "___" +    //2
+            id_usuario                  + "___" +    //3
+            cliente_id                  + "___" +    //4
+            deuda_pesos                 + "___" +    //5
+            deuda_usd                   + "___" +    //6
+            moneda                      + "___" +    //7
+            fechaHora                   + "___" +    //8
+            banco                       + "___" +    //9
+            observaciones.toUpperCase() + "___" +    //10
+            forma_pago                  + "___" +    //11
+            cheque                      + "___" +    //12
+            referencia                  + "___" +    //13
+            tarjeta                     + "___" +    //14
+            antipo                      + "___" +    //15
+            monto_pago                  + "___" +    //16
+            fecha_deposito              + "___" +    //17
+            ficha_movimiento_deposito   + "___" +    //18
+            ficha_cuenta_deposito       + "___" +    //19
+            ficha_banco_kemikal         + "___" +    //20
+            tipo_cambio                 + "___" +    //21
+            anticipo_gastado            + "___" +
+            no_transaccion_anticipo     + "___" +
+            saldo_a_favor;
 
-            HashMap<String, String> succes = new HashMap<String, String>();
+        pagoRequestBuilder
+            .setUsuarioId(id_usuario.intValue())
+            .setClienteId(Helper.toInt(cliente_id))
+            .setMoneda(Helper.toInt(moneda))
+            .setFechaHora(fechaHora)
+            .setBanco(Helper.toInt(banco))
+            .setObservaciones(observaciones.toUpperCase())
+            .setFormaPago(forma_pago)
+            .setCheque(cheque)
+            .setReferencia(referencia)
+            .setTarjeta(tarjeta)
+            .setMontoPago(Helper.toDouble(monto_pago))
+            .setFechaDeposito(fecha_deposito)
+            .setFichaMovimientoDeposito(ficha_movimiento_deposito)
+            .setFichaCuentaDeposito(Helper.toInt(ficha_cuenta_deposito))
+            .setFichaBancoKemikal(Helper.toInt(ficha_banco_kemikal))
+            .setTipoCambio(Helper.toDouble(tipo_cambio))
+            .setAnticipoGastado(Helper.toDouble(anticipo_gastado))
+            .setNoTransaccionAnticipo(Helper.toLong(no_transaccion_anticipo))
+            .setSaldoAFavor(Helper.toDouble(saldo_a_favor));
 
-            String data_string =
-                    app_selected+"___"+                             //1
-                    command_selected+"___"+                         //2
-                    id_usuario+"___"+                               //3
-                    cliente_id+"___"+                               //4
-                    deuda_pesos+"___"+                              //5
-                    deuda_usd+"___"+                                //6
-                    moneda+"___"+                                   //7
-                    fecha+" "+hora+":"+minutos+":"+segundos+"___"+  //8
-                    banco+"___"+                                    //9
-                    observaciones.toUpperCase()+"___"+              //10
-                    forma_pago+"___"+                               //11
-                    cheque+"___"+                                   //12
-                    referencia+"___"+                               //13
-                    tarjeta+"___"+                                  //14
-                    antipo+"___"+                                   //15
-                    monto_pago+"___"+                               //16
-                    fecha_deposito+"___"+                           //17
-                    ficha_movimiento_deposito+"___"+                //18
-                    ficha_cuenta_deposito+"___"+                    //19
-                    ficha_banco_kemikal+"___"+                      //20
-                    tipo_cambio+"___"+                              //21
-                    anticipo_gastado+"___"+
-                    no_transaccion_anticipo+"___"+
-                    saldo_a_favor;
+        success = this.getCxcDao().selectFunctionValidateAaplicativo(data_string, app_selected, extra_data_array);
 
-            succes = this.getCxcDao().selectFunctionValidateAaplicativo(data_string,app_selected,extra_data_array);
+        log.log(Level.INFO, "Resultado de validacion {0}", success.get("success"));
 
-            log.log(Level.INFO, "despues de validacion {0}", String.valueOf(succes.get("success")));
-            String actualizo = "0";
+        if(success.get("success").equals("true")) {
 
-            if(String.valueOf(succes.get("success")).equals("true")){
-                actualizo = this.getCxcDao().selectFunctionForThisApp(data_string, extra_data_array);
-                String pag_id = String.valueOf(actualizo.split("___")[0]);
-                jsonretorno.put("numero_transaccion", pag_id);
-                jsonretorno.put("identificador_pago",String.valueOf(actualizo.split("___")[1]));
+            String actualizo = registrarPago(pagoRequestBuilder.build());
 
-                /* From this point onward
-                This code really sucks !!, because of there no clear strategy to catch the error and show it at user's interface
-                Conversily user's interface will never know if the request has gone missing */
-                HashMap<String, String> userDat = this.getHomeDao().getUserById(id_usuario);
-                Integer id_empresa = Integer.parseInt(userDat.get("empresa_id"));
-                String no_id = this.getGralDao().getNoIdEmpresa(id_empresa);
-                String serieFolio = this.getCxcDao().q_serie_folio(id_usuario);
-                String filename = no_id + "_" + serieFolio + ".xml";
+            String[] pago_arr = actualizo.split("___");
+            String pag_id = pago_arr[0];
 
-                LegacyRequest req = new LegacyRequest();
-
-                req.sendTo("cxc");
-                req.from("webui");
-                req.action("dopago");
-
-                HashMap<String, String> kwargs = new HashMap<String, String>();
-                kwargs.put("filename", filename);
-                kwargs.put("usr_id", id_usuario.toString());
-                kwargs.put("pag_id", pag_id.toString());
-                req.args(kwargs);
-
-                BbgumProxy bbgumProxy = new BbgumProxy();
-
-                try {
-                    ServerReply reply = bbgumProxy.uploadBuff("localhost", 10080, req.getJson().getBytes());
-                    String msg = "core reply code: " + reply.getReplyCode();
-                    if (reply.getReplyCode() == 0) {
-                        Logger.getLogger(CarterasController.class.getName()).log(
-                                Level.INFO, msg);
-                        jsonretorno.put("folio", serieFolio);
-                    } else {
-                        Logger.getLogger(CarterasController.class.getName()).log(
-                                Level.WARNING, msg);
-                    }
-                } catch (BbgumProxyError ex) {
-                    Logger.getLogger(CarterasController.class.getName()).log(
-                            Level.WARNING, ex.getMessage());
-                }
+            jsonretorno.put("numero_transaccion", pag_id);
+            jsonretorno.put("identificador_pago", pago_arr[1]);
+            
+            if (pag_id.equals("0")) {
+                jsonretorno.put("success", pago_arr[1]);
+                return jsonretorno;
             }
 
-            jsonretorno.put("success",String.valueOf(succes.get("success")));
-            System.out.println("numero_transaccion: "+jsonretorno.get("numero_transaccion"));
-            System.out.println("identificador_pago: "+jsonretorno.get("identificador_pago"));
+            /* From this point onward
+            This code really sucks !!, because of there no clear strategy to catch the error and show it at user's interface
+            Conversily user's interface will never know if the request has gone missing */
+            HashMap<String, String> userDat = this.getHomeDao().getUserById(id_usuario);
+            Integer id_empresa = Integer.parseInt(userDat.get("empresa_id"));
+            String no_id = this.getGralDao().getNoIdEmpresa(id_empresa);
+            String serieFolio = this.getCxcDao().q_serie_folio(id_usuario);
+            String filename = no_id + "_" + serieFolio + ".xml";
 
-            log.log(Level.INFO, "Salida json {0}", String.valueOf(jsonretorno.get("success")));
+            LegacyRequest req = new LegacyRequest();
+
+            req.sendTo("cxc");
+            req.from("webui");
+            req.action("dopago");
+
+            HashMap<String, String> kwargs = new HashMap<String, String>();
+            kwargs.put("filename", filename);
+            kwargs.put("usr_id", id_usuario.toString());
+            kwargs.put("pag_id", pag_id.toString());
+            req.args(kwargs);
+
+            BbgumProxy bbgumProxy = new BbgumProxy();
+
+            try {
+                ServerReply reply = bbgumProxy.uploadBuff("localhost", 10080, req.getJson().getBytes());
+                String msg = "core reply code: " + reply.getReplyCode();
+
+                if (reply.getReplyCode() == 0) {
+
+                    Logger.getLogger(CarterasController.class.getName()).log(
+                            Level.INFO, msg);
+                    jsonretorno.put("folio", serieFolio);
+                } else {
+
+                    Logger.getLogger(CarterasController.class.getName()).log(
+                            Level.WARNING, msg);
+                }
+            } catch (BbgumProxyError ex) {
+
+                Logger.getLogger(CarterasController.class.getName()).log(
+                        Level.WARNING, ex.getMessage());
+            }
+        }
+
+        jsonretorno.put("success", success.get("success"));
+        System.out.println("numero_transaccion: " + jsonretorno.get("numero_transaccion"));
+        System.out.println("identificador_pago: " + jsonretorno.get("identificador_pago"));
+
+        log.log(Level.INFO, "Salida json {0}", jsonretorno.get("success"));
+
         return jsonretorno;
     }
     

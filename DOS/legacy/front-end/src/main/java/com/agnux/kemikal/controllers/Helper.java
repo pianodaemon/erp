@@ -25,4 +25,9 @@ public class Helper {
         String res = str.trim();
         return res.equals("") ? 0.0 : Double.parseDouble(res);
     }
+    
+    public static long toLong(String str) {
+        String res = str.trim();
+        return res.equals("") ? 0 : Long.parseLong(res);
+    }
 }
