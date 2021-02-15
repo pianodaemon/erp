@@ -5829,3 +5829,392 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
+
+
+CREATE TYPE grid_renglon_pago AS (
+    serie_folio character varying,
+    saldado boolean,
+    cantidad double precision,
+    tipo_cambio double precision
+);
+
+CREATE FUNCTION public.pago_register(
+    _usuario_id integer,                            --str_data[3]
+    _cliente_id integer,                            --str_data[4]
+    _moneda integer,                                --str_data[7]
+    _fecha_hora timestamp with time zone,           --str_data[8]
+    _banco integer,                                 --str_data[9]
+    _observaciones text,                            --str_data[10]
+    _forma_pago character varying,                  --str_data[11]
+    _cheque character varying,                      --str_data[12]
+    _referencia character varying,                  --str_data[13]
+    _tarjeta character varying,                     --str_data[14]
+    _monto_pago double precision,                   --str_data[16]
+    _fecha_deposito timestamp with time zone,       --str_data[17]
+    _ficha_movimiento_deposito character varying,   --str_data[18]
+    _ficha_cuenta_deposito integer,                 --str_data[19]
+    _ficha_banco_kemikal integer,                   --str_data[20]
+    _tipo_cambio double precision,                  --str_data[21]
+    _anticipo_gastado double precision,             --str_data[22]
+    _no_transaccion_anticipo bigint,                --str_data[23]
+    _saldo_a_favor double precision,                --str_data[24]
+    _grid_detalle grid_renglon_pago[]
+
+) RETURNS character varying LANGUAGE plpgsql AS $$
+
+DECLARE
+
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    -- >> Name:     Registro de pagos                                              >>
+    -- >> Version:  MAZINGER                                                       >>
+    -- >> Date:     11/feb/2021                                                    >>
+    -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+    --Numero de transaccion pago CXC
+    id_tipo_consecutivo integer := 11;
+    prefijo_consecutivo character varying := '';
+    nuevo_consecutivo bigint := 0;
+    folio_transaccion bigint := 0;
+    id_forma_pago integer := 0;
+    id_anticipo integer := 0;
+    monto_anticipo_actual double precision := 0;
+    rowCount integer := 0;
+    ultimo_id integer := 0;
+    grid_rows integer := 0;
+    detalle grid_renglon_pago;
+    id_moneda_factura integer := 0;
+    sql_pagos text := '';
+    fila record;
+    total_factura double precision := 0;
+    monto_pagos double precision := 0;
+    suma_pagos double precision := 0;
+    suma_notas_credito double precision := 0;
+    nuevacantidad_monto_pago double precision := 0;
+    nuevo_saldo_factura double precision := 0;
+    saldo_anticipo double precision := 0;
+    emp_id integer := 0;
+    suc_id integer := 0;
+    valor_retorno character varying := '';
+
+BEGIN
+
+    --obtiene empresa_id, sucursal_id y sucursal_id
+    SELECT gral_suc.empresa_id,
+           gral_usr_suc.gral_suc_id
+      FROM gral_usr_suc
+      JOIN gral_suc ON gral_suc.id = gral_usr_suc.gral_suc_id
+      JOIN inv_suc_alm ON inv_suc_alm.sucursal_id = gral_suc.id
+     WHERE gral_usr_suc.gral_usr_id = _usuario_id
+      INTO emp_id,
+           suc_id;
+
+    --aqui entra para tomar el consecutivo del folio  la sucursal actual
+    UPDATE gral_cons
+       SET consecutivo = (
+              SELECT sbt.consecutivo + 1
+                FROM gral_cons AS sbt
+               WHERE sbt.id = gral_cons.id
+           )
+     WHERE gral_emp_id = emp_id
+       AND gral_suc_id = suc_id
+       AND gral_cons_tipo_id = id_tipo_consecutivo
+ RETURNING prefijo,
+           consecutivo
+      INTO prefijo_consecutivo,
+           nuevo_consecutivo;
+
+    --concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio
+    --nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+
+    --nuevo folio transaccion
+    folio_transaccion := nuevo_consecutivo::bigint;
+
+    --obtiene id de la forma de pago
+    SELECT id
+      FROM erp_pagos_formas
+     WHERE titulo ILIKE _forma_pago
+     LIMIT 1
+      INTO id_forma_pago;
+
+    id_anticipo := 0;
+    monto_anticipo_actual := 0;
+    --obtener id del anticipo
+    SELECT COUNT(id)
+      FROM cxc_ant
+     WHERE numero_transaccion = _no_transaccion_anticipo
+       AND cliente_id = _cliente_id
+       AND borrado_logico = false
+      INTO rowCount;
+
+    IF rowCount > 0 THEN
+        SELECT id,
+               anticipo_actual
+          FROM cxc_ant
+         WHERE numero_transaccion = _no_transaccion_anticipo
+           AND cliente_id = _cliente_id
+         LIMIT 1
+          INTO id_anticipo,
+               monto_anticipo_actual;
+    END IF;
+
+    INSERT INTO erp_pagos (
+        numero_transaccion,
+        momento_creacion,
+        forma_pago_id,
+        numero_cheque,
+        referencia,
+        numero_tarjeta,
+        observaciones,
+        id_usuario_pago,
+        banco_id,
+        moneda_id,
+        monto_pago,
+        cliente_id,
+        fecha_deposito,
+        numerocuenta_id,
+        movimiento,
+        bancokemikal_id,
+        tipo_cambio,
+        anticipo_id,
+        empresa_id,
+        sucursal_id
+    ) VALUES (
+        folio_transaccion,
+        now(),
+        id_forma_pago,
+        _cheque,
+        _referencia,
+        _tarjeta,
+        _observaciones,
+        _usuario_id,
+        _banco,
+        _moneda,
+        _monto_pago,
+        _cliente_id,
+        _fecha_deposito,
+        _ficha_cuenta_deposito,
+        _ficha_movimiento_deposito,
+        _ficha_banco_kemikal,
+        _tipo_cambio,
+        id_anticipo,
+        emp_id,
+        suc_id
+    ) RETURNING id INTO ultimo_id;
+
+    --str_data[3]     id_usuario
+    --str_data[4]     cliente_id
+    --str_data[5]     deuda_pesos
+    --str_data[6]     deuda_usd
+    --str_data[7]     moneda
+    --str_data[8]     fecha+" "+hora+":"+minutos+":"+segundos
+    --str_data[9]     banco
+    --str_data[10]    observaciones
+    --str_data[11]    forma_pago
+    --str_data[12]    cheque
+    --str_data[13]    referencia
+    --str_data[14]    tarjeta
+    --str_data[15]    anticipo
+    --str_data[16]    monto_pago
+    --str_data[17]    fecha_deposito
+    --str_data[18]    ficha_movimiento_deposito
+    --str_data[19]    ficha_cuenta_deposito
+    --str_data[20]    ficha_banco_kemikal
+    --str_data[21]    tipo_cambio
+    --str_data[22]    anticipo_gastado
+    --str_data[23]    no_transaccion_anticipo
+    --str_data[24]    saldo_a_favor
+
+    --RAISE EXCEPTION '%','Si llega aqui: id_pago: '||ultimo_id_pago;
+    --------------------saldando facturas--------------------------------
+    --SELECT INTO item string_to_array(''||valores||'','&');
+
+    SELECT array_length(_grid_detalle, 1)
+      INTO grid_rows;
+
+    FOR idx IN 1 .. grid_rows LOOP
+
+        detalle := _grid_detalle[idx];
+        --RAISE EXCEPTION '%', iterar[1];
+        --iterar[1]    factura_vista
+        --iterar[2]    saldado
+        --iterar[3]    saldo
+        --iterar[4]    tipocambio(este tipo de cambio no se utiliza, el tipo de cambio esta en pagos)
+
+        SELECT moneda_id
+          FROM fac_docs
+         WHERE serie_folio = detalle.serie_folio
+          INTO id_moneda_factura;
+
+        INSERT INTO erp_pagos_detalles (
+            pago_id,
+            serie_folio,
+            cantidad,
+            momento_pago,
+            fac_moneda_id
+        ) VALUES (
+            ultimo_id,
+            detalle.serie_folio,
+            detalle.cantidad,
+            _fecha_hora,
+            id_moneda_factura
+        );
+
+        IF detalle.saldado = true THEN
+            UPDATE erp_h_facturas
+               SET pagado = true
+             WHERE serie_folio = detalle.serie_folio;
+
+            UPDATE fac_cfds
+               SET pagado = true
+             WHERE serie_folio ilike detalle.serie_folio;
+            --UPDATE erp_notacargos SET pagado=true WHERE serie_folio ilike detalle.serie_folio;
+        END IF;
+
+    END LOOP;
+
+    sql_pagos := 'SELECT serie_folio,
+                         cantidad
+                    FROM erp_pagos_detalles
+                   WHERE pago_id = ' || ultimo_id;
+    --RAISE EXCEPTION '%','Si llega aqui: sql-pagos: '||string_pagos;
+
+    FOR fila IN EXECUTE(sql_pagos) LOOP
+
+        EXECUTE 'SELECT monto_total,
+                        total_pagos
+                   FROM erp_h_facturas
+                  WHERE serie_folio ilike ''' || fila.serie_folio || ''''
+           INTO total_factura,
+                monto_pagos;
+
+        --sacar suma total de pagos para esta factura
+        SELECT CASE WHEN sum IS NULL
+                   THEN 0
+                   ELSE sum
+               END
+          FROM (SELECT sum(cantidad)
+                  FROM erp_pagos_detalles
+                 WHERE serie_folio = fila.serie_folio
+                   AND cancelacion = FALSE) AS sbt
+          INTO suma_pagos;
+
+        --sacar suma total de notas de credito para esta factura
+        --SELECT CASE WHEN sum IS NULL THEN 0 ELSE sum END FROM (SELECT sum(total) FROM fac_nota_credito WHERE serie_folio_factura=fila.serie_folio AND cancelado=FALSE) AS subtabla INTO suma_notas_credito;
+        SELECT total_notas_creditos
+          FROM erp_h_facturas
+         WHERE serie_folio = fila.serie_folio
+          INTO suma_notas_credito;
+
+        nuevacantidad_monto_pago := round((suma_pagos)::numeric, 4)::double precision;
+        nuevo_saldo_factura := round((total_factura - suma_pagos - suma_notas_credito)::numeric, 4)::double precision;
+
+        --actualiza cantidades cada vez que se realice un pago
+        UPDATE erp_h_facturas
+           SET total_pagos = nuevacantidad_monto_pago,
+               total_notas_creditos = suma_notas_credito,
+               saldo_factura = nuevo_saldo_factura,
+               momento_actualizacion = now(),
+               fecha_ultimo_pago = _fecha_deposito::date
+         WHERE serie_folio = fila.serie_folio;
+
+    END LOOP;
+
+    --Inicia guardar saldos a favor y actualizar anticipos
+    IF id_anticipo <> 0 THEN
+        --aqui entra porque el pago es de un anticipo y actualiza cantidades del anticipo
+        IF monto_anticipo_actual >= _anticipo_gastado THEN
+
+            saldo_anticipo := monto_anticipo_actual - _anticipo_gastado;
+            IF saldo_anticipo <= 0 THEN
+                UPDATE cxc_ant
+                   SET anticipo_actual = 0,
+                       borrado_logico = true,
+                       id_usuario_actualizacion = _usuario_id,
+                       momento_baja = now()
+                 WHERE cliente_id = _cliente_id
+                   AND id = id_anticipo;
+            ELSE
+                UPDATE cxc_ant
+                   SET anticipo_actual = saldo_anticipo,
+                       id_usuario_baja = _usuario_id,
+                       momento_actualizacion = now()
+                 WHERE cliente_id = _cliente_id
+                   AND id = id_anticipo;
+            END IF;
+
+        END IF;
+    ELSE
+        --Aqui entra porque el pago no es de un anticipo
+        IF _saldo_a_favor > 0 THEN
+            /*
+            INSERT INTO erp_pagosxaplicar(
+                cliente_id,
+                moneda_id,
+                monto_inicial,
+                monto_actual,
+                momento_creacion,
+                id_usuario_creacion,
+                empresa_id,
+                sucursal_id)
+            VALUES(
+                _cliente_id,
+                _moneda,
+                _saldo_a_favor,
+                _saldo_a_favor,
+                now(),_usuario_id,
+                emp_id,
+                suc_id
+            );
+            */
+            --Aquí se genera una nuevo numero de transaccion para el anticipo des saldo a favor
+            --aqui entra para tomar el consecutivo del folio  la sucursal actual
+            UPDATE gral_cons
+               SET consecutivo = (
+                     SELECT sbt.consecutivo + 1
+                       FROM gral_cons AS sbt
+                      WHERE sbt.id = gral_cons.id
+                   )
+             WHERE gral_emp_id = emp_id
+               AND gral_suc_id = suc_id
+               AND gral_cons_tipo_id = id_tipo_consecutivo
+         RETURNING prefijo,
+                   consecutivo
+              INTO prefijo_consecutivo,
+                   nuevo_consecutivo;
+                                --nuevo folio transaccion
+            folio_transaccion := nuevo_consecutivo::bigint;
+
+            INSERT INTO cxc_ant(
+                numero_transaccion,     --folio_transaccion,
+                cliente_id,             --str_data[4]::integer,
+                moneda_id,              --_moneda,
+                anticipo_inicial,       --_saldo_a_favor,
+                anticipo_actual,        --_saldo_a_favor,
+                fecha_anticipo_usuario, --now(),
+                observaciones,          --'ANTICIPO GENERADO DESDE UN PAGO COMO SALDO A FAVOR DEL CLIENTE'
+                momento_creacion,       --now(),
+                id_usuario_creacion,    --_usuario_id,
+                empresa_id,             --emp_id,
+                sucursal_id             --suc_id
+            ) VALUES (
+                folio_transaccion,
+                _cliente_id,
+                _moneda,
+                _saldo_a_favor,
+                _saldo_a_favor,
+                now(),
+                'ANTICIPO GENERADO DESDE UN PAGO COMO SALDO A FAVOR DEL CLIENTE',
+                now(),
+                _usuario_id,
+                emp_id,
+                suc_id
+            );
+        END IF;
+
+    END IF;
+
+    valor_retorno := folio_transaccion::character varying || '___' || ultimo_id::character varying;
+    RETURN valor_retorno;
+
+END;
+$$;
