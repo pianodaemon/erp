@@ -3139,14 +3139,14 @@ public class PocSpringDao implements PocInterfaceDao{
                     row.put("presentacion_id",rs.getString("presentacion_id"));
                     row.put("presentacion",rs.getString("presentacion"));
                     row.put("cantidad",StringHelper.roundDouble(rs.getString("cantidad"),2));
-                    row.put("precio_unitario",StringHelper.roundDouble(rs.getDouble("precio_unitario"),4));
+                    row.put("precio_unitario",StringHelper.roundDouble(rs.getDouble("precio_unitario"), 2));
                     row.put("moneda_id",String.valueOf(rs.getInt("moneda_id")));
                     row.put("moneda_abr",rs.getString("moneda_abr"));
-                    row.put("importe",StringHelper.roundDouble(rs.getDouble("importe"),4));
+                    row.put("importe",StringHelper.roundDouble(rs.getDouble("importe"), 2));
                     row.put("id_imp",String.valueOf(rs.getInt("id_imp")));
-                    row.put("valor_imp",StringHelper.roundDouble(rs.getDouble("valor_imp"),4));
+                    row.put("valor_imp",StringHelper.roundDouble(rs.getDouble("valor_imp"), 2));
                     
-                    row.put("status_aut",String.valueOf(rs.getInt("status_aut"))+"&&&"+StringHelper.roundDouble(rs.getDouble("precio_aut"),4)+"&&&"+Base64Coder.encodeString(String.valueOf(rs.getInt("gral_usr_id_aut"))));
+                    row.put("status_aut",String.valueOf(rs.getInt("status_aut"))+"&&&"+StringHelper.roundDouble(rs.getDouble("precio_aut"), 2)+"&&&"+Base64Coder.encodeString(String.valueOf(rs.getInt("gral_usr_id_aut"))));
                     row.put("requiere_aut",String.valueOf(rs.getBoolean("requiere_aut")));
                     return row;
                 }
