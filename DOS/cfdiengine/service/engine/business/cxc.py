@@ -34,6 +34,23 @@ def __get_emisor_bucket(logger, usr_id):
     _, bucket = __get_emp_attributes(logger, usr_id)
     return bucket
 
+def __move_to_cloud(logger, usr_id, *fnames):
+
+    def placer(fname):
+        SthreeOps.placement(__get_emisor_bucket(logger, usr_id), fname)
+        if os.path.isfile(fname):
+            os.remove(fname)
+
+    try:
+        if not fnames:
+            raise Exception("no files to store in the cloud")
+        for i in fnames:
+            placer(i)
+        return ErrorCode.SUCCESS
+    except:
+        logger.error(dump_exception())
+        rc = ErrorCode.THIRD_PARTY_ISSUES
+
 def __run_builder(logger, pt, f_outdoc, resdir, dm_builder, **kwargs):
     try:
         dpl = DocPipeLine(logger, resdir, rdirs_conf=pt.res.dirs)
@@ -198,6 +215,11 @@ def dopago(logger, pt, req):
                 rc = __run_builder(logger, pt,
                     signed_file.replace('.xml', '.pdf'),
                     resdir, 'pagpdf', xml = signed_file, rfc = _rfc)
+            if rc == ErrorCode.SUCCESS:
+                rc = __move_to_cloud(logger, usr_id,
+                        signed_file,                          # The xml file
+                        signed_file.replace('.xml', '.pdf')   # The pdf file
+                )
 
     if os.path.isfile(tmp_file):
         os.remove(tmp_file)
@@ -384,7 +406,10 @@ def facturar(logger, pt, req):
                         resdir, 'facpdf', xml = outfile,
                         rfc = inceptor_data['rfc'])
             if rc == ErrorCode.SUCCESS:
-                pass
+                rc = __move_to_cloud(logger, usr_id,
+                        outfile,                          # The xml file
+                        outfile.replace('.xml', '.pdf')   # The pdf file
+                )
 
     if os.path.isfile(tmp_file):
         os.remove(tmp_file)
@@ -465,6 +490,11 @@ def donota(logger, pt, req):
                 rc = __run_builder(logger, pt,
                         signed_file.replace('.xml', '.pdf'),
                         resdir, 'ncrpdf', xml = signed_file, rfc = _rfc)
+            if rc == ErrorCode.SUCCESS:
+                rc = __move_to_cloud(logger, usr_id,
+                        signed_file,                          # The xml file
+                        signed_file.replace('.xml', '.pdf')   # The pdf file
+                )
 
     if os.path.isfile(tmp_file):
         os.remove(tmp_file)
