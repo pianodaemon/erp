@@ -2,7 +2,7 @@ import tempfile
 import os
 from engine.error import ErrorCode
 from misc.helperpg import HelperPg
-from misc.helpercfdibucket import HelperCfdiBucket
+from misc.sthreeops import SthreeOps
 from engine.common import fetch_rdirs
 from pac.connector import setup_pac
 from misc.tricks import dump_exception
@@ -383,6 +383,8 @@ def facturar(logger, pt, req):
                         outfile.replace('.xml', '.pdf'),  # We replace the xml extension
                         resdir, 'facpdf', xml = outfile,
                         rfc = inceptor_data['rfc'])
+            if rc == ErrorCode.SUCCESS:
+                pass
 
     if os.path.isfile(tmp_file):
         os.remove(tmp_file)
