@@ -12,13 +12,24 @@ class SaxReader(xml.sax.ContentHandler):
 
     def __call__(self, xml_file_path):
         try:
-            self.__reset()
+            self._reset()
             xml.sax.parse(xml_file_path, self)
             return self.__ds, self.__get_tos()
         except xml.sax.SAXParseException:
             raise
 
-    def __reset(self):
+    @classmethod
+    def parse_input_supplied(cls, supplier):
+        ic = cls()
+        ic._reset()
+        try:
+            xml.sax.parseString(supplier(), ic)
+            return self.__ds, self.__get_tos()
+        except xml.sax.SAXParseException as e:
+            emsg = "the xml text supplied could not be parsed : {}"
+            raise Exception(emsg.format(e))
+
+    def _reset(self):
         self.__ds = {
             'TVER': None,
             'PAC': None,

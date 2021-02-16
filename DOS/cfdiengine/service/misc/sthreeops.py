@@ -44,7 +44,7 @@ class SthreeOps(object):
             return obj['Body'].read().decode('utf-8')
         except ClientError as e:
             emsg = "file {} could not be retrieved from {} : ({})"
-            raise Exception(emsg.format(fname, target_bucket, e))
+            raise Exception(emsg.format(item_name, target_bucket, e))
 
     @classmethod
     def placement(cls, target_bucket, fname):
