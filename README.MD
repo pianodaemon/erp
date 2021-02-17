@@ -49,4 +49,4 @@ export PATH="$ERP_ROOT/bin:$PATH"
 cd $ERP_ROOT
 
 ```
-![](https://img.shields.io/github/forks/pandao/editor.md.svg) ![](https://img.shields.io/github/issues/pandao/editor.md.svg)
+
