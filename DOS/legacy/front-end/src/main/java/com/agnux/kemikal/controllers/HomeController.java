@@ -183,6 +183,24 @@ public class HomeController {
         /*Para actualizar el tipo de cambio*/
         this.tipoCambioServiceMethod(Integer.parseInt(succes.get("id")), userdata.getEmpresaId());
         
+        String grpcHost = System.getenv("SALES_GRPC_HOST"),
+               grpcPort = System.getenv("SALES_GRPC_PORT");
+
+        if (grpcHost == null || grpcPort == null) {
+            log.log(Level.SEVERE, "SALES gRPC connection params... not found!!!");
+        } else {
+            log.log(Level.INFO, "SALES gRPC connection params... in good shape.");
+        }
+
+        grpcHost = System.getenv("COBRANZA_GRPC_HOST");
+        grpcPort = System.getenv("COBRANZA_GRPC_PORT");
+
+        if (grpcHost == null || grpcPort == null) {
+            log.log(Level.SEVERE, "COBRANZA gRPC connection params... not found!!!");
+        } else {
+            log.log(Level.INFO, "COBRANZA gRPC connection params... in good shape.");
+        }
+
         return x;
     }
     

@@ -1,16 +1,23 @@
 package com.agnux.kemikal.controllers;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
 
 public class Helper {
-    
+
+    private static final Logger log  = Logger.getLogger(Helper.class.getName());
+
     public static String getGrpcConnString(String modulo) {
 
         String grpcHost = System.getenv(modulo + "_GRPC_HOST"),
                grpcPort = System.getenv(modulo + "_GRPC_PORT");
 
          if (grpcHost == null || grpcPort == null) {
+
              grpcHost = "127.0.0.1";
              grpcPort = "10090";
+             log.log(Level.SEVERE, "{0}: gRPC connection params not found. Defaults to 127.0.0.1:10090", modulo);
          }
 
          return grpcHost + ":" + grpcPort;
