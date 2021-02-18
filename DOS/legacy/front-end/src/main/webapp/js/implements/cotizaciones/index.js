@@ -1216,7 +1216,7 @@ $(function() {
 			
 			$grid_productos.find('.checkauth'+ tr).click(function(event){
 				if(this.checked){
-					$('#forma-cotizacions-window').find('#btn_autorizar').show();
+
 				}else{
 					var cont_check=0;
 					$grid_productos.find('input[name=checkauth]').each(function(index){
@@ -1226,10 +1226,6 @@ $(function() {
 							}
 						}
 					});
-					
-					if(parseInt(cont_check)<=0){
-						$('#forma-cotizacions-window').find('#btn_autorizar').hide();
-					}
 				}
 			});
 			
@@ -2064,6 +2060,7 @@ $(function() {
 		var $contactocliente = $('#forma-cotizacions-window').find('input[name=contactocliente]');
 		var $select_moneda = $('#forma-cotizacions-window').find('select[name=moneda]');
 		var $select_moneda_original = $('#forma-cotizacions-window').find('select[name=moneda2]');
+		var $select_tiempo_entrega = $('#forma-cotizacions-window').find('select[name=tiempo_entrega_id]');
 		var $tc = $('#forma-cotizacions-window').find('input[name=tc]');
 		//var $tc_original = $('#forma-cotizacions-window').find('input[name=tc_original]');
 		var $tc_usd = $('#forma-cotizacions-window').find('input[name=tc_usd]');
@@ -2088,7 +2085,6 @@ $(function() {
 		//href para agregar producto al grid
 		var $agregar_producto = $('#forma-cotizacions-window').find('a[href*=agregar_producto]');
 		
-		var $btn_autorizar = $('#forma-cotizacions-window').find('#btn_autorizar');
 		var $boton_genera_pdf = $('#forma-cotizacions-window').find('#genera_pdf');
 		
 		//grid de productos
@@ -2124,7 +2120,6 @@ $(function() {
 		$boton_genera_pdf.hide();
 		$etiqueta_accion.hide();
 		$select_accion.hide();
-		$btn_autorizar.hide();
 		
 		//$descripcion_larga.hide();
 		$tr_tipo.hide();
@@ -2315,7 +2310,18 @@ $(function() {
 			});
 			$select_moneda.append(moneda_hmtl);
 			$select_moneda_original.append(moneda_hmtl);//este  esta oculto
-			
+
+			//select tiempo_entrega
+			let tiempo_entrega_html = '';
+
+			$.each(entry.tiemposEntrega, function (idx, tiempoEntrega) {
+
+				tiempo_entrega_html += '<option value="' + tiempoEntrega.id + '">' + tiempoEntrega.title + '</option> ';
+			});
+
+			$select_tiempo_entrega.append(tiempo_entrega_html);
+
+
 			$id_impuesto.val(entry['iva']['0']['id_impuesto']);
 			$valor_impuesto.val(entry['iva']['0']['valor_impuesto']);
 			
@@ -2550,14 +2556,6 @@ $(function() {
 		
 		
 		
-		$btn_autorizar.click(function(event){
-			//LLamada a la funcion de la ventana de autorizacion
-			$forma_autorizacion($grid_productos, $btn_autorizar, id_to_show);
-		});
-		
-		
-		
-		
 		$submit_actualizar.bind('click',function(){
 			var trCount = $("tr", $grid_productos).size();
 			$total_tr.val(trCount);
@@ -2657,6 +2655,7 @@ $(function() {
 				var $contactocliente = $('#forma-cotizacions-window').find('input[name=contactocliente]');
 				var $select_moneda = $('#forma-cotizacions-window').find('select[name=moneda]');
 				var $select_moneda_original = $('#forma-cotizacions-window').find('select[name=moneda2]');
+				var $select_tiempo_entrega = $('#forma-cotizacions-window').find('select[name=tiempo_entrega_id]');
 				var $tc = $('#forma-cotizacions-window').find('input[name=tc]');
 				var $tc_usd = $('#forma-cotizacions-window').find('input[name=tc_usd]');
 				var $tc_usd_sat = $('#forma-cotizacions-window').find('input[name=tc_usd_sat]');
@@ -2678,7 +2677,6 @@ $(function() {
 				//href para agregar producto al grid
 				var $agregar_producto = $('#forma-cotizacions-window').find('a[href*=agregar_producto]');
 				
-				var $btn_autorizar = $('#forma-cotizacions-window').find('#btn_autorizar');
 				var $boton_genera_pdf = $('#forma-cotizacions-window').find('#genera_pdf');
 				
 				//grid de productos
@@ -2696,7 +2694,6 @@ $(function() {
 				var $submit_actualizar = $('#forma-cotizacions-window').find('#submit');
 				
 				
-				$btn_autorizar.hide();
 				$select_moneda_original.hide();
 				//ocultar boton de generar pdf. Solo debe estar activo en editar
 				//$boton_genera_pdf.hide();
@@ -2833,7 +2830,7 @@ $(function() {
 					$select_moneda.children().remove();
 					//var moneda_hmtl = '<option value="0">[--   --]</option>';
 					var moneda_hmtl = '';
-					var moneda_hmtl2 = '';
+
 					$.each(entry['Monedas'],function(entryIndex,moneda){
 						if(moneda['id'] == entry['datosCotizacion']['0']['moneda_id']){
 							moneda_hmtl += '<option value="' + moneda['id'] + '"  selected="yes">' + moneda['descripcion'] + '</option>';
@@ -2842,11 +2839,24 @@ $(function() {
 								moneda_hmtl += '<option value="' + moneda['id'] + '"  >' + moneda['descripcion_abr'] + '</option>';
 							}
 						}
-						//moneda_hmtl2 += '<option value="' + moneda['id'] + '"  >' + moneda['descripcion'] + '</option>';
 					});
 					$select_moneda.append(moneda_hmtl);
 					//este select esta oculto, de esta se copian los elementos para el select de moneda del grid
 					$select_moneda_original.append(moneda_hmtl);
+
+					//select tiempo_entrega
+					let tiempo_entrega_html = '';
+
+					$.each(entry.tiemposEntrega, function (idx, tiempoEntrega) {
+
+						if (tiempoEntrega.id == entry.datosCotizacion[0].tiempo_entrega_id) {
+							tiempo_entrega_html += '<option value="' + tiempoEntrega.id + '" selected >' + tiempoEntrega.title + '</option> ';
+						} else {
+							tiempo_entrega_html += '<option value="' + tiempoEntrega.id + '">' + tiempoEntrega.title + '</option> ';
+						}
+					});
+
+					$select_tiempo_entrega.append(tiempo_entrega_html);
 					
 					
 					if(entry['datosCotizacion'][0]['img_desc'] == 'true'){
@@ -3222,13 +3232,6 @@ $(function() {
 					}else {
 						return false;
 					}		
-				});
-				
-				
-				
-				$btn_autorizar.click(function(event){
-					//LLamada a la funcion de la ventana de autorizacion
-					$forma_autorizacion($grid_productos, $btn_autorizar, id_to_show);
 				});
 				
 				
