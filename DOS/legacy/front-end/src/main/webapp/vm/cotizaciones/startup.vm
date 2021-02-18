@@ -296,9 +296,9 @@
 																	<input type="text" name="tc_usd" value="0.0000" style="width:60px;" maxlength="8">
 																	<input type="hidden" name="tc_usd_sat" value="0.0000">
                                                                 </td>
-                                                                <td width="45"></td>
-                                                                <td width="130" colspan="3" align="right">
-																	<input type="button" id="btn_autorizar" value="Autorizar" style="font-weight:bold; width:110px;">
+                                                                <td colspan="2">Tiempo de entrega</td>
+                                                                <td colspan="2" align="right">
+																	<select id="tiempo_entrega" name="tiempo_entrega_id"></select>
                                                                 </td>
                                                                 <!--
                                                                 <td width="20"></td>

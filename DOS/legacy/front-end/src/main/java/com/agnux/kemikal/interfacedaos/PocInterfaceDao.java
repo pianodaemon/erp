@@ -37,6 +37,7 @@ public interface PocInterfaceDao{
     
     public ArrayList<HashMap<String, String>> getVerificarImpuesto(Integer idSuc, Integer idTipoClient, ArrayList<HashMap<String, String>> productos);
     public ArrayList<HashMap<String, String>> getMonedas();
+    public ArrayList<HashMap<String, String>> getTiemposEntrega();
     public ArrayList<HashMap<String, String>> getAgentes(Integer id_empresa, Integer id_sucursal, boolean obtener_todos);
     public ArrayList<HashMap<String, String>> getCondicionesDePago();
     public Double getTipoCambioActual();

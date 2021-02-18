@@ -948,6 +948,33 @@ public class PocSpringDao implements PocInterfaceDao{
     }
     
     
+    @Override
+    public ArrayList<HashMap<String, String>> getTiemposEntrega() {
+
+        String sql_to_query =
+                "SELECT id, title " +
+                "  FROM poc_cot_tiempos_entrega " +
+                " ORDER BY id ASC;";
+
+        ArrayList<HashMap<String, String>> tiemposEntrega =
+            (ArrayList<HashMap<String, String>>) this.jdbcTemplate.query(
+                sql_to_query,
+                new Object[] {},
+                new RowMapper() {
+                    @Override
+                    public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+
+                        HashMap<String, String> row = new HashMap<>();
+
+                        row.put("id",    String.valueOf(rs.getInt("id")));
+                        row.put("title", rs.getString("title"));
+                        return row;
+                    }
+                }
+            );
+        return tiemposEntrega;
+    }
+    
     
     //Obtener agentes de Ventas
     @Override
@@ -2926,7 +2953,8 @@ public class PocSpringDao implements PocInterfaceDao{
                     + "poc_cot.dias_vigencia,"
                     + "(fecha+dias_vigencia) AS fecha_vencimiento,"
                     + "(CASE WHEN (fecha+dias_vigencia)::timestamp with time zone<=now() THEN true ELSE false END) AS vencido, "
-                    + "poc_cot.tc_usd "
+                    + "poc_cot.tc_usd, "
+                    + "poc_cot.tiempo_entrega_id "
                 + "FROM poc_cot "
                 + "LEFT JOIN gral_usr ON gral_usr.id=poc_cot.gral_usr_id_creacion "
                 + "LEFT JOIN  gral_empleados ON gral_empleados.id=gral_usr.gral_empleados_id "
@@ -2961,9 +2989,9 @@ public class PocSpringDao implements PocInterfaceDao{
                     row.put("total",StringHelper.roundDouble(rs.getString("total"),2));
                     row.put("dias_vigencia",String.valueOf(rs.getInt("dias_vigencia")));
                     row.put("incluye_iva",String.valueOf(rs.getBoolean("incluye_iva")));
-                    
                     row.put("fecha_vencimiento",rs.getString("fecha_vencimiento"));
                     row.put("vencido",String.valueOf(rs.getBoolean("vencido")));
+                    row.put("tiempo_entrega_id", String.valueOf(rs.getInt("tiempo_entrega_id")));
                     return row;
                 }
             }
