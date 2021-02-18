@@ -273,25 +273,24 @@ public class CotizacionesController {
         ) {
         
         log.log(Level.INFO, "Ejecutando getCotizacionJson de {0}", CotizacionesController.class.getName());
-        HashMap<String,ArrayList<HashMap<String, String>>> jsonretorno = new HashMap<String,ArrayList<HashMap<String, String>>>();
-        HashMap<String, String> userDat = new HashMap<String, String>();
-        ArrayList<HashMap<String, String>> datosCotizacion = new ArrayList<HashMap<String, String>>();
-        ArrayList<HashMap<String, String>> DatosCliPros = new ArrayList<HashMap<String, String>>();
-        ArrayList<HashMap<String, String>> datosGrid = new ArrayList<HashMap<String, String>>();
-        ArrayList<HashMap<String, String>> valorIva = new ArrayList<HashMap<String, String>>();
-        ArrayList<HashMap<String, String>> monedas = new ArrayList<HashMap<String, String>>();
-        ArrayList<HashMap<String, String>> arrayExtra = new ArrayList<HashMap<String, String>>();
-        HashMap<String, String> extra = new HashMap<String, String>();
-        HashMap<String, String> tc = new HashMap<String, String>();
-        ArrayList<HashMap<String, String>> tipoCambioActual = new ArrayList<HashMap<String, String>>();
-        HashMap<String, String> parametros = new HashMap<String, String>();
+        HashMap<String,ArrayList<HashMap<String, String>>> jsonretorno = new HashMap<>();
+        HashMap<String, String> userDat;
+        ArrayList<HashMap<String, String>> datosCotizacion = new ArrayList<>();
+        ArrayList<HashMap<String, String>> DatosCliPros = new ArrayList<>();
+        ArrayList<HashMap<String, String>> datosGrid = new ArrayList<>();
+        ArrayList<HashMap<String, String>> valorIva;
+        ArrayList<HashMap<String, String>> monedas;
+        ArrayList<HashMap<String, String>> arrayExtra = new ArrayList<>();
+        HashMap<String, String> extra = new HashMap<>();
+        HashMap<String, String> tc = new HashMap<>();
+        ArrayList<HashMap<String, String>> tipoCambioActual = new ArrayList<>();
+        HashMap<String, String> parametros;
         
         //decodificar id de usuario
         Integer id_usuario = Integer.parseInt(Base64Coder.decodeString(id_user_cod));
         userDat = this.getHomeDao().getUserById(id_usuario);
         Integer id_empresa = Integer.parseInt(userDat.get("empresa_id"));
         Integer id_sucursal = Integer.parseInt(userDat.get("sucursal_id"));
-        String dirImgProd="";
         boolean obtener_todos_los_agentes=false;
         
         //Aqui se obtienen los parametros de la facturacion, nos intersa saber si se debe permitir cambiar_unidad_medida
@@ -317,6 +316,7 @@ public class CotizacionesController {
         monedas = this.getPocDao().getMonedas();
         tc.put("tipo_cambio", StringHelper.roundDouble(this.getPocDao().getTipoCambioActual(), 4));
         tipoCambioActual.add(0,tc);
+        ArrayList<HashMap<String, String>> tiemposEntrega = this.getPocDao().getTiemposEntrega();
         
         
         //if(parametros.get("cambiar_unidad_medida").toLowerCase().equals("true")){
@@ -332,6 +332,7 @@ public class CotizacionesController {
         jsonretorno.put("Tc", tipoCambioActual);
         jsonretorno.put("Agentes", this.getPocDao().getAgentes(id_empresa, id_sucursal, obtener_todos_los_agentes));
         jsonretorno.put("Incoterms", this.getPocDao().getCotizacion_Incoterms(id_empresa, Integer.parseInt(id_cotizacion)));
+        jsonretorno.put("tiemposEntrega", tiemposEntrega);
         
         return jsonretorno;
     }
@@ -575,6 +576,7 @@ public class CotizacionesController {
         @RequestParam(value="moneda", required=true) String moneda_id,
         @RequestParam(value="fecha", required=true) String fecha,
         @RequestParam(value="select_agente", required=true) String select_agente,
+        @RequestParam(value="tiempo_entrega_id", required=true) int tiempo_entrega_id,
 
         @RequestParam(value="total_tr", required=true) String total_tr,
         @RequestParam(value="iddetalle", required=true) String[] iddetalle,
@@ -596,6 +598,7 @@ public class CotizacionesController {
         @ModelAttribute("user") UserSessionData user,
         Model model)
     {
+        System.out.println("tiempo_entrega_id: " + tiempo_entrega_id);
         String arreglo[] = new String[eliminado.length];
         Integer id_usuario= user.getUserId();
         Integer app_selected = 12;
@@ -724,9 +727,10 @@ public class CotizacionesController {
             .setAgenteId(Helper.toInt(select_agente))
             .setVigencia(Helper.toInt(vigencia))
             .setIncluyeIva(Boolean.parseBoolean(check_incluye_iva))
-            .setTcUSD(Helper.toDouble(tc_usd));
+            .setTcUSD(Helper.toDouble(tc_usd))
+            .setTiempoEntregaId(tiempo_entrega_id);
 
-        HashMap<String, String> jsonretorno = new HashMap<String, String>();
+        HashMap<String, String> jsonretorno = new HashMap<>();
         HashMap<String, String> success = this.getPocDao()
             .selectFunctionValidateAaplicativo(data_string, app_selected, extra_data_array);
 

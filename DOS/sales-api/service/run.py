@@ -28,6 +28,7 @@ class Sales(sales_pb2_grpc.SalesServicer):
             request.vigencia,
             request.incluyeIva,
             request.tcUSD,
+            request.tiempoEntregaId,
             request.extraData
         )
         return sales_pb2.CotResponse(
