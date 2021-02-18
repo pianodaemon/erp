@@ -33,6 +33,7 @@ message CotRequest {
   int32 vigencia             = 11;
   bool incluyeIva            = 12;
   double tcUSD               = 13;
+  int32 tiempoEntregaId      = 14;
 
   message GridRenglonCot {
     int32 removido            = 1;
@@ -52,7 +53,7 @@ message CotRequest {
     bool requiereAutorizacion = 15;
     string salvarRegistro     = 16;
   }
-  repeated GridRenglonCot extraData = 14;
+  repeated GridRenglonCot extraData = 15;
 }
 
 // The response message containing the quotation's create/edit operation results

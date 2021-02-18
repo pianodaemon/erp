@@ -4,7 +4,7 @@ def edit_cot(usuario_id,            identificador,           select_tipo_cotizac
             id_cliente_o_prospecto, check_descripcion_larga, observaciones,
             tipo_cambio,            moneda_id,               fecha,
             agente_id,              vigencia,                incluye_iva,
-            tc_usd,                 extra_data):
+            tc_usd,                 tiempo_entrega_id,       extra_data):
 
     grid_renglon_cot_str = convert_to_sql_array_literal(extra_data)
 
@@ -23,6 +23,7 @@ def edit_cot(usuario_id,            identificador,           select_tipo_cotizac
         {}::smallint,
         {}::boolean,
         {}::double precision,
+        {}::integer,
         {}::grid_renglon_cot[])
         AS msg""".format(
             usuario_id,
@@ -38,6 +39,7 @@ def edit_cot(usuario_id,            identificador,           select_tipo_cotizac
             vigencia,
             incluye_iva,
             tc_usd,
+            tiempo_entrega_id,
             grid_renglon_cot_str
         )
 
