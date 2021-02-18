@@ -2176,6 +2176,7 @@ CREATE OR REPLACE FUNCTION public.cot_edit(
     _vigencia smallint,
     _incluye_iva boolean,
     _tc_usd double precision,
+    _tiempo_entrega_id integer,
     _extra_data grid_renglon_cot[])
   RETURNS character varying AS
 $BODY$
@@ -2296,7 +2297,8 @@ BEGIN
             proceso_id,
             gral_usr_id_creacion,
             momento_creacion,
-            borrado_logico
+            borrado_logico,
+            tiempo_entrega_id
         ) VALUES (
             nuevo_folio,
             _select_tipo_cotizacion,
@@ -2312,7 +2314,8 @@ BEGIN
             ultimo_id_proceso,
             _usuario_id,
             espacio_tiempo_ejecucion,
-            false
+            false,
+            _tiempo_entrega_id
         ) RETURNING id INTO ultimo_id;
 
         -- Tipo
@@ -2470,7 +2473,8 @@ BEGIN
             incluye_iva = _incluye_iva,
             tc_usd = _tc_usd,
             gral_usr_id_actualizacion = _usuario_id,
-            momento_actualizacion = espacio_tiempo_ejecucion
+            momento_actualizacion = espacio_tiempo_ejecucion,
+            tiempo_entrega_id = _tiempo_entrega_id
         WHERE id = _identificador;
 
         -- Obtiene total de elementos del arreglo
