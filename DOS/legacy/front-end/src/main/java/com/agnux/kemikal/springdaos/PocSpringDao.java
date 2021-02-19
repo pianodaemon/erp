@@ -2954,13 +2954,15 @@ public class PocSpringDao implements PocInterfaceDao{
                     + "(fecha+dias_vigencia) AS fecha_vencimiento,"
                     + "(CASE WHEN (fecha+dias_vigencia)::timestamp with time zone<=now() THEN true ELSE false END) AS vencido, "
                     + "poc_cot.tc_usd, "
-                    + "poc_cot.tiempo_entrega_id "
+                    + "poc_cot.tiempo_entrega_id, "
+                    + "poc_cot_tiempos_entrega.title AS tiempo_entrega "
                 + "FROM poc_cot "
                 + "LEFT JOIN gral_usr ON gral_usr.id=poc_cot.gral_usr_id_creacion "
                 + "LEFT JOIN  gral_empleados ON gral_empleados.id=gral_usr.gral_empleados_id "
                 + "LEFT JOIN  gral_puestos ON gral_puestos.id=gral_empleados.gral_puesto_id "
-                + "JOIN gral_mon ON gral_mon.id=poc_cot.gral_mon_id"
-                + " WHERE poc_cot.id=? ";
+                + "JOIN gral_mon ON gral_mon.id=poc_cot.gral_mon_id "
+                + "LEFT JOIN poc_cot_tiempos_entrega ON poc_cot.tiempo_entrega_id = poc_cot_tiempos_entrega.id "
+                + "WHERE poc_cot.id=? ";
         //poc_cot.fecha + poc_cot.dias_vigencia AS fecha_vencimiento
         //System.out.println("getCotizacion: "+sql_query);
         ArrayList<HashMap<String, String>> hm_cotizacion = (ArrayList<HashMap<String, String>>) this.jdbcTemplate.query(
@@ -2992,6 +2994,7 @@ public class PocSpringDao implements PocInterfaceDao{
                     row.put("fecha_vencimiento",rs.getString("fecha_vencimiento"));
                     row.put("vencido",String.valueOf(rs.getBoolean("vencido")));
                     row.put("tiempo_entrega_id", String.valueOf(rs.getInt("tiempo_entrega_id")));
+                    row.put("tiempo_entrega", rs.getString("tiempo_entrega"));
                     return row;
                 }
             }

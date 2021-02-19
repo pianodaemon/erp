@@ -40,7 +40,8 @@ public class PdfCotizacion {
     private String incluyeIva;
     private String monedaAbr;
     private String idMonGlobal;
-    
+    private String tiempoEntrega;
+
     private String emisorRazonSocial;
     private String emisorRfc;
     private String emisorCalle;
@@ -94,6 +95,7 @@ public class PdfCotizacion {
         this.setIncluyeIva(datos.get("incluiyeIvaPdf"));
         this.setMonedaAbr(datos.get("monedaAbr"));
         this.setIdMonGlobal(datos.get("moneda_id"));
+        this.setTiempoEntrega(datos.get("tiempo_entrega"));
         
         this.setEmisorCalle(datosEmisor.get("emp_calle"));
         this.setEmisorColonia(datosEmisor.get("emp_colonia"));
@@ -150,6 +152,7 @@ public class PdfCotizacion {
         parameters.put("subtotal", addSeparadorMiles(subtotal, ","));
         parameters.put("impuesto", addSeparadorMiles(impuesto, ","));
         parameters.put("total", addSeparadorMiles(total, ","));
+        parameters.put("tiempoEntrega", tiempoEntrega);
         parameters.put("despedida", despedida);
         parameters.put("nombreUsuario", nombreUsuario);
         parameters.put("emisorRazonSocial", emisorRazonSocial);
@@ -606,5 +609,13 @@ public class PdfCotizacion {
 
     public void setIdMonGlobal(String idMonGlobal) {
         this.idMonGlobal = idMonGlobal;
+    }
+
+    public String getTiempoEntrega() {
+        return tiempoEntrega;
+    }
+
+    public void setTiempoEntrega(String tiempoEntrega) {
+        this.tiempoEntrega = tiempoEntrega;
     }
 }

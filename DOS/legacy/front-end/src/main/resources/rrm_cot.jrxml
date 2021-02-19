@@ -10,6 +10,7 @@
 	<parameter name="subtotal" class="java.lang.String"/>
 	<parameter name="impuesto" class="java.lang.String"/>
 	<parameter name="total" class="java.lang.String"/>
+	<parameter name="tiempoEntrega" class="java.lang.String"/>
 	<parameter name="despedida" class="java.lang.String"/>
 	<parameter name="nombreUsuario" class="java.lang.String"/>
 	<parameter name="emisorRazonSocial" class="java.lang.String"/>
@@ -30,7 +31,7 @@
 	<title>
 		<band height="197" splitType="Stretch">
 			<textField>
-				<reportElement x="320" y="76" width="252" height="11" uuid="78229e5f-a46e-4ab1-a62d-84b7ff512156">
+				<reportElement x="320" y="80" width="252" height="11" uuid="78229e5f-a46e-4ab1-a62d-84b7ff512156">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
@@ -266,7 +267,7 @@
 				<textElement verticalAlignment="Middle">
 					<font size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Entrega inmediata"]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{tiempoEntrega}]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement x="0" y="169" width="572" height="14" uuid="acfee197-87e6-4f42-b5f8-87855921a20a"/>
