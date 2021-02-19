@@ -320,7 +320,7 @@ public class CotizacionesController {
         
         
         //if(parametros.get("cambiar_unidad_medida").toLowerCase().equals("true")){
-            jsonretorno.put("UM", this.getPocDao().getUnidadesMedida());
+        jsonretorno.put("UM", this.getPocDao().getUnidadesMedida());
         //}
         
         jsonretorno.put("datosCotizacion", datosCotizacion);
@@ -911,6 +911,7 @@ public class CotizacionesController {
         datos.put("total", datosCotizacion.get(0).get("total"));
         datos.put("dias_vigencia", datosCotizacion.get(0).get("dias_vigencia"));
         datos.put("monedaAbr", datosCotizacion.get(0).get("monedaAbr"));
+        datos.put("tiempo_entrega", datosCotizacion.get(0).get("tiempo_entrega"));
         
         //esta variable viene desde la vista
         //hay un campo en la base de datos pero, no se esta utilizando en el pdf
