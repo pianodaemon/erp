@@ -42,6 +42,10 @@ export SALES_GRPC_PORT="10090"
 export COBRANZA_GRPC_HOST="127.0.0.1"
 export COBRANZA_GRPC_PORT="10110"
 
+# cfdiengine server
+export CFDIENGINE_HOST="127.0.0.1"
+export CFDIENGINE_PORT="10080"
+
 # inclusion of a few management scripts into the path
 export PATH="$ERP_ROOT/bin:$PATH"
 
