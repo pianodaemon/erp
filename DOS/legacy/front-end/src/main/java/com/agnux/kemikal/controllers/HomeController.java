@@ -200,6 +200,15 @@ public class HomeController {
         } else {
             log.log(Level.INFO, "COBRANZA gRPC connection params... in good shape.");
         }
+        
+        String host = System.getenv("CFDIENGINE_HOST"),
+               port = System.getenv("CFDIENGINE_PORT");
+
+        if (host == null || port == null) {
+            log.log(Level.SEVERE, "CFDIENGINE connection params... not found!!!");
+        } else {
+            log.log(Level.INFO, "CFDIENGINE connection params... in good shape.");
+        }
 
         return x;
     }

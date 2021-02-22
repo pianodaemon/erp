@@ -16,8 +16,13 @@ public class Helper {
          if (grpcHost == null || grpcPort == null) {
 
              grpcHost = "127.0.0.1";
-             grpcPort = "10090";
-             log.log(Level.SEVERE, "{0}: gRPC connection params not found. Defaults to 127.0.0.1:10090", modulo);
+             switch (modulo) {
+                 case "SALES"   : grpcPort = "10090"; break;
+                 case "COBRANZA": grpcPort = "10110"; break;
+                 default        : grpcPort = "10090"; break;
+             }
+             String msj = String.format("gRPC connection params (%s) not found. Defaults to %s:%s", modulo, grpcHost, grpcPort);
+             log.log(Level.SEVERE, msj);
          }
 
          return grpcHost + ":" + grpcPort;
@@ -36,5 +41,22 @@ public class Helper {
     public static long toLong(String str) {
         String res = str.trim();
         return res.equals("") ? 0 : Long.parseLong(res);
+    }
+    
+    public static String[] getCfdiengineConnParams() {
+
+        String host = System.getenv("CFDIENGINE_HOST"),
+               port = System.getenv("CFDIENGINE_PORT");
+
+         if (host == null || port == null) {
+
+             host = "localhost";
+             port = "10080";
+             String msj = String.format("CFDIENGINE connection params not found. Defaults to %s:%s", host, port);
+             log.log(Level.SEVERE, msj);
+         }
+
+         String[] params = {host, port};
+         return params;
     }
 }

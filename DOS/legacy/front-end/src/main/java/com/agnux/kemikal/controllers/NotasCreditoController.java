@@ -8,7 +8,6 @@ import com.agnux.cfd.v2.Base64Coder;
 import com.agnux.cfd.v2.BeanFacturador;
 import com.agnux.cfdi.BeanCancelaCfdi;
 import com.agnux.cfdi.BeanFacturadorCfdi;
-import com.agnux.cfdi.BeanFromCfdiXml;
 import com.agnux.cfdi.LegacyRequest;
 import com.agnux.cfdi.timbre.BeanFacturadorCfdiTimbre;
 import com.agnux.common.helpers.StringHelper;
@@ -436,7 +435,7 @@ public class NotasCreditoController {
                 req.sendTo("cxc");
                 req.from("webui");
                 req.action("donota");
-                HashMap<String, String> kwargs = new HashMap<String, String>();
+                HashMap<String, String> kwargs = new HashMap<>();
                 kwargs.put("filename", filename);
                 kwargs.put("usr_id", id_usuario.toString());
                 kwargs.put("ncr_id", id_nota_credito.toString());
@@ -444,7 +443,8 @@ public class NotasCreditoController {
                 req.args(kwargs);
 
                 try {
-                    ServerReply reply = bbgumProxy.uploadBuff("localhost", 10080, req.getJson().getBytes());
+                    String[] connParams = Helper.getCfdiengineConnParams();
+                    ServerReply reply = bbgumProxy.uploadBuff(connParams[0], Integer.parseInt(connParams[1]), req.getJson().getBytes());
                     String msg = "core reply code: " + reply.getReplyCode();
                     if (reply.getReplyCode() == 0) {
                         Logger.getLogger(NotasCreditoController.class.getName()).log(
@@ -572,7 +572,7 @@ public class NotasCreditoController {
         req.from("webui");
         req.action("undonota");
 
-        HashMap<String, String> kwargs = new HashMap<String, String>();
+        HashMap<String, String> kwargs = new HashMap<>();
         kwargs.put("usr_id", id_usuario.toString());
         kwargs.put("ncr_id", id_nota.toString());
         kwargs.put("reason", motivo_cancelacion.toUpperCase());
@@ -580,7 +580,8 @@ public class NotasCreditoController {
         req.args(kwargs);
 
         try {
-            ServerReply reply = bbgumProxy.uploadBuff("localhost", 10080, req.getJson().getBytes());
+            String[] connParams = Helper.getCfdiengineConnParams();
+            ServerReply reply = bbgumProxy.uploadBuff(connParams[0], Integer.parseInt(connParams[1]), req.getJson().getBytes());
             String msg = "core reply code: " + reply.getReplyCode();
             if (reply.getReplyCode() == 0) {
                 Logger.getLogger(NotasCreditoController.class.getName()).log(

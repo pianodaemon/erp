@@ -579,7 +579,7 @@ public class CarterasController {
             req.from("webui");
             req.action("dopago");
 
-            HashMap<String, String> kwargs = new HashMap<String, String>();
+            HashMap<String, String> kwargs = new HashMap<>();
             kwargs.put("filename", filename);
             kwargs.put("usr_id", id_usuario.toString());
             kwargs.put("pag_id", pag_id.toString());
@@ -588,7 +588,8 @@ public class CarterasController {
             BbgumProxy bbgumProxy = new BbgumProxy();
 
             try {
-                ServerReply reply = bbgumProxy.uploadBuff("localhost", 10080, req.getJson().getBytes());
+                String[] connParams = Helper.getCfdiengineConnParams();
+                ServerReply reply = bbgumProxy.uploadBuff(connParams[0], Integer.parseInt(connParams[1]), req.getJson().getBytes());
                 String msg = "core reply code: " + reply.getReplyCode();
 
                 if (reply.getReplyCode() == 0) {

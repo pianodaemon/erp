@@ -335,7 +335,7 @@ public class FacCancelacionController {
         req.sendTo("cxc");
         req.from("webui");
         req.action("undofacturar");
-        HashMap<String, String> kwargs = new HashMap<String, String>();
+        HashMap<String, String> kwargs = new HashMap<>();
         kwargs.put("fact_id", id_factura.toString());
         kwargs.put("usr_id", id_usuario.toString());
         kwargs.put("reason", motivo_cancelacion);
@@ -343,7 +343,8 @@ public class FacCancelacionController {
         req.args(kwargs);
 
         try {
-            ServerReply reply = bbgumProxy.uploadBuff("localhost", 10080, req.getJson().getBytes());
+            String[] connParams = Helper.getCfdiengineConnParams();
+            ServerReply reply = bbgumProxy.uploadBuff(connParams[0], Integer.parseInt(connParams[1]), req.getJson().getBytes());
             if (reply.getReplyCode() == 0) {
                 String msg = "core reply code: " + reply.getReplyCode();
                 Logger.getLogger(PrefacturasController.class.getName()).log(
