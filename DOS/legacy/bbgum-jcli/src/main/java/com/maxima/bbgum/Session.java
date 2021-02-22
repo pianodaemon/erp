@@ -48,7 +48,9 @@ public class Session extends Thread {
                 }
             } catch (Exception ex) {
                 try {
-                    is.close();
+                    if (is != null) {
+                        is.close();
+                    }
                 } catch (IOException e) {
                     Logger.getLogger(Session.class.getName()).log(Level.SEVERE, null, e);
                 }
