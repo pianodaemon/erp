@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 public class Principal extends AbstractVerticle {
 
-    private Future<String> spinUpHttpServer() {
+    private Future<String> spinUpHttpServer(int httpPort) {
 
         Promise<String> promise = Promise.promise();
 
@@ -18,9 +18,9 @@ public class Principal extends AbstractVerticle {
             req.response()
                     .putHeader("content-type", "text/plain")
                     .end("Hello from Vert.x!");
-        }).listen(8888, http -> {
+        }).listen(httpPort, http -> {
             if (http.succeeded()) {
-                promise.complete("HTTP server started on port 8888");
+                promise.complete("HTTP server started on port " + httpPort);
             } else {
                 promise.fail(http.cause());
             }
@@ -29,7 +29,7 @@ public class Principal extends AbstractVerticle {
         return promise.future();
     }
 
-    private void gearUpVerticles(ConfigRetriever retriever) {
+    private void gearUpVerticles() {
 
         DeploymentOptions opts = new DeploymentOptions()
                 .setInstances(Principal.WORKER_INSTANCES)
@@ -41,14 +41,25 @@ public class Principal extends AbstractVerticle {
     }
 
     @Override
-    public void start() throws Exception {
+    public void start(Promise<Void> pro) throws Exception {
 
-        Future<String> future = this.spinUpHttpServer();
         ConfigRetriever retriever = ConfigRetriever.create(vertx);
+        retriever.getConfig(config -> {
+            if (config.failed()) {
+                pro.fail(config.cause());
+            } else {
+                final int httpPort = config.result().getInteger("HTTP_DYN_PORT", 8888);
+                this.setUp(this.spinUpHttpServer(httpPort));
+                pro.complete();
+            }
+        });
+    }
 
-        this.gearUpVerticles(retriever);
+    private void setUp(Future<String> fut) {
 
-        future.onComplete(ar -> {
+        this.gearUpVerticles();
+
+        fut.onComplete(ar -> {
             if (ar.failed()) {
                 logger.warn("Something bad happened: {}", ar.cause().toString());
             } else {
