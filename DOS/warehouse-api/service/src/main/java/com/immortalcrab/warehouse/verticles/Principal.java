@@ -69,5 +69,5 @@ public class Principal extends AbstractVerticle {
     }
 
     private final Logger logger = LoggerFactory.getLogger(Principal.class);
-    public static final int WORKER_INSTANCES = 2;
+    public static final int WORKER_INSTANCES = 1;
 }
