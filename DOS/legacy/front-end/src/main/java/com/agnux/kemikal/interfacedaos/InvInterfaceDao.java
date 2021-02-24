@@ -56,6 +56,7 @@ public interface InvInterfaceDao {
     public ArrayList<HashMap<String, String>> getProducto_Subfamilias(Integer id_empresa,String familia_id);
     public ArrayList<HashMap<String, String>> getProducto_CuentasContables(Integer cta_mayor, Integer detalle, String clasifica, String cta, String scta, String sscta, String ssscta, String sssscta, String descripcion, Integer id_empresa );
     public ArrayList<HashMap<String, String>> getProducto_DatosContabilidad(Integer id_producto);
+    public ArrayList<String[]> getClaveProdServSuggestions(String searchTerm);
     
     
     

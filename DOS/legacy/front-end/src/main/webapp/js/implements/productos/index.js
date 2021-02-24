@@ -813,7 +813,7 @@ $(function() {
 				$valor_maximo.attr('disabled','-1');
 				$valor_minimo.attr('disabled','-1');
 				$punto_reorden.attr('disabled','-1');
-                                $clave_cfdi_claveprodserv.attr('disabled','-1');
+                $clave_cfdi_claveprodserv.attr('disabled','-1');
 			}
 		}
 		
@@ -849,7 +849,7 @@ $(function() {
 				$valor_maximo.removeAttr('disabled');
 				$valor_minimo.removeAttr('disabled');
 				$punto_reorden.removeAttr('disabled');
-                                $clave_cfdi_claveprodserv.removeAttr('disabled');
+                $clave_cfdi_claveprodserv.removeAttr('disabled');
 			}
 		}
 	}//termina  habilitar y deshabilitar campos
@@ -1025,8 +1025,8 @@ $(function() {
 		var $valor_minimo = $('#forma-product-window').find('input[name=valor_minimo]');
 		var $punto_reorden = $('#forma-product-window').find('input[name=punto_reorden]');
                 
-                //var $busca_cfdi_claveprodserv = $('#forma-product-window').find('a[href=busca_cfdi_claveprodserv]');
-                var $clave_cfdi_claveprodserv = $('#forma-product-window').find('input[name=clave_cfdi_claveprodserv]');
+		//var $busca_cfdi_claveprodserv = $('#forma-product-window').find('a[href=busca_cfdi_claveprodserv]');
+		var $clave_cfdi_claveprodserv = $('#forma-product-window').find('input[name=clave_cfdi_claveprodserv]');
 		
 		var $td_etiqueta_prov_clie = $('#forma-product-window').find('#td_etiqueta_prov_clie');
 		var $busca_clie_prov = $('#forma-product-window').find('#busca_clie_prov');
@@ -1827,7 +1827,81 @@ $(function() {
 			}
 			$densidad.val(parseFloat($densidad.val()).toFixed(4));
 		});
-		
+
+
+		// clave producto servicio (request al catalogo de sat)
+		let prodserv_datalist = document.getElementById('prodserv_datalist');
+		let timeoutId = 0;
+		let route = document.location.protocol + '//' + document.location.host + '/' + controller + '/prodserv_suggestions/?search_term=';
+		let ultimaBusq = '';
+
+		$clave_cfdi_claveprodserv.keyup(function(event) {
+
+			window.clearTimeout(timeoutId);
+			let value = event.target.value.trim();
+
+			if (value.length >= 3 && value != ultimaBusq) {
+				timeoutId = window.setTimeout(makeRequestCatalogData, 750, prodserv_datalist, value, route);
+			}
+		});
+
+		function makeRequestCatalogData(datalist, str, route) {
+			let url = route + str;
+			// console.log('(new product) entered makeRequestCatalogData');
+
+			httpRequest = new XMLHttpRequest();
+
+			if (!httpRequest) {
+				console.log('No puede crearse instancia de XMLHttpRequest ' + url);
+				return false;
+			}
+
+			httpRequest.onreadystatechange = () => {responseHandler(datalist, str, route)};
+			httpRequest.open('GET', url);
+			httpRequest.send();
+		}
+
+		function responseHandler(datalist, str, route) {
+
+			if (httpRequest.readyState === XMLHttpRequest.DONE) {
+
+				if (httpRequest.status === 200) {
+
+					let list = JSON.parse(httpRequest.responseText);
+
+					clearOptions(datalist);
+					addOptionsFromArray(datalist, list);
+					ultimaBusq = str;
+
+					// if (list.length) {
+					// 	console.log('(new product) "' + str + '" agregadas [...' + list.length + '].');
+					// } else {
+					// 	console.log('(new product) "' + str + '" agregadas [].');
+					// }
+
+				} else {
+					console.log('Hubo un problema con el request ' + route + str);
+				}
+			}
+		}
+
+		function addOptionsFromArray(datalist, arr) {
+			for (let item of arr) {
+				let opt = document.createElement('option');
+
+				opt.value = item[0];
+				opt.text = item[1] + ' (' + item[0] + ')';
+				datalist.appendChild(opt);
+			}
+		}
+
+		function clearOptions(datalist) {
+			while (datalist.firstChild) {
+				datalist.removeChild(datalist.firstChild);
+			}
+		}
+
+
 		$valor_maximo.keypress(function(e){
 			// Permitir  numeros, borrar, suprimir, TAB, puntos, comas
                         alert("Ok");
@@ -1837,17 +1911,8 @@ $(function() {
 				return false;
 			}
 		});
-                
-                    $clave_cfdi_claveprodserv.keypress(function(e){
-			// Permitir  numeros, borrar, suprimir, TAB, puntos, comas
-                        //alert("Ok");
-			if ( (e.which == 8 || e.which == 46 || e.which==13 || e.which == 0 || (e.which >= 48 && e.which <= 57 )) && e.which != 46 ) {
-				return true;
-			}else {
-				return false;
-			}
-		});
-		
+
+
 		//Quita cero al obtener el enfoque, si es mayor a 0 entonces no hace nada
 		$valor_maximo.focus(function(e){
 			if(parseFloat($valor_maximo.val())<1){
@@ -2041,7 +2106,7 @@ $(function() {
 				var $valor_maximo = $('#forma-product-window').find('input[name=valor_maximo]');
 				var $valor_minimo = $('#forma-product-window').find('input[name=valor_minimo]');
 				var $punto_reorden = $('#forma-product-window').find('input[name=punto_reorden]');
-                                var $clave_cfdi_claveprodserv = $('#forma-product-window').find('input[name=clave_cfdi_claveprodserv]');
+                var $clave_cfdi_claveprodserv = $('#forma-product-window').find('input[name=clave_cfdi_claveprodserv]');
 			
 				var $td_etiqueta_prov_clie = $('#forma-product-window').find('#td_etiqueta_prov_clie');
 				var $busca_clie_prov = $('#forma-product-window').find('#busca_clie_prov');
@@ -2393,7 +2458,7 @@ $(function() {
 					$valor_minimo.attr({'value' : entry['Producto'][0]['valor_minimo']});
 					$punto_reorden.attr({'value' : entry['Producto'][0]['punto_reorden']});
 					$no_clie.attr({'value' : entry['Producto'][0]['no_clie']});
-                                        $clave_cfdi_claveprodserv.attr({'value' : entry['Producto'][0]['clave_cfdi_claveprodserv']});
+                    $clave_cfdi_claveprodserv.attr({'value' : entry['Producto'][0]['clave_cfdi_claveprodserv']});
 					
 					$check_noserie.attr('checked', (entry['Producto'][0]['requiere_numero_serie'] == 'true')? true:false );
 					$check_nom.attr('checked', (entry['Producto'][0]['requiere_nom'] == 'true')? true:false );
@@ -2557,7 +2622,39 @@ $(function() {
 							
 							//tipo=3 es KIT, tipo=4 es SERVICIOS
 							if(parseInt(entry['Producto'][0]['tipo_de_producto_id'])==3 || parseInt(entry['Producto'][0]['tipo_de_producto_id'])==4 ){
-								$deshabilitar_campos("desahabilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden, $clave_cfdi_claveprodserv);
+								$deshabilitar_campos(
+									"desahabilitar",
+									$proveedor,
+									$tiempos_de_entrega,
+									$select_prod_tipo,
+									$select_estatus,
+									$select_seccion,
+									$select_grupo,
+									$select_linea,
+									$select_marca,
+									$select_clase,
+									$select_familia,
+									$select_subfamilia,
+									$select_unidad,
+									$select_clasifstock,
+									$select_iva,
+									$select_ieps,
+									$check_noserie,
+									$check_nom,
+									$check_nolote,
+									$check_pedimento,
+									$check_stock,
+									$check_ventaext,
+									$check_compraext,
+									$select_disponibles,
+									$select_seleccionados,
+									$agregar_pres,
+									$remover_pres,
+									$densidad,
+									$valor_maximo,
+									$valor_minimo,
+									$punto_reorden,
+									$clave_cfdi_claveprodserv);
 							}else{
 									//$deshabilitar_campos("habilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres);
 							}
@@ -3062,24 +3159,82 @@ $(function() {
 					}
 					$densidad.val(parseFloat($densidad.val()).toFixed(4));
 				});
-				
-				$clave_cfdi_claveprodserv.keypress(function(e){
-					// Permitir  numeros, borrar, suprimir, TAB, puntos, comas
-					if (e.which == 8 || e.which == 46 || e.which==13 || e.which == 0 || (e.which >= 48 && e.which <= 57 )) {
-						return true;
-					}else {
-						return false;
+
+
+				// clave producto servicio (request al catalogo de sat)
+				let prodserv_datalist = document.getElementById('prodserv_datalist');
+				let timeoutId = 0;
+				let route = document.location.protocol + '//' + document.location.host + '/' + controller + '/prodserv_suggestions/?search_term=';
+				let ultimaBusq = '';
+
+				$clave_cfdi_claveprodserv.keyup(function(event) {
+
+					window.clearTimeout(timeoutId);
+					let value = event.target.value.trim();
+
+					if (value.length >= 3 && value != ultimaBusq) {
+						timeoutId = window.setTimeout(makeRequestCatalogData, 750, prodserv_datalist, value, route);
 					}
 				});
 
-				$clave_cfdi_claveprodserv.focus(function(e){
-					if(parseInt($clave_cfdi_claveprodserv.val())<=1){
-						$clave_cfdi_claveprodserv.val('');
+				function makeRequestCatalogData(datalist, str, route) {
+					let url = route + str;
+					// console.log('(edit product) entered makeRequestCatalogData');
+
+					httpRequest = new XMLHttpRequest();
+
+					if (!httpRequest) {
+						console.log('No puede crearse instancia de XMLHttpRequest ' + url);
+						return false;
 					}
-				});
-                            
-                            
-                                $valor_maximo.keypress(function(e){
+
+					httpRequest.onreadystatechange = () => {responseHandler(datalist, str, route)};
+					httpRequest.open('GET', url);
+					httpRequest.send();
+				}
+
+				function responseHandler(datalist, str, route) {
+
+					if (httpRequest.readyState === XMLHttpRequest.DONE) {
+
+						if (httpRequest.status === 200) {
+
+							let list = JSON.parse(httpRequest.responseText);
+
+							clearOptions(datalist);
+							addOptionsFromArray(datalist, list);
+							ultimaBusq = str;
+
+							// if (list.length) {
+							// 	console.log('(edit product) "' + str + '" agregadas [...' + list.length + '].');
+							// } else {
+							// 	console.log('(edit product) "' + str + '" agregadas [].');
+							// }
+
+						} else {
+							console.log('Hubo un problema con el request ' + route + str);
+						}
+					}
+				}
+
+				function addOptionsFromArray(datalist, arr) {
+					for (let item of arr) {
+						let opt = document.createElement('option');
+
+						opt.value = item[0];
+						opt.text = item[1] + ' (' + item[0] + ')';
+						datalist.appendChild(opt);
+					}
+				}
+
+				function clearOptions(datalist) {
+					while (datalist.firstChild) {
+						datalist.removeChild(datalist.firstChild);
+					}
+				}
+
+
+                $valor_maximo.keypress(function(e){
 					// Permitir  numeros, borrar, suprimir, TAB, puntos, comas
 					if (e.which == 8 || e.which == 46 || e.which==13 || e.which == 0 || (e.which >= 48 && e.which <= 57 )) {
 						return true;
@@ -3224,7 +3379,8 @@ $(function() {
 			}
 		}
 	}
-	
+
+
 	
 	
 	
@@ -3251,5 +3407,5 @@ $(function() {
     }
     
     $get_datos_grid();
-    
+
 });

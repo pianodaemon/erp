@@ -765,7 +765,38 @@ public class InvSpringDao implements InvInterfaceDao{
     }
 
 
+    @Override
+    public ArrayList<String[]> getClaveProdServSuggestions(String searchTerm) {
 
+        String sql_query;
+
+        if (searchTerm.matches("[0-9]+")) {
+            sql_query = "SELECT clave, descripcion "
+                       + " FROM cfdi_claveprodserv "
+                       + "WHERE clave like '%" + searchTerm + "%' "
+                       + "ORDER BY id ASC "
+                       + "LIMIT 50";
+        } else {
+            sql_query = "SELECT clave, descripcion "
+                       + " FROM cfdi_claveprodserv "
+                       + "WHERE descripcion ilike '%" + searchTerm + "%' "
+                       + "ORDER BY id ASC "
+                       + "LIMIT 50";
+        }
+
+        ArrayList<String[]> al = (ArrayList<String[]>) this.jdbcTemplate.query(
+            sql_query,
+            new Object[]{},
+            new RowMapper() {
+                @Override
+                public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    String[] arr = {rs.getString("clave"), rs.getString("descripcion")};
+                    return arr;
+                }
+            }
+        );
+        return al;
+    }
 
 
     //obtiene tipos de productos

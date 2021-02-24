@@ -603,18 +603,19 @@
                                                                                         <tr>
 												<td width="5" height="13" colspan="13">&nbsp;</td>
 											</tr>
-                                                                                        <tr>
-                                                                                            <td width="5" height="10"></td>
-                                                                                            <td width="110">Clave Prod./Serv.</td>
-                                                                                            <td width="5"></td>
-                                                                                                <td width="45"><input type="text" size="8"maxlength="8" name="clave_cfdi_claveprodserv" value="" style="width:80px; border:1px solid #000;"></td>
-                                                                                            <td width="50">&nbsp;</td>
-                                                                                            
-                                                                                            <td width="25" colspan="7"><div class="interrogacion"><img src="../../img/help-16x16.png" ALIGN="top" rel="warning_clave_cfdi_claveprodserv"></div></td>
-                                                                                            <!--
-                                                                                            <td width="100" colspan="7"><input type="button" id="busca_cfdi_claveprodserv" name="busca_cfdi_claveprodserv" value="Buscar"></td>
-                                                                                            -->
-                                                                                        </tr>
+											<tr>
+												<td width="5" height="10"></td>
+												<td width="110">Clave Prod./Serv.</td>
+												<td width="5"></td>
+												<td colspan="8">
+													<input type="text" name="clave_cfdi_claveprodserv" list="prodserv_datalist" style="border:1px solid #000; display:table-cell; width:100%">
+													<datalist id="prodserv_datalist"></datalist>
+												</td>
+												<td width="25"><div class="interrogacion"><img src="../../img/help-16x16.png" ALIGN="top" rel="warning_clave_cfdi_claveprodserv"></div></td>
+												<!--
+												<td width="100" colspan="7"><input type="button" id="busca_cfdi_claveprodserv" name="busca_cfdi_claveprodserv" value="Buscar"></td>
+												-->
+											</tr>
 										</table>
 										
                                     </div><!--termina tabx-2-->

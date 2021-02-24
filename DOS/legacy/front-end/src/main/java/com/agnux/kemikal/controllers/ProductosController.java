@@ -808,6 +808,14 @@ public class ProductosController {
         return jsonretorno;
     }
     
+    @RequestMapping(method = RequestMethod.GET, value = "/prodserv_suggestions")
+    public @ResponseBody ArrayList<String[]> getClaveProdServSuggestions(
+        @RequestParam(value="search_term", required=true) String searchTerm) {
+
+        ArrayList<String[]> arr = this.getInvDao().getClaveProdServSuggestions(searchTerm);
+        return arr;
+    }
+
     //descargtar imagen
     @RequestMapping(method = RequestMethod.GET, value="/imgDownloadImg/{name_img}/{id}/{iu}/out.json")
     public @ResponseBody HashMap<String, String> imgDownloadImgJson(@PathVariable("name_img") String name_img,
