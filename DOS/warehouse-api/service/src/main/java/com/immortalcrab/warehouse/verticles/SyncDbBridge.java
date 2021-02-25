@@ -1,6 +1,6 @@
 package com.immortalcrab.warehouse.verticles;
 
-import com.immortalcrab.warehouse.persistence.WareHouseMgmt;
+import com.immortalcrab.warehouse.persistence.PgsqlConnPool;
 import io.vertx.core.AbstractVerticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,7 @@ public class SyncDbBridge extends AbstractVerticle {
                 logger.info("Zzz...");
 
                 Thread.sleep(8000);
-                logger.info("Up! #{}", WareHouseMgmt.getInstance().up());
+                logger.info("Up! #{}", PgsqlConnPool.getInstance().up());
             } catch (InterruptedException e) {
                 logger.error("Woops", e);
             }
