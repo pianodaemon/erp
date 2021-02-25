@@ -1832,7 +1832,7 @@ $(function() {
 		// clave producto servicio (request al catalogo de sat)
 		let prodserv_datalist = document.getElementById('prodserv_datalist');
 		let timeoutId = 0;
-		let route = document.location.protocol + '//' + document.location.host + '/' + controller + '/prodserv_suggestions/?search_term=';
+		let route = document.location.protocol + '//' + document.location.host + controller + '/prodserv_suggestions/?search_term=';
 		let ultimaBusq = '';
 
 		$clave_cfdi_claveprodserv.keyup(function(event) {
@@ -1846,7 +1846,7 @@ $(function() {
 		});
 
 		function makeRequestCatalogData(datalist, str, route) {
-			let url = route + str;
+			let url = encodeURI(route + str);
 			// console.log('(new product) entered makeRequestCatalogData');
 
 			httpRequest = new XMLHttpRequest();
@@ -3164,7 +3164,7 @@ $(function() {
 				// clave producto servicio (request al catalogo de sat)
 				let prodserv_datalist = document.getElementById('prodserv_datalist');
 				let timeoutId = 0;
-				let route = document.location.protocol + '//' + document.location.host + '/' + controller + '/prodserv_suggestions/?search_term=';
+				let route = document.location.protocol + '//' + document.location.host + controller + '/prodserv_suggestions/?search_term=';
 				let ultimaBusq = '';
 
 				$clave_cfdi_claveprodserv.keyup(function(event) {
@@ -3178,7 +3178,7 @@ $(function() {
 				});
 
 				function makeRequestCatalogData(datalist, str, route) {
-					let url = route + str;
+					let url = encodeURI(route + str);
 					// console.log('(edit product) entered makeRequestCatalogData');
 
 					httpRequest = new XMLHttpRequest();
