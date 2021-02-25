@@ -48,7 +48,7 @@ public class PgsqlConnPool {
         return ++this.counter;
     }
 
-    private Connection getConnection() throws SQLException {
+    public Connection getConnection() throws SQLException {
         return ds.getConnection();
     }
 
