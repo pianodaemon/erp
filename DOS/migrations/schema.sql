@@ -15540,7 +15540,7 @@ BEGIN
 		--str_data[15] almacen_destino
 		
 		
-		IF trim(str_data[6])<>'' THEN
+		IF trim(str_data[6]) <> '' AND str_data[5] <> '' THEN
 			valida_integridad:=0;
 			EXECUTE 'SELECT count(id) FROM com_fac WHERE  proveedor_id='||str_data[5]||' AND factura ilike '''||str_data[6]||''' AND empresa_id='||emp_id||';' INTO valida_integridad;
 			IF valida_integridad > 0 THEN
@@ -27352,7 +27352,7 @@ BEGIN
 		--str_data[15] almacen_destino
 		
 		
-		IF trim(str_data[6])<>'' THEN
+		IF trim(str_data[6]) <> '' AND str_data[5] <> '' THEN
 			valida_integridad:=0;
 			EXECUTE 'SELECT count(id) FROM com_fac WHERE  proveedor_id='||str_data[5]||' AND factura ilike '''||str_data[6]||''' AND empresa_id='||emp_id||';' INTO valida_integridad;
 			IF valida_integridad > 0 THEN
