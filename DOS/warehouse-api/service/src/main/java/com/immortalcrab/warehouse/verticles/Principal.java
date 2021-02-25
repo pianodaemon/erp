@@ -5,6 +5,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.eventbus.EventBus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +14,18 @@ public class Principal extends AbstractVerticle {
     private Future<String> spinUpHttpServer(int httpPort) {
 
         Promise<String> promise = Promise.promise();
+
+        EventBus eb = vertx.eventBus();
+
+        vertx.setPeriodic(1000, v -> {
+            eb.request("ping-address", "ping!", reply -> {
+                if (reply.succeeded()) {
+                    logger.info("Received reply " + reply.result().body());
+                } else {
+                    logger.warn("No reply");
+                }
+            });
+        });
 
         vertx.createHttpServer().requestHandler(req -> {
             req.response()

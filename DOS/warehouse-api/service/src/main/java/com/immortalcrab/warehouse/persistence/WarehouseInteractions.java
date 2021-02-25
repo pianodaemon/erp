@@ -33,18 +33,13 @@ public class WarehouseInteractions {
 
         {
             try (PreparedStatement stmt = conn.prepareStatement(sqlQuery)) {
-
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
-
                     rp = new Pair<>(rs.getDouble("exis"), rs.getInt("decimales"));
                 } else {
-
                     throw new Exception("There is not data retrieved");
                 }
-
             } finally {
-
                 conn.close();
             }
         }
