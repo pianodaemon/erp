@@ -5,36 +5,40 @@ import com.immortalcrab.warehouse.persistence.WarehouseInteractions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
-import java.sql.SQLException;
-import java.util.logging.Level;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SyncDbBridge extends AbstractVerticle {
 
+    public static String PING_ADDRESS = "ping-address";
+
     @Override
     public void start() {
 
         EventBus bus = vertx.eventBus();
-        bus.<JsonObject>consumer("ping-address", message -> {
+        bus.<JsonObject>consumer(PING_ADDRESS, message -> {
             JsonObject body = message.body();
 
             try {
-                Pair<Double, Integer> result = WarehouseInteractions.requestExistancePerPresentation(
+                Pair<Double, Integer> answer = WarehouseInteractions.requestExistancePerPresentation(
                         body.getInteger("productId"),
                         body.getInteger("presentationId"),
                         body.getInteger("warehouseId"),
                         PgsqlConnPool.getInstance().getConnection(),
                         logger);
-                JsonObject x = new JsonObject();
-                x.put("existance", result.getValue0());
-                x.put("digits", result.getValue1());
-                message.reply(x);
-            } catch (SQLException ex) {
-                java.util.logging.Logger.getLogger(SyncDbBridge.class.getName()).log(Level.SEVERE, null, ex);
+
+                //Shapping the reply
+                {
+                    JsonObject jor = new JsonObject();
+                    jor.put("existance", answer.getValue0());
+                    jor.put("digits", answer.getValue1());
+                    message.reply(jor);
+                }
+
             } catch (Exception ex) {
-                java.util.logging.Logger.getLogger(SyncDbBridge.class.getName()).log(Level.SEVERE, null, ex);
+                this.logger.error(ex.getMessage());
+                message.fail(ex.hashCode(), ex.getMessage());
             }
 
         });
