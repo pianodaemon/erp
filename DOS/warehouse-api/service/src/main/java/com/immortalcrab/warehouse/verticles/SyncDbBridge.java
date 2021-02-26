@@ -11,13 +11,13 @@ import org.slf4j.LoggerFactory;
 
 public class SyncDbBridge extends AbstractVerticle {
 
-    public static String PING_ADDRESS = "ping-address";
+    public static String EXISTANCE_PER_PRESENTATION = String.format("%s.%s", SyncDbBridge.class.getSimpleName().toLowerCase(), "ping-address");
 
     @Override
     public void start() {
 
         EventBus bus = vertx.eventBus();
-        bus.<JsonObject>consumer(PING_ADDRESS, message -> {
+        bus.<JsonObject>consumer(EXISTANCE_PER_PRESENTATION, message -> {
             JsonObject body = message.body();
 
             try {
@@ -28,7 +28,7 @@ public class SyncDbBridge extends AbstractVerticle {
                         PgsqlConnPool.getInstance().getConnection(),
                         logger);
 
-                //Shapping the reply
+                //Shapping the json object reply (AKA the jor)
                 {
                     JsonObject jor = new JsonObject();
                     jor.put("existance", answer.getValue0());
@@ -40,7 +40,6 @@ public class SyncDbBridge extends AbstractVerticle {
                 this.logger.error(ex.getMessage());
                 message.fail(ex.hashCode(), ex.getMessage());
             }
-
         });
 
     }

@@ -46,12 +46,12 @@ public class Principal extends AbstractVerticle {
                         .put("warehouseId", params.pathParameter("warehouseId").getInteger())
                         .put("productId", params.pathParameter("productId").getInteger());
 
-                eb.<JsonObject>request(SyncDbBridge.PING_ADDRESS, payload, reply -> {
+                eb.<JsonObject>request(SyncDbBridge.EXISTANCE_PER_PRESENTATION, payload, reply -> {
                     if (reply.succeeded()) {
                         JsonObject replyBody = reply.result().body();
                         response.end(Json.encodePrettily(replyBody));
                     } else {
-                        logger.warn("an error has occuried at the consumer {}", SyncDbBridge.PING_ADDRESS);
+                        logger.warn("an error has occuried at the consumer {}", SyncDbBridge.EXISTANCE_PER_PRESENTATION);
                     }
                 });
             }
