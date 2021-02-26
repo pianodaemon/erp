@@ -4,6 +4,7 @@ import com.immortalcrab.warehouse.persistence.PgsqlConnPool;
 import com.immortalcrab.warehouse.persistence.WarehouseInteractions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.json.JsonObject;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import org.javatuples.Pair;
@@ -16,19 +17,23 @@ public class SyncDbBridge extends AbstractVerticle {
     public void start() {
 
         EventBus bus = vertx.eventBus();
-        bus.consumer("ping-address", message -> {
+        bus.<JsonObject>consumer("ping-address", message -> {
+            JsonObject body = message.body();
 
-            System.out.println("Received message: " + message.body());
             try {
-                Pair<Double, Integer> result = WarehouseInteractions.requestExistancePerPresentation(3162, 10, 1, PgsqlConnPool.getInstance().getConnection(), logger);
-                message.reply("pong " + result.getValue0() );
+                Pair<Double, Integer> result = WarehouseInteractions.requestExistancePerPresentation(
+                        body.getInteger("productId"),
+                        body.getInteger("presentationId"),
+                        body.getInteger("warehouseId"),
+                        PgsqlConnPool.getInstance().getConnection(),
+                        logger);
+                message.reply("pong " + result.getValue0());
             } catch (SQLException ex) {
                 java.util.logging.Logger.getLogger(SyncDbBridge.class.getName()).log(Level.SEVERE, null, ex);
             } catch (Exception ex) {
                 java.util.logging.Logger.getLogger(SyncDbBridge.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
-            
+
         });
 
     }

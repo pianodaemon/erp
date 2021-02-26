@@ -7,6 +7,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.RequestParameters;
 import io.vertx.ext.web.api.validation.HTTPRequestValidationHandler;
@@ -21,16 +22,6 @@ public class Principal extends AbstractVerticle {
         Promise<String> promise = Promise.promise();
 
         EventBus eb = vertx.eventBus();
-
-        vertx.setPeriodic(10000, v -> {
-            eb.request("ping-address", "ping!", reply -> {
-                if (reply.succeeded()) {
-                    logger.info("Received reply " + reply.result().body());
-                } else {
-                    logger.warn("No reply");
-                }
-            });
-        });
 
         Router baseRouter = Router.router(vertx);
         Router apiRouter = Router.router(vertx);
@@ -50,10 +41,22 @@ public class Principal extends AbstractVerticle {
 
                 RequestParameters params = routingContext.get("parsedParameters");
 
-                Integer warehouseId = params.pathParameter("warehouseId").getInteger();
+                /*Integer warehouseId = params.pathParameter("warehouseId").getInteger();
                 Integer productId = params.pathParameter("productId").getInteger();
                 Integer presentationId = params.pathParameter("presentationId").getInteger();
-                this.logger.info("---- {}", presentationId);
+                this.logger.info("---- {}", presentationId);*/
+                JsonObject payload = new JsonObject()
+                        .put("presentationId", params.pathParameter("presentationId").getInteger())
+                        .put("warehouseId", params.pathParameter("warehouseId").getInteger())
+                        .put("productId", params.pathParameter("productId").getInteger());
+
+                eb.request("ping-address", payload, reply -> {
+                    if (reply.succeeded()) {
+                        logger.info("Received reply " + reply.result().body());
+                    } else {
+                        logger.warn("No reply");
+                    }
+                });
             }
 
             response
