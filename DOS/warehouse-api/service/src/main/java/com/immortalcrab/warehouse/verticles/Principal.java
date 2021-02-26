@@ -32,7 +32,10 @@ public class Principal extends AbstractVerticle {
             });
         });
 
-        Router router = Router.router(vertx);
+        Router baseRouter = Router.router(vertx);
+        Router apiRouter = Router.router(vertx);
+
+        baseRouter.mountSubRouter("/api/v1", apiRouter);
 
         HTTPRequestValidationHandler validationHandler;
         validationHandler = HTTPRequestValidationHandler.create()
@@ -40,7 +43,7 @@ public class Principal extends AbstractVerticle {
                 .addPathParam("productId", ParameterType.INT)
                 .addPathParam("presentationId", ParameterType.INT);
 
-        router.get("/existence/:warehouseId/:productId/:presentationId").handler(validationHandler).handler(routingContext -> {
+        apiRouter.get("/existence/:warehouseId/:productId/:presentationId").handler(validationHandler).handler(routingContext -> {
             HttpServerResponse response = routingContext.response();
 
             {
@@ -58,7 +61,7 @@ public class Principal extends AbstractVerticle {
                     .end("<h1>Hello from my first Vert.x 3 application</h1>");
         });
 
-        vertx.createHttpServer().requestHandler(router).listen(port, http -> {
+        vertx.createHttpServer().requestHandler(baseRouter).listen(port, http -> {
             if (http.succeeded()) {
                 promise.complete("HTTP server started on port " + port);
             } else {
