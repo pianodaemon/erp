@@ -41,10 +41,6 @@ public class Principal extends AbstractVerticle {
 
                 RequestParameters params = routingContext.get("parsedParameters");
 
-                /*Integer warehouseId = params.pathParameter("warehouseId").getInteger();
-                Integer productId = params.pathParameter("productId").getInteger();
-                Integer presentationId = params.pathParameter("presentationId").getInteger();
-                this.logger.info("---- {}", presentationId);*/
                 JsonObject payload = new JsonObject()
                         .put("presentationId", params.pathParameter("presentationId").getInteger())
                         .put("warehouseId", params.pathParameter("warehouseId").getInteger())
