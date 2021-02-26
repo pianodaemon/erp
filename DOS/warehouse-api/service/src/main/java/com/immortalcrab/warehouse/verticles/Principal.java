@@ -52,6 +52,7 @@ public class Principal extends AbstractVerticle {
                         response.end(Json.encodePrettily(replyBody));
                     } else {
                         logger.warn("an error has occuried at the consumer {}", SyncDbBridge.EXISTANCE_PER_PRESENTATION);
+                        response.setStatusCode(502).end();
                     }
                 });
             }

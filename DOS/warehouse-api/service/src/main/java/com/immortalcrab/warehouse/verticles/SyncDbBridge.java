@@ -11,8 +11,6 @@ import org.slf4j.LoggerFactory;
 
 public class SyncDbBridge extends AbstractVerticle {
 
-    public static String EXISTANCE_PER_PRESENTATION = String.format("%s.%s", SyncDbBridge.class.getSimpleName().toLowerCase(), "ping-address");
-
     @Override
     public void start() {
 
@@ -41,8 +39,9 @@ public class SyncDbBridge extends AbstractVerticle {
                 message.fail(ex.hashCode(), ex.getMessage());
             }
         });
-
     }
+
+    public static String EXISTANCE_PER_PRESENTATION = String.format("%s.%s", SyncDbBridge.class.getSimpleName().toLowerCase(), "existance-per-presentation");
 
     private final Logger logger = LoggerFactory.getLogger(SyncDbBridge.class);
 }
