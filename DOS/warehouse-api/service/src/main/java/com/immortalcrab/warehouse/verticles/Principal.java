@@ -1,18 +1,13 @@
 package com.immortalcrab.warehouse.verticles;
 
+import com.immortalcrab.warehouse.endpoints.Transfers;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.api.RequestParameters;
-import io.vertx.ext.web.api.validation.HTTPRequestValidationHandler;
-import io.vertx.ext.web.api.validation.ParameterType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,37 +24,7 @@ public class Principal extends AbstractVerticle {
 
         baseRouter.mountSubRouter("/api/v1", apiRouter);
 
-        HTTPRequestValidationHandler validationHandler;
-        validationHandler = HTTPRequestValidationHandler.create()
-                .addPathParam("warehouseId", ParameterType.INT)
-                .addPathParam("productId", ParameterType.INT)
-                .addPathParam("presentationId", ParameterType.INT);
-
-        apiRouter.get("/existence/:warehouseId/:productId/:presentationId").handler(validationHandler).handler(routingContext -> {
-            HttpServerResponse response = routingContext.response();
-
-            {
-                RequestParameters params = routingContext.get("parsedParameters");
-
-                JsonObject payload = new JsonObject()
-                        .put("presentationId", params.pathParameter("presentationId").getInteger())
-                        .put("warehouseId", params.pathParameter("warehouseId").getInteger())
-                        .put("productId", params.pathParameter("productId").getInteger());
-
-                eb.<JsonObject>request(SyncDbBridge.EXISTANCE_PER_PRESENTATION, payload, reply -> {
-                    if (reply.succeeded()) {
-                        JsonObject replyBody = reply.result().body();
-                        response
-                                .putHeader("content-type", "application/json; charset=utf-8")
-                                .end(Json.encodePrettily(replyBody));
-                    } else {
-                        logger.warn("an error has occuried at the consumer {}", SyncDbBridge.EXISTANCE_PER_PRESENTATION);
-                        response.setStatusCode(502).end();
-                    }
-                });
-            }
-
-        });
+        Transfers.existancePerPresentation(eb, apiRouter.get("/existence/:warehouseId/:productId/:presentationId"));
 
         vertx.createHttpServer().requestHandler(baseRouter).listen(port, http -> {
             if (http.succeeded()) {
