@@ -7,6 +7,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.RequestParameters;
@@ -46,18 +47,16 @@ public class Principal extends AbstractVerticle {
                         .put("warehouseId", params.pathParameter("warehouseId").getInteger())
                         .put("productId", params.pathParameter("productId").getInteger());
 
-                eb.request("ping-address", payload, reply -> {
+                eb.<JsonObject>request("ping-address", payload, reply -> {
                     if (reply.succeeded()) {
-                        logger.info("Received reply " + reply.result().body());
+                        JsonObject replyBody = reply.result().body();
+                        response.end(Json.encodePrettily(replyBody));
                     } else {
                         logger.warn("No reply");
                     }
                 });
             }
 
-            response
-                    .putHeader("content-type", "text/html")
-                    .end("<h1>Hello from my first Vert.x 3 application</h1>");
         });
 
         vertx.createHttpServer().requestHandler(baseRouter).listen(port, http -> {

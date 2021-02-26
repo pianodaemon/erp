@@ -27,7 +27,10 @@ public class SyncDbBridge extends AbstractVerticle {
                         body.getInteger("warehouseId"),
                         PgsqlConnPool.getInstance().getConnection(),
                         logger);
-                message.reply("pong " + result.getValue0());
+                JsonObject x = new JsonObject();
+                x.put("existance", result.getValue0());
+                x.put("digits", result.getValue1());
+                message.reply(x);
             } catch (SQLException ex) {
                 java.util.logging.Logger.getLogger(SyncDbBridge.class.getName()).log(Level.SEVERE, null, ex);
             } catch (Exception ex) {
