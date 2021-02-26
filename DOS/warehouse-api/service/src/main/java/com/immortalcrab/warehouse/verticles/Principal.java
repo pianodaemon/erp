@@ -49,7 +49,9 @@ public class Principal extends AbstractVerticle {
                 eb.<JsonObject>request(SyncDbBridge.EXISTANCE_PER_PRESENTATION, payload, reply -> {
                     if (reply.succeeded()) {
                         JsonObject replyBody = reply.result().body();
-                        response.end(Json.encodePrettily(replyBody));
+                        response
+                                .putHeader("content-type", "application/json; charset=utf-8")
+                                .end(Json.encodePrettily(replyBody));
                     } else {
                         logger.warn("an error has occuried at the consumer {}", SyncDbBridge.EXISTANCE_PER_PRESENTATION);
                         response.setStatusCode(502).end();
