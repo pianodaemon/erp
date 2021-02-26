@@ -4,24 +4,21 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 import org.apache.commons.dbcp2.BasicDataSource;
-import java.text.MessageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PgsqlConnPool {
 
-    int counter;
     private BasicDataSource ds;
 
     private BasicDataSource configureConnectionPool() {
 
         Map<String, String> envConf = System.getenv();
-        String urlBody = String.format("jdbc:postgresql://{0}:{1}/{2}");
-        MessageFormat mf = new MessageFormat(urlBody);
-        String jdbcUrl = mf.format(new Object[]{
-            envConf.getOrDefault("POSTGRES_HOST", "rdbms_dos"),
-            envConf.getOrDefault("POSTGRES_PORT", "5432"),
-            envConf.getOrDefault("POSTGRES_DB", "erp")});
+
+        String jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s",
+                envConf.getOrDefault("POSTGRES_HOST", "rdbms_dos"),
+                envConf.getOrDefault("POSTGRES_PORT", "5432"),
+                envConf.getOrDefault("POSTGRES_DB", "erp"));
 
         this.logger.info("Setting up connection pool with {}", jdbcUrl);
 
@@ -40,12 +37,7 @@ public class PgsqlConnPool {
     }
 
     private PgsqlConnPool() {
-        this.counter = 0;
         this.ds = this.configureConnectionPool();
-    }
-
-    public int up() {
-        return ++this.counter;
     }
 
     public Connection getConnection() throws SQLException {
