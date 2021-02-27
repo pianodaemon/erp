@@ -2,6 +2,7 @@ package com.immortalcrab.warehouse.endpoints;
 
 import com.immortalcrab.warehouse.verticles.SyncDbBridge;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
@@ -46,8 +47,9 @@ public class Transfers {
                                 .putHeader("content-type", "application/json; charset=utf-8")
                                 .end(Json.encodePrettily(replyBody));
                     } else {
+                        ReplyException ex = (ReplyException) reply.cause();
                         cls.logger.warn("an error has occuried at the consumer {}", SyncDbBridge.EXISTANCE_PER_PRESENTATION);
-                        response.setStatusCode(502).end();
+                        response.setStatusCode(ex.failureCode()).end();
                     }
                 });
             }

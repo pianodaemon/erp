@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.NoSuchElementException;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 
@@ -11,7 +12,7 @@ public class WarehouseInteractions {
 
     public static Pair<Double, Integer> requestExistancePerPresentation(final Integer productId,
             final Integer presentationId, final Integer warehouseId,
-            Connection conn, Logger logger) throws SQLException, Exception {
+            Connection conn, Logger logger) throws SQLException, NoSuchElementException {
 
         String sqlQuery = String.format("SELECT exis, decimales FROM ( "
                 + " SELECT ( "
@@ -29,7 +30,11 @@ public class WarehouseInteractions {
         {
             try (PreparedStatement stmt = conn.prepareStatement(sqlQuery)) {
                 ResultSet rs = stmt.executeQuery();
-                rp = rs.next() ? new Pair<>(rs.getDouble("exis"), rs.getInt("decimales")) : new Pair<>(new Double(0), 0);
+                if (rs.next()) {
+                    rp = new Pair<>(rs.getDouble("exis"), rs.getInt("decimales"));
+                } else {
+                    throw new NoSuchElementException("Presentation not found");
+                }
             } finally {
                 conn.close();
             }

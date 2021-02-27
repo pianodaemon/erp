@@ -5,6 +5,8 @@ import com.immortalcrab.warehouse.persistence.WarehouseInteractions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
+import java.sql.SQLException;
+import java.util.NoSuchElementException;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +36,14 @@ public class SyncDbBridge extends AbstractVerticle {
                     message.reply(jor);
                 }
 
-            } catch (Exception ex) {
+            } catch (SQLException | NoSuchElementException ex) {
                 this.logger.error(ex.getMessage());
-                message.fail(ex.hashCode(), ex.getMessage());
+                if (ex instanceof SQLException) {
+                    message.fail(502, ex.getMessage());
+                }
+                if (ex instanceof NoSuchElementException) {
+                    message.fail(404, ex.getMessage());
+                }
             }
         });
     }
