@@ -56,22 +56,17 @@ public class Principal extends AbstractVerticle {
             if (config.failed()) {
                 pro.fail(config.cause());
             } else {
+                this.gearUpVerticles();
                 final int port = config.result().getInteger("HTTP_DYN_PORT", 8888);
-                this.setUp(this.spinUpHttpServer(port));
+                Future<String> fut = this.spinUpHttpServer(port);
+                fut.onComplete(ar -> {
+                    if (ar.failed()) {
+                        logger.warn("Something bad happened: {}", ar.cause().toString());
+                    } else {
+                        logger.info("Result: " + ar.result());
+                    }
+                });
                 pro.complete();
-            }
-        });
-    }
-
-    private void setUp(Future<String> fut) {
-
-        this.gearUpVerticles();
-
-        fut.onComplete(ar -> {
-            if (ar.failed()) {
-                logger.warn("Something bad happened: {}", ar.cause().toString());
-            } else {
-                logger.info("Result: " + ar.result());
             }
         });
     }
