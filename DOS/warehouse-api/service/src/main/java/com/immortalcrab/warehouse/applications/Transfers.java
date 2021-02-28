@@ -1,7 +1,6 @@
 package com.immortalcrab.warehouse.applications;
 
 import com.immortalcrab.warehouse.persistence.PgsqlInteractions;
-import com.immortalcrab.warehouse.verticles.SyncDbBridge;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.ReplyException;
