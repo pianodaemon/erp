@@ -11,16 +11,13 @@ import io.vertx.ext.web.api.RequestParameters;
 import io.vertx.ext.web.api.validation.HTTPRequestValidationHandler;
 import io.vertx.ext.web.api.validation.ParameterType;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Transfers {
-
-    private final Logger logger = LoggerFactory.getLogger(Transfers.class);
 
     private Transfers() {
     }
 
-    public static Route existancePerPresentation(EventBus eb, Route route) {
+    public static Route bindExistancePerPresentation(EventBus eb, Route route, Logger logger) {
 
         Transfers cls = new Transfers();
 
@@ -48,7 +45,7 @@ public class Transfers {
                                 .end(Json.encodePrettily(replyBody));
                     } else {
                         ReplyException ex = (ReplyException) reply.cause();
-                        cls.logger.warn("an error has occuried at the consumer {}", SyncDbBridge.EXISTANCE_PER_PRESENTATION);
+                        logger.warn("an error has occuried at the consumer {}", SyncDbBridge.EXISTANCE_PER_PRESENTATION);
                         response.setStatusCode(ex.failureCode()).end();
                     }
                 });
