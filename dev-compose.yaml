@@ -65,6 +65,7 @@ services:
           context: './DOS/warehouse-api'
         ports:
           - '8888:8888'
+          - '8889:8889'
         networks:
           - operational_network
     cfdiengine:
