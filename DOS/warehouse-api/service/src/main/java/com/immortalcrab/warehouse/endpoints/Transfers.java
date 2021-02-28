@@ -19,6 +19,8 @@ import org.slf4j.Logger;
 
 public class Transfers {
 
+    public static String EXISTANCE_PER_PRESENTATION = "existance-per-presentation";
+
     private Transfers() {
     }
 
@@ -42,7 +44,7 @@ public class Transfers {
                         .put("warehouseId", params.pathParameter("warehouseId").getInteger())
                         .put("productId", params.pathParameter("productId").getInteger());
 
-                eb.<JsonObject>request(SyncDbBridge.EXISTANCE_PER_PRESENTATION, payload, reply -> {
+                eb.<JsonObject>request(EXISTANCE_PER_PRESENTATION, payload, reply -> {
                     if (reply.succeeded()) {
                         JsonObject replyBody = reply.result().body();
                         response
@@ -50,7 +52,7 @@ public class Transfers {
                                 .end(Json.encodePrettily(replyBody));
                     } else {
                         ReplyException ex = (ReplyException) reply.cause();
-                        logger.warn("an error has occuried at the consumer {}", SyncDbBridge.EXISTANCE_PER_PRESENTATION);
+                        logger.warn("an error has occuried at the consumer {}", EXISTANCE_PER_PRESENTATION);
                         response.setStatusCode(ex.failureCode()).end();
                     }
                 });

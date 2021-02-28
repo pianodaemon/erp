@@ -13,12 +13,10 @@ public class SyncDbBridge extends AbstractVerticle {
     public void start() {
 
         EventBus bus = vertx.eventBus();
-        bus.<JsonObject>consumer(EXISTANCE_PER_PRESENTATION, message -> {
+        bus.<JsonObject>consumer(Transfers.EXISTANCE_PER_PRESENTATION, message -> {
             Transfers.actOnExistancePerPresentation(message, this.logger);
         });
     }
-
-    public static String EXISTANCE_PER_PRESENTATION = String.format("%s.%s", SyncDbBridge.class.getSimpleName().toLowerCase(), "existance-per-presentation");
 
     private final Logger logger = LoggerFactory.getLogger(SyncDbBridge.class);
 }
