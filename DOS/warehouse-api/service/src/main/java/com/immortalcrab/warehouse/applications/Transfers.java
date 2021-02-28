@@ -1,4 +1,4 @@
-package com.immortalcrab.warehouse.endpoints;
+package com.immortalcrab.warehouse.applications;
 
 import com.immortalcrab.warehouse.persistence.PgsqlInteractions;
 import com.immortalcrab.warehouse.verticles.SyncDbBridge;
