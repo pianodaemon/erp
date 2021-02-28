@@ -24,7 +24,10 @@ public class Principal extends AbstractVerticle {
 
         baseRouter.mountSubRouter("/api/v1", apiRouter);
 
-        Transfers.existancePerPresentation(eb, apiRouter.get("/existence/:warehouseId/:productId/:presentationId"));
+        {
+            Transfers.existancePerPresentation(eb,
+                    apiRouter.get("/existence/:warehouseId/:productId/:presentationId"));
+        }
 
         vertx.createHttpServer().requestHandler(baseRouter).listen(port, http -> {
             if (http.succeeded()) {

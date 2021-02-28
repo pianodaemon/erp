@@ -12,7 +12,7 @@ public class WarehouseInteractions {
 
     public static Pair<Double, Integer> requestExistancePerPresentation(final Integer productId,
             final Integer presentationId, final Integer warehouseId,
-            Connection conn, Logger logger) throws SQLException, NoSuchElementException {
+            Logger logger) throws SQLException, NoSuchElementException {
 
         String sqlQuery = String.format("SELECT exis, decimales FROM ( "
                 + " SELECT ( "
@@ -23,11 +23,12 @@ public class WarehouseInteractions {
                 + " AND inv_exi_pres.inv_prod_id = %d AND inv_exi_pres.inv_prod_presentacion_id = %d )"
                 + " AS sbt WHERE exis > 0 LIMIT 1", warehouseId, productId, presentationId);
 
-        logger.info(sqlQuery);
+        Connection conn = PgsqlConnPool.getInstance().getConnection();
 
         Pair<Double, Integer> rp = null;
 
         {
+            logger.info(sqlQuery);
             try (PreparedStatement stmt = conn.prepareStatement(sqlQuery)) {
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {

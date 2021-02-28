@@ -1,6 +1,5 @@
 package com.immortalcrab.warehouse.verticles;
 
-import com.immortalcrab.warehouse.persistence.PgsqlConnPool;
 import com.immortalcrab.warehouse.persistence.WarehouseInteractions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
@@ -25,7 +24,6 @@ public class SyncDbBridge extends AbstractVerticle {
                         body.getInteger("productId"),
                         body.getInteger("presentationId"),
                         body.getInteger("warehouseId"),
-                        PgsqlConnPool.getInstance().getConnection(),
                         logger);
 
                 //Shapping the json object reply (AKA the jor)
