@@ -8,9 +8,9 @@ import java.util.NoSuchElementException;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 
-public class WarehouseInteractions {
+public class PgsqlInteractions {
 
-    public static Pair<Double, Integer> requestExistancePerPresentation(final Integer productId,
+    public static Pair<Double, Integer> existancePerPresentation(final Integer productId,
             final Integer presentationId, final Integer warehouseId,
             Logger logger) throws SQLException, NoSuchElementException {
 
