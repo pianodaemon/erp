@@ -638,7 +638,7 @@ public class InvSpringDao implements InvInterfaceDao{
             new Object[]{new Integer(id_producto)}, new RowMapper() {
                 @Override
                 public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    HashMap<String, String> row = new HashMap<String, String>();
+                    HashMap<String, String> row = new HashMap<>();
                     row.put("id",rs.getString("id"));
                     row.put("sku",rs.getString("sku"));
                     row.put("descripcion",rs.getString("descripcion"));
@@ -680,7 +680,7 @@ public class InvSpringDao implements InvInterfaceDao{
                     row.put("no_clie",rs.getString("no_clie"));
                     row.put("mon_id",String.valueOf(rs.getInt("mon_id")));
                     row.put("impto_ret_id",String.valueOf(rs.getInt("impto_ret_id")));
-                    row.put("clave_cfdi_claveprodserv",String.valueOf(rs.getInt("clave_cfdi_claveprodserv")));
+                    row.put("clave_cfdi_claveprodserv", rs.getString("clave_cfdi_claveprodserv"));
                                         
                     return row;
                 }
