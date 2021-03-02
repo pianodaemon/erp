@@ -8,6 +8,9 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.healthchecks.HealthCheckHandler;
+import io.vertx.ext.healthchecks.Status;
+import io.vertx.ext.web.Route;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,13 +28,16 @@ public class Principal extends AbstractVerticle {
         baseRouter.mountSubRouter("/api/v1", apiRouter);
 
         {
+            bindHealth(baseRouter.get("/health"));
+
             Transfers.bindExistancePerPresentation(eb,
                     apiRouter.get("/existence/:warehouseId/:productId/:presentationId"),
                     this.logger);
         }
 
         vertx.createHttpServer().requestHandler(baseRouter).listen(port, http -> {
-            if (http.succeeded()) {
+            this.started = http.succeeded();
+            if (this.started) {
                 promise.complete("HTTP server started on port " + port);
             } else {
                 promise.fail(http.cause());
@@ -75,6 +81,12 @@ public class Principal extends AbstractVerticle {
         });
     }
 
+    private void bindHealth(Route route) {
+        route.handler(HealthCheckHandler.create(vertx)
+                        .register("http-server-running", future -> future.complete(started ? Status.OK() : Status.KO())));
+    }
+
     private final Logger logger = LoggerFactory.getLogger(Principal.class);
+    private boolean started;
     public static final int WORKER_INSTANCES = 4;
 }
