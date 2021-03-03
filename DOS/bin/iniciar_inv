@@ -1,0 +1,312 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import argparse
+from datetime import date
+
+import psycopg2
+from psycopg2.extras import DictCursor
+
+
+def update_costos_promedio(cur, nuevo_anio, empresa_id):
+    ''' Crea los registros en la tabla inv_prod_cost_prom para el nuevo año '''
+
+    sql = '''
+        SELECT inv_prod_cost_prom.inv_prod_id,
+               inv_prod_cost_prom.costo_promedio_12 AS costo_promedio,
+               inv_prod_cost_prom.costo_ultimo_12   AS costo_ultimo,
+               inv_prod_cost_prom.tipo_cambio_12    AS tc,
+               inv_prod_cost_prom.gral_mon_id_12    AS id_mon,
+               inv_prod_cost_prom.actualizacion_12  AS actualizacion,
+               inv_prod_cost_prom.factura_ultima_12 AS factura,
+               inv_prod_cost_prom.oc_ultima_12      AS oc
+          FROM inv_prod_cost_prom
+          JOIN inv_prod
+            ON inv_prod.id = inv_prod_cost_prom.inv_prod_id
+         WHERE inv_prod_cost_prom.ano  = %s
+           AND inv_prod.empresa_id     = %s
+           AND inv_prod.borrado_logico = false;'''
+
+    cur.execute(sql, (nuevo_anio - 1, empresa_id))
+    rows = cur.fetchall()
+
+    sql = '''
+        INSERT INTO inv_prod_cost_prom (
+            inv_prod_id,
+            ano,
+            costo_promedio_1, costo_promedio_2, costo_promedio_3, costo_promedio_4, costo_promedio_5, costo_promedio_6, costo_promedio_7, costo_promedio_8, costo_promedio_9, costo_promedio_10, costo_promedio_11, costo_promedio_12,
+            costo_ultimo_1,   costo_ultimo_2,   costo_ultimo_3,   costo_ultimo_4,   costo_ultimo_5,   costo_ultimo_6,   costo_ultimo_7,   costo_ultimo_8,   costo_ultimo_9,   costo_ultimo_10,   costo_ultimo_11,   costo_ultimo_12,
+            tipo_cambio_1,    tipo_cambio_2,    tipo_cambio_3,    tipo_cambio_4,    tipo_cambio_5,    tipo_cambio_6,    tipo_cambio_7,    tipo_cambio_8,    tipo_cambio_9,    tipo_cambio_10,    tipo_cambio_11,    tipo_cambio_12,
+            gral_mon_id_1,    gral_mon_id_2,    gral_mon_id_3,    gral_mon_id_4,    gral_mon_id_5,    gral_mon_id_6,    gral_mon_id_7,    gral_mon_id_8,    gral_mon_id_9,    gral_mon_id_10,    gral_mon_id_11,    gral_mon_id_12,
+            actualizacion_1,  actualizacion_2,  actualizacion_3,  actualizacion_4,  actualizacion_5,  actualizacion_6,  actualizacion_7,  actualizacion_8,  actualizacion_9,  actualizacion_10,  actualizacion_11,  actualizacion_12,
+            factura_ultima_1, factura_ultima_2, factura_ultima_3, factura_ultima_4, factura_ultima_5, factura_ultima_6, factura_ultima_7, factura_ultima_8, factura_ultima_9, factura_ultima_10, factura_ultima_11, factura_ultima_12,
+            oc_ultima_1,      oc_ultima_2,      oc_ultima_3,      oc_ultima_4,      oc_ultima_5,      oc_ultima_6,      oc_ultima_7,      oc_ultima_8,      oc_ultima_9,      oc_ultima_10,      oc_ultima_11,      oc_ultima_12
+        ) VALUES (
+            %s,
+            %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        );'''
+    for row in rows:
+        costo_prom = row['costo_promedio']
+        costo_ult  = row['costo_ultimo']
+        tc         = row['tc']
+        id_mon     = row['id_mon']
+        actualizac = row['actualizacion']
+        factura    = row['factura']
+        oc         = row['oc']
+
+        cur.execute(sql, (
+            row['inv_prod_id'],
+            nuevo_anio,
+            costo_prom, costo_prom, costo_prom, costo_prom, costo_prom, costo_prom, costo_prom, costo_prom, costo_prom, costo_prom, costo_prom, costo_prom,
+            costo_ult,  costo_ult,  costo_ult,  costo_ult,  costo_ult,  costo_ult,  costo_ult,  costo_ult,  costo_ult,  costo_ult,  costo_ult,  costo_ult,
+            tc,         tc,         tc,         tc,         tc,         tc,         tc,         tc,         tc,         tc,         tc,         tc,
+            id_mon,     id_mon,     id_mon,     id_mon,     id_mon,     id_mon,     id_mon,     id_mon,     id_mon,     id_mon,     id_mon,     id_mon,
+            actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac,
+            factura,    factura,    factura,    factura,    factura,    factura,    factura,    factura,    factura,    factura,    factura,    factura,
+            oc,         oc,         oc,         oc,         oc,         oc,         oc,         oc,         oc,         oc,         oc,         oc
+        ))
+
+    if len(rows) == 0:
+        return 'No se encontraron registros de costos promedio del año anterior (tabla inv_prod_cost_prom) y tampoco se actualizaron datos del nuevo año ({}).'.format(nuevo_anio)
+    else:
+        return ''
+
+
+def update_costos_adicionales(cur, nuevo_anio, empresa_id):
+    ''' Crea los registros en la tabla inv_prod_costos para el nuevo año '''
+
+    sql = '''
+        SELECT inv_prod_costos.gral_emp_id,
+               inv_prod_costos.inv_prod_id,
+               inv_prod_costos.inv_prod_presentacion_id,
+               inv_prod_costos.costo_imp_12        AS igi,
+               inv_prod_costos.costo_dir_12        AS gi,
+               inv_prod_costos.precio_min_12       AS pmin,
+               inv_prod_costos.actualizacion_12    AS actualizacion,
+               inv_prod_costos.usr_id_actualiza_12 AS id_user,
+               inv_prod_costos.costo_adic_12       AS costo_adic
+          FROM inv_prod_costos
+          JOIN inv_prod
+            ON inv_prod.id = inv_prod_costos.inv_prod_id
+          JOIN inv_prod_presentaciones
+            ON (inv_prod_presentaciones.id             = inv_prod_costos.inv_prod_presentacion_id AND
+                inv_prod_presentaciones.borrado_logico = false)
+         WHERE inv_prod_costos.ano         = %s
+           AND inv_prod_costos.gral_emp_id = %s
+           AND inv_prod.borrado_logico     = false;'''
+
+    cur.execute(sql, (nuevo_anio - 1, empresa_id))
+    rows = cur.fetchall()
+
+    sql ='''
+        INSERT INTO inv_prod_costos (
+            gral_emp_id,
+            ano,
+            inv_prod_id,
+            inv_prod_presentacion_id,
+            costo_imp_1,        costo_imp_2,        costo_imp_3,        costo_imp_4,        costo_imp_5,        costo_imp_6,        costo_imp_7,        costo_imp_8,        costo_imp_9,        costo_imp_10,        costo_imp_11,        costo_imp_12,
+            costo_dir_1,        costo_dir_2,        costo_dir_3,        costo_dir_4,        costo_dir_5,        costo_dir_6,        costo_dir_7,        costo_dir_8,        costo_dir_9,        costo_dir_10,        costo_dir_11,        costo_dir_12,
+            precio_min_1,       precio_min_2,       precio_min_3,       precio_min_4,       precio_min_5,       precio_min_6,       precio_min_7,       precio_min_8,       precio_min_9,       precio_min_10,       precio_min_11,       precio_min_12,
+            actualizacion_1,    actualizacion_2,    actualizacion_3,    actualizacion_4,    actualizacion_5,    actualizacion_6,    actualizacion_7,    actualizacion_8,    actualizacion_9,    actualizacion_10,    actualizacion_11,    actualizacion_12,
+            usr_id_actualiza_1, usr_id_actualiza_2, usr_id_actualiza_3, usr_id_actualiza_4, usr_id_actualiza_5, usr_id_actualiza_6, usr_id_actualiza_7, usr_id_actualiza_8, usr_id_actualiza_9, usr_id_actualiza_10, usr_id_actualiza_11, usr_id_actualiza_12,
+            costo_adic_1,       costo_adic_2,       costo_adic_3,       costo_adic_4,       costo_adic_5,       costo_adic_6,       costo_adic_7,       costo_adic_8,       costo_adic_9,       costo_adic_10,       costo_adic_11,       costo_adic_12
+        ) VALUES (
+            %s,
+            %s,
+            %s,
+            %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        );'''
+    for row in rows:
+        igi        = row['igi']
+        gi         = row['gi']
+        pmin       = row['pmin']
+        actualizac = row['actualizacion']
+        id_user    = row['id_user']
+        costo_adic = row['costo_adic']
+
+        cur.execute(sql, (
+            row['gral_emp_id'],
+            nuevo_anio,
+            row['inv_prod_id'],
+            row['inv_prod_presentacion_id'],
+            igi,  igi,  igi,  igi,  igi,  igi,  igi,  igi,  igi,  igi,  igi,  igi,
+            gi,   gi,   gi,   gi,   gi,   gi,   gi,   gi,   gi,   gi,   gi,   gi,
+            pmin, pmin, pmin, pmin, pmin, pmin, pmin, pmin, pmin, pmin, pmin, pmin,
+            actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac, actualizac,
+            id_user,    id_user,    id_user,    id_user,    id_user,    id_user,    id_user,    id_user,    id_user,    id_user,    id_user,    id_user,
+            costo_adic, costo_adic, costo_adic, costo_adic, costo_adic, costo_adic, costo_adic, costo_adic, costo_adic, costo_adic, costo_adic, costo_adic
+        ))
+
+    if len(rows) == 0:
+        return 'No se encontraron registros de costos adicionales del año anterior (tabla inv_prod_costos) y tampoco se actualizaron datos del nuevo año ({}).'.format(nuevo_anio)
+    else:
+        return ''
+
+
+def update_existencias(cur, nuevo_anio, empresa_id):
+    ''' Crea los registros en la tabla inv_exi para el nuevo año.
+        La existencia del año anterior se carga en el campo exi_inicial. '''
+
+    sql = '''
+        SELECT inv_exi.inv_prod_id,
+               inv_exi.inv_alm_id,
+               inv_exi.ano,
+               (exi_inicial
+                + entradas_1 + entradas_2 + entradas_3 + entradas_4 + entradas_5 + entradas_6 + entradas_7 + entradas_8 + entradas_9 + entradas_10 + entradas_11 + entradas_12
+                -  salidas_1 -  salidas_2 -  salidas_3 -  salidas_4 -  salidas_5 -  salidas_6 -  salidas_7 -  salidas_8 -  salidas_9 -  salidas_10 -  salidas_11 -  salidas_12
+               ) AS exi,
+               inv_exi.transito,
+               inv_exi.reservado,
+               costo_ultimo_12 AS costo_ultimo
+          FROM inv_exi
+          JOIN inv_prod
+            ON inv_prod.id = inv_exi.inv_prod_id
+         WHERE inv_exi.ano             = %s
+           AND inv_prod.empresa_id     = %s
+           AND inv_prod.borrado_logico = false;'''
+
+    cur.execute(sql, (nuevo_anio - 1, empresa_id))
+    rows = cur.fetchall()
+
+    sql = '''
+        INSERT INTO inv_exi (
+            ano,
+            inv_prod_id,
+            inv_alm_id,
+            exi_inicial,
+            transito,
+            reservado,
+            entradas_1,     entradas_2,     entradas_3,     entradas_4,     entradas_5,     entradas_6,     entradas_7,     entradas_8,     entradas_9,     entradas_10,     entradas_11,     entradas_12,
+            salidas_1,      salidas_2,      salidas_3,      salidas_4,      salidas_5,      salidas_6,      salidas_7,      salidas_8,      salidas_9,      salidas_10,      salidas_11,      salidas_12,
+            costo_ultimo_1, costo_ultimo_2, costo_ultimo_3, costo_ultimo_4, costo_ultimo_5, costo_ultimo_6, costo_ultimo_7, costo_ultimo_8, costo_ultimo_9, costo_ultimo_10, costo_ultimo_11, costo_ultimo_12
+        ) VALUES (
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        );'''
+    for row in rows:
+        costo_ult = row['costo_ultimo']
+
+        cur.execute(sql, (
+            nuevo_anio,
+            row['inv_prod_id'],
+            row['inv_alm_id'],
+            row['exi'],
+            row['transito'],
+            row['reservado'],
+            costo_ult, costo_ult, costo_ult, costo_ult, costo_ult, costo_ult, costo_ult, costo_ult, costo_ult, costo_ult, costo_ult, costo_ult
+        ))
+
+    if len(rows) == 0:
+        return 'No se encontraron registros de existencias del año anterior (tabla inv_exi) y tampoco se actualizaron datos del nuevo año ({}).'.format(nuevo_anio)
+    else:
+        return ''
+
+
+def get_empresa_id(cur, empresa_rfc):
+    sql = '''
+        SELECT id
+          FROM gral_emp
+         WHERE rfc = %s;
+    '''
+    cur.execute(sql, (empresa_rfc,))
+    rows = cur.fetchall()
+
+    if len(rows) > 1:
+        raise Exception('No puede haber más de una empresa con RFC {}'.format(empresa_rfc))
+    elif len(rows) < 1:
+        raise Exception('No hay empresa registrada con RFC {}'.format(empresa_rfc))
+
+    return rows[0]['id']
+
+
+def iniciar_anio_inv(cur, nuevo_anio, empresa_id):
+    messages = []
+
+    try:
+        msg = update_costos_promedio(cur, nuevo_anio, empresa_id)
+        if msg:
+            messages.append(msg)
+
+        msg = update_costos_adicionales(cur, nuevo_anio, empresa_id)
+        if msg:
+            messages.append(msg)
+
+        msg = update_existencias(cur, nuevo_anio, empresa_id)
+        if msg:
+            messages.append(msg)
+
+    except:
+        raise Exception('Error al guardar registros en base de datos. Es posible que ya se haya inicializado el inventario para {}.'.format(nuevo_anio))
+
+    return messages
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(prog='iniciar_anio_inv', description='Iniciar el inventario para una empresa y año específicos.')
+    parser.add_argument('-a', '--nuevo_anio', type=int, default=date.today().year, help='Año para el cual se inicializará el inventario')
+    parser.add_argument('empresa_rfc', help='RFC de la empresa')
+
+    args = parser.parse_args()
+
+    try:
+        conn_str = 'host={} port={} user={} password={} dbname={}'.format(
+            os.environ['POSTGRES_HOST'],
+            os.environ['POSTGRES_PORT'],
+            os.environ['POSTGRES_USER'],
+            os.environ['POSTGRES_PASSWORD'],
+            os.environ['POSTGRES_DB']
+        )
+
+        conn = psycopg2.connect(conn_str)
+
+    except KeyError as err:
+        print('Error al recuperar parámetros de conexión a base de datos.', err)
+        sys.exit(1)
+
+    except Exception as err:
+        print('Error al intentar conectar con la base de datos.', err)
+        sys.exit(1)
+
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    try:
+        empresa_id = get_empresa_id(cur, args.empresa_rfc)
+        messages = iniciar_anio_inv(cur, args.nuevo_anio, empresa_id)
+
+    except Exception as err:
+        print(err)
+        sys.exit(1)
+    else:
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
+    if messages:
+        print('Warnings:')
+        for msg in messages:
+            print(msg)
+    else:
+        print('SUCCESS!!')
