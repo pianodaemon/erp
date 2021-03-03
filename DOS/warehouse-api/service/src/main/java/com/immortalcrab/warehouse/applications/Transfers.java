@@ -6,12 +6,14 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.api.RequestParameters;
 import io.vertx.ext.web.api.validation.HTTPRequestValidationHandler;
 import io.vertx.ext.web.api.validation.ParameterType;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
@@ -19,13 +21,14 @@ import org.slf4j.Logger;
 public class Transfers {
 
     public static String EXISTANCE_PER_PRESENTATION = "existance-per-presentation";
+    public static String WAREHOUSES = "warehouses";
 
     private Transfers() {
     }
 
     public static Route bindExistancePerPresentation(EventBus eb, Route route, Logger logger) {
 
-        Transfers cls = new Transfers();
+//        Transfers cls = new Transfers();
 
         HTTPRequestValidationHandler valHandler = HTTPRequestValidationHandler.create()
                 .addPathParam("warehouseId", ParameterType.INT)
@@ -59,7 +62,7 @@ public class Transfers {
 
         });
     }
-
+    
     public static void actOnExistancePerPresentation(Message<JsonObject> message, Logger logger) {
         JsonObject body = message.body();
 
@@ -74,6 +77,70 @@ public class Transfers {
                 JsonObject jor = new JsonObject();
                 jor.put("existance", answer.getValue0());
                 jor.put("digits", answer.getValue1());
+                message.reply(jor);
+            }
+
+        } catch (SQLException | NoSuchElementException ex) {
+            logger.error(ex.getMessage());
+            if (ex instanceof SQLException) {
+                message.fail(502, ex.getMessage());
+            }
+            if (ex instanceof NoSuchElementException) {
+                message.fail(404, ex.getMessage());
+            }
+        }
+    }
+
+    public static Route bindWarehouses(EventBus eb, Route route, Logger logger) {
+
+        HTTPRequestValidationHandler valHandler = HTTPRequestValidationHandler.create()
+                .addPathParam("empresaId", ParameterType.INT);
+
+        return route.handler(valHandler).handler(routingContext -> {
+            HttpServerResponse response = routingContext.response();
+
+            {
+                RequestParameters params = routingContext.get("parsedParameters");
+
+                JsonObject payload = new JsonObject()
+                        .put("empresaId", params.pathParameter("empresaId").getInteger());
+
+                eb.<JsonObject>request(WAREHOUSES, payload, reply -> {
+                    if (reply.succeeded()) {
+                        JsonObject replyBody = reply.result().body();
+                        response
+                                .putHeader("content-type", "application/json; charset=utf-8")
+                                .end(Json.encodePrettily(replyBody));
+                    } else {
+                        ReplyException ex = (ReplyException) reply.cause();
+                        logger.warn("an error has occuried at the consumer {}", WAREHOUSES);
+                        response.setStatusCode(ex.failureCode()).end();
+                    }
+                });
+            }
+
+        });
+    }
+
+    public static void actOnWarehouses(Message<JsonObject> message, Logger logger) {
+        JsonObject body = message.body();
+
+        try {
+            ArrayList<Pair<Integer, String>> answer = PgsqlInteractions.getWarehouses(body.getInteger("empresaId"), logger);
+
+            //Shaping the json object reply (AKA the jor)
+            {
+                JsonArray jArr = new JsonArray();
+                
+                for (Pair<Integer, String> pair : answer) {
+                    JsonObject jObj = new JsonObject();
+                    jObj.put("id", pair.getValue0());
+                    jObj.put("titulo", pair.getValue1());
+                    jArr.add(jObj);
+                }
+
+                JsonObject jor = new JsonObject();
+                jor.put("warehouses", jArr);
                 message.reply(jor);
             }
 

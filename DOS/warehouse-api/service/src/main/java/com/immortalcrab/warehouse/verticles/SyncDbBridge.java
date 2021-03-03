@@ -16,6 +16,10 @@ public class SyncDbBridge extends AbstractVerticle {
         bus.<JsonObject>consumer(Transfers.EXISTANCE_PER_PRESENTATION, message -> {
             Transfers.actOnExistancePerPresentation(message, this.logger);
         });
+
+        bus.<JsonObject>consumer(Transfers.WAREHOUSES, message -> {
+            Transfers.actOnWarehouses(message, this.logger);
+        });
     }
 
     private final Logger logger = LoggerFactory.getLogger(SyncDbBridge.class);

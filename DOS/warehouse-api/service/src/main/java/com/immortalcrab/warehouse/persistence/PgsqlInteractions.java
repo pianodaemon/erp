@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
@@ -42,5 +43,36 @@ public class PgsqlInteractions {
         }
 
         return rp;
+    }
+
+    public static ArrayList<Pair<Integer, String>> getWarehouses(
+            final Integer empresaId,
+            Logger logger) throws SQLException, NoSuchElementException {
+
+        String sqlQuery = String.format(
+                "SELECT DISTINCT inv_alm.id, inv_alm.titulo "
+               +  "FROM inv_alm "
+               +  "JOIN inv_suc_alm ON inv_suc_alm.almacen_id = inv_alm.id "
+               +  "JOIN gral_suc ON gral_suc.id = inv_suc_alm.sucursal_id "
+               + "WHERE gral_suc.empresa_id = %d AND inv_alm.borrado_logico = FALSE;", empresaId);
+
+        Connection conn = PgsqlConnPool.getInstance().getConnection();
+
+        ArrayList<Pair<Integer, String>> al = new ArrayList<>();
+
+        {
+            logger.info(sqlQuery);
+            try (PreparedStatement stmt = conn.prepareStatement(sqlQuery)) {
+                ResultSet rs = stmt.executeQuery();
+
+                while (rs.next()) {
+                    al.add(new Pair<>(rs.getInt("id"), rs.getString("titulo")));
+                }
+            } finally {
+                conn.close();
+            }
+        }
+
+        return al;
     }
 }
