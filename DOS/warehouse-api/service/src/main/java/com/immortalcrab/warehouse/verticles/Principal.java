@@ -38,7 +38,7 @@ public class Principal extends AbstractVerticle {
                     apiRouter.get("/warehouses/:empresaId"),
                     this.logger);
         }
-        
+
         vertx.createHttpServer().requestHandler(baseRouter).listen(port, http -> {
             this.started = http.succeeded();
             if (this.started) {

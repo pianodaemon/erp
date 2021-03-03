@@ -28,8 +28,6 @@ public class Transfers {
 
     public static Route bindExistancePerPresentation(EventBus eb, Route route, Logger logger) {
 
-//        Transfers cls = new Transfers();
-
         HTTPRequestValidationHandler valHandler = HTTPRequestValidationHandler.create()
                 .addPathParam("warehouseId", ParameterType.INT)
                 .addPathParam("productId", ParameterType.INT)
@@ -62,7 +60,7 @@ public class Transfers {
 
         });
     }
-    
+
     public static void actOnExistancePerPresentation(Message<JsonObject> message, Logger logger) {
         JsonObject body = message.body();
 
@@ -72,7 +70,7 @@ public class Transfers {
                     body.getInteger("warehouseId"),
                     logger);
 
-            //Shapping the json object reply (AKA the jor)
+            //Shaping the json object reply (AKA the jor)
             {
                 JsonObject jor = new JsonObject();
                 jor.put("existance", answer.getValue0());
@@ -131,7 +129,7 @@ public class Transfers {
             //Shaping the json object reply (AKA the jor)
             {
                 JsonArray jArr = new JsonArray();
-                
+
                 for (Pair<Integer, String> pair : answer) {
                     JsonObject jObj = new JsonObject();
                     jObj.put("id", pair.getValue0());

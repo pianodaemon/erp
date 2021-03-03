@@ -65,9 +65,15 @@ public class PgsqlInteractions {
             try (PreparedStatement stmt = conn.prepareStatement(sqlQuery)) {
                 ResultSet rs = stmt.executeQuery();
 
-                while (rs.next()) {
-                    al.add(new Pair<>(rs.getInt("id"), rs.getString("titulo")));
+                if (rs.next()) {
+                    do {
+                        al.add(new Pair<>(rs.getInt("id"), rs.getString("titulo")));
+                    } while (rs.next());
+
+                } else {
+                    throw new NoSuchElementException("Warehouses not found");
                 }
+
             } finally {
                 conn.close();
             }
