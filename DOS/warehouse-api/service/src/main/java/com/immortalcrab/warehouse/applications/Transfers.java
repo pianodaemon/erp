@@ -138,7 +138,7 @@ public class Transfers {
                 }
 
                 JsonObject jor = new JsonObject();
-                jor.put("warehouses", jArr);
+                jor.put("almacenes", jArr);
                 message.reply(jor);
             }
 

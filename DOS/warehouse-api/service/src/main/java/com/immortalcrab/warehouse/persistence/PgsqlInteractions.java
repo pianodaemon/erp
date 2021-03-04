@@ -71,7 +71,7 @@ public class PgsqlInteractions {
                     } while (rs.next());
 
                 } else {
-                    throw new NoSuchElementException("Warehouses not found");
+                    throw new NoSuchElementException("No se encontraron almacenes");
                 }
 
             } finally {

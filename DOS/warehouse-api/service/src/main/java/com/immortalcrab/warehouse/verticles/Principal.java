@@ -35,7 +35,7 @@ public class Principal extends AbstractVerticle {
                     this.logger);
 
             Transfers.bindWarehouses(eb,
-                    apiRouter.get("/warehouses/:empresaId"),
+                    apiRouter.get("/almacenes/por_empresa/:empresaId"),
                     this.logger);
         }
 
