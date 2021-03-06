@@ -22,5 +22,6 @@ public class SyncDbBridge extends AbstractVerticle {
         });
     }
 
+    public static final int REQUIRED_WORKER_THREADS = 4;
     private final Logger logger = LoggerFactory.getLogger(SyncDbBridge.class);
 }
