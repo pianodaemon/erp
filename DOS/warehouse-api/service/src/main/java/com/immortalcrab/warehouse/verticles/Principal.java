@@ -6,6 +6,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
@@ -84,6 +85,23 @@ public class Principal extends AbstractVerticle {
         return promise.future();
     }
 
+    private void gearUpVerticles(Promise<Void> pro, final int port) {
+
+        CompositeFuture fut = CompositeFuture.all(
+                syncVerticleDeployer(SyncDbBridge.class, SyncDbBridge.REQUIRED_WORKER_THREADS),
+                asyncVerticleDeployer(StaticFileServer.class),
+                this.spinUpHttpServer(port));
+
+        fut.onComplete(result -> {
+            if (result.succeeded()) {
+                logger.info("Result: " + result.result());
+                pro.complete();
+            } else {
+                pro.fail(result.cause());
+            }
+        });
+    }
+
     private void gearUpVerticles() {
 
         DeploymentOptions opts = new DeploymentOptions()
@@ -125,5 +143,4 @@ public class Principal extends AbstractVerticle {
 
     private final Logger logger = LoggerFactory.getLogger(Principal.class);
     private boolean started;
-    public static final int WORKER_INSTANCES = 4;
 }
