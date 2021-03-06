@@ -118,7 +118,7 @@ public class Principal extends AbstractVerticle {
 
     private void bindHealth(Route route) {
         route.handler(HealthCheckHandler.create(vertx)
-                        .register("http-server-running", future -> future.complete(started ? Status.OK() : Status.KO())));
+                .register("http-server-running", future -> future.complete(started ? Status.OK() : Status.KO())));
     }
 
     private final Logger logger = LoggerFactory.getLogger(Principal.class);

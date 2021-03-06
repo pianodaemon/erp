@@ -130,12 +130,14 @@ public class Transfers {
             {
                 JsonArray jArr = new JsonArray();
 
-                for (Pair<Integer, String> pair : answer) {
+                answer.stream().map(pair -> {
                     JsonObject jObj = new JsonObject();
                     jObj.put("id", pair.getValue0());
                     jObj.put("titulo", pair.getValue1());
+                    return jObj;
+                }).forEachOrdered(jObj -> {
                     jArr.add(jObj);
-                }
+                });
 
                 JsonObject jor = new JsonObject();
                 jor.put("almacenes", jArr);
