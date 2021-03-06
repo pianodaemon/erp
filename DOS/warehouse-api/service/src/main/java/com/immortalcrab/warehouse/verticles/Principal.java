@@ -102,17 +102,6 @@ public class Principal extends AbstractVerticle {
         });
     }
 
-    private void gearUpVerticles() {
-
-        DeploymentOptions opts = new DeploymentOptions()
-                .setInstances(Principal.WORKER_INSTANCES)
-                .setWorker(true);
-
-        vertx.deployVerticle(SyncDbBridge.class.getName(), opts);
-
-        vertx.deployVerticle(StaticFileServer.class.getName());
-    }
-
     @Override
     public void start(Promise<Void> pro) throws Exception {
 
@@ -121,17 +110,8 @@ public class Principal extends AbstractVerticle {
             if (config.failed()) {
                 pro.fail(config.cause());
             } else {
-                this.gearUpVerticles();
-                final int port = config.result().getInteger("HTTP_DYN_PORT", 8888);
-                Future<String> fut = this.spinUpHttpServer(port);
-                fut.onComplete(ar -> {
-                    if (ar.failed()) {
-                        logger.warn("Something bad happened: {}", ar.cause().toString());
-                    } else {
-                        logger.info("Result: " + ar.result());
-                    }
-                });
-                pro.complete();
+
+                this.gearUpVerticles(pro, config.result().getInteger("HTTP_DYN_PORT", 8888));
             }
         });
     }
