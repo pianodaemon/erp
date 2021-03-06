@@ -6561,7 +6561,7 @@ BEGIN
         sql_update := 'UPDATE inv_exi
                           SET salidas_'        || mes_actual  || ' = (salidas_' || mes_actual || ' + ' || detalle.cantidad_tras || '),
                               momento_salida_' || mes_actual  || ' = ''' || espacio_tiempo_ejecucion || '''
-                        WHERE inv_alm_id  = ' || _alm_orig_id  || '::integer
+                        WHERE inv_alm_id  = ' || _alm_orig_id || '::integer
                           AND inv_prod_id = ' || detalle.inv_prod_id || '
                           AND ano         = ' || ano_actual;
         EXECUTE sql_update;
@@ -6629,7 +6629,7 @@ BEGIN
         sql_select := 'SELECT count(id)
                          FROM inv_exi
                         WHERE inv_prod_id = ' || detalle.inv_prod_id || '
-                          AND inv_alm_id  = ' || _alm_dest_id  || '
+                          AND inv_alm_id  = ' || _alm_dest_id || '
                           AND ano         = ' || ano_actual;
 
         EXECUTE sql_select
@@ -6642,7 +6642,7 @@ BEGIN
                               SET entradas_'        || mes_actual || ' = (entradas_' || mes_actual || ' + ' || detalle.cantidad_tras || '::double precision),
                                   costo_ultimo_'    || mes_actual || ' = '   || precio_unitario || '::double precision,
                                   momento_entrada_' || mes_actual || ' = ''' || espacio_tiempo_ejecucion || '''
-                            WHERE inv_alm_id  = ' || _alm_dest_id  || '
+                            WHERE inv_alm_id  = ' || _alm_dest_id || '
                               AND inv_prod_id = ' || detalle.inv_prod_id || '
                               AND ano         = ' || ano_actual;
             EXECUTE sql_update;
@@ -6656,14 +6656,14 @@ BEGIN
                                 momento_entrada_' || mes_actual || ',
                                 exi_inicial,
                                 costo_ultimo_'    || mes_actual ||
-                          ') VALUES (' ||
-                                detalle.inv_prod_id || ', '     ||
-                                _alm_dest_id  || ', '     ||
-                                ano_actual   || ', '     ||
-                                detalle.cantidad_tras || ', '''   ||
-                                espacio_tiempo_ejecucion ||
-                                ''', 0, '       ||
-                                precio_unitario ||
+                          ') VALUES ('                   ||
+                                detalle.inv_prod_id      || ', '   ||
+                                _alm_dest_id             || ', '   ||
+                                ano_actual               || ', '   ||
+                                detalle.cantidad_tras    || ', ''' ||
+                                espacio_tiempo_ejecucion || ''', ' ||
+                                '0, '                    ||
+                                precio_unitario          ||
                           ')';
             EXECUTE sql_insert;
         END IF;
