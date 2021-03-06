@@ -51,6 +51,39 @@ public class Principal extends AbstractVerticle {
         return promise.future();
     }
 
+    private Future<Void> asyncVerticleDeployer(final Class cls) {
+        final String name = cls.getName();
+        final Promise<Void> promise = Promise.promise();
+        vertx.deployVerticle(name, res -> {
+            if (res.failed()) {
+                logger.error("Failed to deploy async verticle " + name);
+                promise.fail(res.cause());
+            } else {
+                promise.complete();
+            }
+        });
+
+        return promise.future();
+    }
+
+    private Future<Void> syncVerticleDeployer(final Class cls, final int nthreads) {
+
+        final String name = cls.getName();
+        final Promise<Void> promise = Promise.promise();
+        vertx.deployVerticle(name, new DeploymentOptions()
+                .setInstances(nthreads)
+                .setWorker(true), res -> {
+            if (res.failed()) {
+                logger.error("Failed to deploy sync verticle " + name);
+                promise.fail(res.cause());
+            } else {
+                promise.complete();
+            }
+        });
+
+        return promise.future();
+    }
+
     private void gearUpVerticles() {
 
         DeploymentOptions opts = new DeploymentOptions()
