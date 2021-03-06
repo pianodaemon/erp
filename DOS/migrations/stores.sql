@@ -6218,3 +6218,511 @@ BEGIN
 
 END;
 $$;
+
+
+CREATE TYPE grid_renglon_traspaso AS (
+    inv_prod_id integer,
+    cantidad_tras double precision,
+    inv_prod_presentacion_id integer
+);
+
+CREATE OR REPLACE FUNCTION inv_crear_traspaso(
+    _usuario_id integer,    --str_data[3]
+    _suc_orig_id integer,   --str_data[5]    select_suc_origen
+    _alm_orig_id integer,   --str_data[6]    select_alm_origen
+    _suc_dest_id integer,   --str_data[7]    select_suc_destino
+    _alm_dest_id integer,   --str_data[8]    select_alm_destino
+    _observaciones text,    --str_data[9]    observaciones
+    _fecha_traspaso date,   --str_data[10]   fecha_traspaso
+    _grid_detalle grid_renglon_traspaso[]
+) RETURNS character varying
+  LANGUAGE 'plpgsql' AS $$
+
+--###################################
+--# Wrtten by: Edwin Plauchu        #
+--# mailto: pianodaemon@gmail.com   #
+--# 12 / marzo / 2012               #
+--###################################
+
+-- #### Premisas de ejecucion de este procedimiento almacenado:
+-- * Cuando se genera un Traspaso se genera una SALIDA en el almacen origen
+-- y una ENTRADA en el almacen destino
+-- * Cuando se realiza un ajuste se generara ya sea una salida (Si la cantidad de existencia disminuye)
+-- o una ENTRADA (Si la cantidad de existencia aumenta)... sobre el almacen.
+-- * El campo existencia de la tabla de existencias de inventario se actualizara cada que se actualice
+-- la tabla de movimientos de inventario
+
+DECLARE
+    app_selected integer := 10;
+    emp_id integer := 0;
+    suc_id integer := 0;
+
+    valor_retorno character varying := '';
+    ultimo_id integer := 0;
+    ultimo_id2 integer := 0;
+
+    espacio_tiempo_ejecucion timestamp with time zone := now();
+    identificador_nuevo_movimiento integer := 0;
+    identificador_nuevo_movimiento_entrada integer := 0;
+    tipo_movimiento_id integer := 0;
+
+    exis integer := 0;
+    ano_actual integer := 0;
+    mes_actual integer := 0;
+
+    sql_insert character varying := '';
+    sql_update character varying := '';
+    sql_select text := '';
+
+    precio_unitario  double precision := 0.0;
+
+    --Variables para generar consecutivos
+    id_tipo_consecutivo integer := 0;
+    prefijo_consecutivo character varying := '';
+    nuevo_consecutivo bigint := 0;
+
+    --Traspasos
+    --numero de decimales permitidos para la unidad
+    noDecUnidad integer := 0;
+    --equivalencia de la presentacion en la unidad del producto
+    equivalenciaPres double precision := 0.0;
+    --Cantidad que se esta Intentando traspasar
+    cantPres double precision := 0.0;
+
+    folio1 character varying := '';
+    folio2 character varying := '';
+
+    --Variable que indica si se debe controlar las existencias por presentaciones
+    controlExisPres boolean := false;
+
+    affected_rows integer := 0;
+    detalle grid_renglon_traspaso;
+    idx integer := 0;
+
+BEGIN
+
+    --obtiene empresa_id, sucursal_id
+    SELECT gral_suc.empresa_id, gral_usr_suc.gral_suc_id
+      FROM gral_usr_suc
+      JOIN gral_suc    ON gral_suc.id             = gral_usr_suc.gral_suc_id
+      JOIN inv_suc_alm ON inv_suc_alm.sucursal_id = gral_suc.id
+     WHERE gral_usr_suc.gral_usr_id = _usuario_id
+      INTO emp_id, suc_id;
+
+    SELECT EXTRACT(YEAR FROM espacio_tiempo_ejecucion)  INTO ano_actual;
+    SELECT EXTRACT(MONTH FROM espacio_tiempo_ejecucion) INTO mes_actual;
+
+    --Obtiene parametros de la empresa
+    SELECT control_exis_pres
+      FROM gral_emp
+     WHERE id = emp_id
+      INTO controlExisPres;
+
+    --Aplicativo Traspasos
+
+    --str_data[4]    identificador
+    --str_data[5]    select_suc_origen
+    --str_data[6]    select_alm_origen
+    --str_data[7]    select_suc_destino
+    --str_data[8]    select_alm_destino
+    --str_data[9]    observaciones
+    --str_data[10]   fecha_traspaso
+
+    -- Folio Traspaso
+    id_tipo_consecutivo := 29;
+
+    -- aqui entra para tomar el consecutivo del folio la sucursal actual
+    affected_rows := 0;
+
+    UPDATE gral_cons
+       SET consecutivo = (
+               SELECT sbt.consecutivo + 1
+                 FROM gral_cons AS sbt
+                WHERE sbt.id = gral_cons.id
+           )
+     WHERE gral_emp_id       = emp_id
+       AND gral_suc_id       = suc_id
+       AND gral_cons_tipo_id = id_tipo_consecutivo
+ RETURNING prefijo, consecutivo
+      INTO prefijo_consecutivo, nuevo_consecutivo;
+
+    GET DIAGNOSTICS affected_rows := ROW_COUNT;
+    IF affected_rows = 0 THEN
+        valor_retorno := 'Traspaso (nuevo): No fue posible obtener el folio Traspaso (emp_id=' || emp_id || ', suc_id=' || suc_id || ', id_tipo_consecutivo=' || id_tipo_consecutivo || ')';
+        RAISE;
+    END IF;
+
+    -- concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio del traspaso
+    folio1 := prefijo_consecutivo || nuevo_consecutivo::character varying;
+
+    INSERT INTO inv_tras (
+        folio,              --folio1,
+        fecha_traspaso,     --str_data[10]::date,
+        gral_suc_id_origen, --str_data[5]::integer,
+        inv_alm_id_origen,  --str_data[6]::integer,
+        gral_suc_id_destino,--str_data[7]::integer,
+        inv_alm_id_destino, --str_data[8]::integer,
+        observaciones,      --str_data[9],
+        momento_creacion,   --espacio_tiempo_ejecucion,
+        gral_emp_id,        --emp_id,
+        gral_suc_id,        --suc_id,
+        gral_usr_id_creacion--_usuario_id
+    ) VALUES (
+        folio1,
+        _fecha_traspaso,
+        _suc_orig_id,
+        _alm_orig_id,
+        _suc_dest_id,
+        _alm_dest_id,
+        _observaciones,
+        espacio_tiempo_ejecucion,
+        emp_id,
+        suc_id,
+        _usuario_id
+    ) RETURNING id INTO ultimo_id;
+
+
+    --********************************************************************************************************
+    --GENERA REGISTRO PARA ORDEN DE TRASPASO(inv_otras)
+    --Folio Orden de Traspaso
+    id_tipo_consecutivo := 30;
+
+    --aqui entra para tomar el consecutivo del folio la sucursal actual
+    affected_rows := 0;
+
+    UPDATE gral_cons
+       SET consecutivo = (
+               SELECT sbt.consecutivo + 1
+                 FROM gral_cons AS sbt
+                WHERE sbt.id = gral_cons.id
+           )
+     WHERE gral_emp_id       = emp_id
+       AND gral_suc_id       = suc_id
+       AND gral_cons_tipo_id = id_tipo_consecutivo
+ RETURNING prefijo, consecutivo
+      INTO prefijo_consecutivo, nuevo_consecutivo;
+
+    GET DIAGNOSTICS affected_rows := ROW_COUNT;
+    IF affected_rows = 0 THEN
+        valor_retorno := 'Traspaso (nuevo): No fue posible obtener el folio Orden de Traspaso (emp_id=' || emp_id || ', suc_id=' || suc_id || ', id_tipo_consecutivo=' || id_tipo_consecutivo || ')';
+        RAISE;
+    END IF;
+
+    --concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio dela Orden de Traspaso
+    folio2 := prefijo_consecutivo || nuevo_consecutivo::character varying;
+
+    INSERT INTO inv_otras (
+        folio,
+        fecha,
+        gral_suc_id_origen,
+        inv_alm_id_origen,
+        gral_suc_id_destino,
+        inv_alm_id_destino,
+        momento_creacion,
+        gral_emp_id,
+        gral_suc_id,
+        gral_usr_id_creacion,
+        inv_tras_id
+    ) VALUES (
+        folio2,
+        _fecha_traspaso,
+        _suc_orig_id,
+        _alm_orig_id,
+        _suc_dest_id,
+        _alm_dest_id,
+        espacio_tiempo_ejecucion,
+        emp_id,
+        suc_id,
+        _usuario_id,
+        ultimo_id
+    ) RETURNING id INTO ultimo_id2;
+
+    --********************************************************************************************************
+
+    tipo_movimiento_id := 7;--SALIDA POR TRASPASO
+
+    --genera registro del movimiento
+    INSERT INTO inv_mov (
+        referencia,         --folio1,
+        inv_mov_tipo_id,    --tipo_movimiento_id,
+        fecha_mov,          --_fecha_traspaso,
+        observacion,        --_observaciones,
+        momento_creacion,   --espacio_tiempo_ejecucion,
+        gral_usr_id,        --_usuario_id,
+        gral_app_id         --app_selected
+    ) VALUES (
+        folio1,
+        tipo_movimiento_id,
+        _fecha_traspaso,
+        _observaciones,
+        espacio_tiempo_ejecucion,
+        _usuario_id,
+        app_selected
+    ) RETURNING id INTO identificador_nuevo_movimiento;
+
+
+    tipo_movimiento_id := 3;--ENTRADA TRASPASO
+
+    --genera registro del movimiento
+    INSERT INTO inv_mov (
+        referencia,         --folio1,
+        inv_mov_tipo_id,    --tipo_movimiento_id,
+        fecha_mov,          --_fecha_traspaso,
+        observacion,        --_observaciones,
+        momento_creacion,   --espacio_tiempo_ejecucion,
+        gral_usr_id,        --_usuario_id,
+        gral_app_id         --app_selected
+    ) VALUES (
+        folio1,
+        tipo_movimiento_id,
+        _fecha_traspaso,
+        _observaciones,
+        espacio_tiempo_ejecucion,
+        _usuario_id,
+        app_selected
+    ) RETURNING id INTO identificador_nuevo_movimiento_entrada;
+
+
+    FOR idx IN 1 .. array_length(_grid_detalle, 1) LOOP
+
+        detalle := _grid_detalle[idx];
+
+        --str_filas[1]    idproducto[i]
+        --str_filas[2]    cant_traspaso[i]
+        --str_filas[3]    no_tr[i]
+        --str_filas[4]    select_pres
+
+        --buscar el numero de decimales de la unidad del producto
+        SELECT inv_prod_unidades.decimales
+          FROM inv_prod
+          JOIN inv_prod_unidades ON inv_prod_unidades.id = inv_prod.unidad_id
+         WHERE inv_prod.id = detalle.inv_prod_id
+          INTO noDecUnidad;
+
+        IF noDecUnidad IS NULL THEN
+            noDecUnidad := 0;
+        END IF;
+
+        --redondear la Cantidad de la Presentacion
+        detalle.cantidad_tras := round(detalle.cantidad_tras::numeric, noDecUnidad)::double precision;
+
+        --crear registro en detalles de traspaso
+        INSERT INTO inv_tras_det (
+            inv_tras_id,
+            inv_prod_id,
+            cantidad_tras,
+            inv_prod_presentacion_id
+        ) VALUES (
+            ultimo_id,
+            detalle.inv_prod_id,
+            detalle.cantidad_tras,
+            detalle.inv_prod_presentacion_id
+        );
+
+        --crea registro para detalles Orden de Traspaso
+        INSERT INTO inv_otras_det (
+            inv_otras_id,
+            inv_prod_id,
+            cantidad_tras,
+            inv_prod_presentacion_id
+        ) VALUES (
+            ultimo_id2,
+            detalle.inv_prod_id,
+            detalle.cantidad_tras,
+            detalle.inv_prod_presentacion_id
+        );
+
+        --obtener el costo promedio actual del producto
+        SELECT *
+          FROM inv_obtiene_costo_promedio_actual(detalle.inv_prod_id, espacio_tiempo_ejecucion)
+          INTO precio_unitario;
+
+        --***** RESGISTRAR SALIDA *********************
+        --genera registro en detalles del movimiento
+        INSERT INTO inv_mov_detalle (
+            inv_mov_id,
+            alm_origen_id,
+            alm_destino_id,
+            producto_id,
+            cantidad,
+            costo,
+            inv_prod_presentacion_id
+        ) VALUES (
+            identificador_nuevo_movimiento,
+            _alm_orig_id,
+            _alm_dest_id,
+            detalle.inv_prod_id,
+            detalle.cantidad_tras,
+            precio_unitario,
+            detalle.inv_prod_presentacion_id
+        );
+
+        --query para descontar producto de existencias
+        sql_update := 'UPDATE inv_exi
+                          SET salidas_'        || mes_actual  || ' = (salidas_' || mes_actual || ' + ' || detalle.cantidad_tras || '),
+                              momento_salida_' || mes_actual  || ' = ''' || espacio_tiempo_ejecucion || '''
+                        WHERE inv_alm_id  = ' || _alm_orig_id  || '::integer
+                          AND inv_prod_id = ' || detalle.inv_prod_id || '
+                          AND ano         = ' || ano_actual;
+        EXECUTE sql_update;
+
+        ----------------------------------------------------------------------------------------
+        --***** INICIA DESCONTAR EXISTENCIA DE PRESENTACIONES ******************************
+        --revisar si la configuracion incluye control de Existencias por Presentacion
+        IF controlExisPres = TRUE THEN
+            --inicializar valor a cero
+            equivalenciaPres := 0;
+
+            --buscar la equivalencia de la Presentacion Origen en la Unidad del Producto
+            SELECT cantidad AS equiv_pres
+              FROM inv_prod_presentaciones
+             WHERE id = detalle.inv_prod_presentacion_id
+              INTO equivalenciaPres;
+
+            IF equivalenciaPres IS NULL THEN
+                equivalenciaPres := 0;
+            END IF;
+
+            --Convertir la Cantidad de Unidades a su equivalencia en Cantidad de Presentaciones
+            cantPres := round(detalle.cantidad_tras::numeric, noDecUnidad)::double precision / equivalenciaPres::double precision;
+
+            --redondear la Cantidad de la Presentacion
+            cantPres := round(cantPres::numeric, noDecUnidad)::double precision;
+
+            --Descontar existencia de las presentaciones
+            UPDATE inv_exi_pres
+               SET salidas                   = (salidas::double precision + cantPres::double precision),
+                   momento_actualizacion     = espacio_tiempo_ejecucion,
+                   gral_usr_id_actualizacion = _usuario_id
+             WHERE inv_alm_id               = _alm_orig_id
+               AND inv_prod_id              = detalle.inv_prod_id
+               AND inv_prod_presentacion_id = detalle.inv_prod_presentacion_id;
+        END IF;
+        --termina descontar existencia de presentaciones
+        ---------------------------------------------------------------------------------------------------------------------
+
+        --***** RESGISTRAR ENTRADA *********************
+        --genera registro en detalles del movimiento
+        INSERT INTO inv_mov_detalle (
+            inv_mov_id,
+            alm_origen_id,
+            alm_destino_id,
+            producto_id,
+            cantidad,
+            costo,
+            inv_prod_presentacion_id
+        ) VALUES (
+            identificador_nuevo_movimiento_entrada,
+            _alm_orig_id,
+            _alm_dest_id,
+            detalle.inv_prod_id,
+            detalle.cantidad_tras,
+            precio_unitario,
+            detalle.inv_prod_presentacion_id
+        );
+
+        --reiniciamos el valor de la variable exis a cero
+        exis := 0;
+
+        sql_select := '';
+        --query para verificar existencia del producto en el almacen y en el año actual
+        sql_select := 'SELECT count(id)
+                         FROM inv_exi
+                        WHERE inv_prod_id = ' || detalle.inv_prod_id || '
+                          AND inv_alm_id  = ' || _alm_dest_id  || '
+                          AND ano         = ' || ano_actual;
+
+        EXECUTE sql_select
+           INTO exis;
+
+        --RAISE EXCEPTION '%' ,'sql_select: '||sql_select;
+        IF exis > 0 THEN
+            --aqui entra para ACTUALIZAR registro en inv_exi
+            sql_update := 'UPDATE inv_exi
+                              SET entradas_'        || mes_actual || ' = (entradas_' || mes_actual || ' + ' || detalle.cantidad_tras || '::double precision),
+                                  costo_ultimo_'    || mes_actual || ' = '   || precio_unitario || '::double precision,
+                                  momento_entrada_' || mes_actual || ' = ''' || espacio_tiempo_ejecucion || '''
+                            WHERE inv_alm_id  = ' || _alm_dest_id  || '
+                              AND inv_prod_id = ' || detalle.inv_prod_id || '
+                              AND ano         = ' || ano_actual;
+            EXECUTE sql_update;
+        ELSE
+            --aqui entra para CREAR registro en inv_exi
+            sql_insert := 'INSERT INTO inv_exi (
+                                inv_prod_id,
+                                inv_alm_id,
+                                ano,
+                                entradas_'        || mes_actual || ',
+                                momento_entrada_' || mes_actual || ',
+                                exi_inicial,
+                                costo_ultimo_'    || mes_actual ||
+                          ') VALUES (' ||
+                                detalle.inv_prod_id || ', '     ||
+                                _alm_dest_id  || ', '     ||
+                                ano_actual   || ', '     ||
+                                detalle.cantidad_tras || ', '''   ||
+                                espacio_tiempo_ejecucion ||
+                                ''', 0, '       ||
+                                precio_unitario ||
+                          ')';
+            EXECUTE sql_insert;
+        END IF;
+
+
+        -------------------------------------------------------------------------------------
+        --***** SUMAR EXISTENCIA DE PRESENTACIONES EN EL ALMACEN DESTINO******
+        --revisar si la configuracion incluye control de Existencias por Presentacion
+        IF controlExisPres = TRUE THEN
+            --inicializar a cero
+            exis := 0;
+
+            --buscar Registro de la Presentacion en el Almacen Destino
+            SELECT count(id) AS exis
+              FROM inv_exi_pres
+             WHERE inv_alm_id               = _alm_dest_id
+               AND inv_prod_id              = detalle.inv_prod_id
+               AND inv_prod_presentacion_id = detalle.inv_prod_presentacion_id
+              INTO exis;
+
+            IF exis > 0 THEN
+                --Sumar existencia de la presentacion
+                UPDATE inv_exi_pres
+                   SET entradas                  = (entradas::double precision + cantPres::double precision),
+                       momento_actualizacion     = espacio_tiempo_ejecucion,
+                       gral_usr_id_actualizacion = _usuario_id
+                 WHERE inv_alm_id               = _alm_dest_id
+                   AND inv_prod_id              = detalle.inv_prod_id
+                   AND inv_prod_presentacion_id = detalle.inv_prod_presentacion_id;
+            ELSE
+                --aqui entra para CREAR registro en inv_exi
+                INSERT INTO inv_exi_pres (
+                    inv_alm_id,
+                    inv_prod_id,
+                    inv_prod_presentacion_id,
+                    entradas,
+                    momento_creacion,
+                    gral_usr_id_creacion
+                ) VALUES (
+                    _alm_dest_id,
+                    detalle.inv_prod_id,
+                    detalle.inv_prod_presentacion_id,
+                    cantPres::double precision,
+                    espacio_tiempo_ejecucion,
+                    _usuario_id
+                );
+            END IF;
+
+        END IF;
+        --**termina actualizar existencia de Presentaciones
+        -----------------------------------------------------------------------------------------
+    END LOOP;
+
+    valor_retorno := '1';
+    RETURN valor_retorno;
+
+    EXCEPTION
+        WHEN others THEN
+            RETURN valor_retorno;
+
+END;
+$$;
