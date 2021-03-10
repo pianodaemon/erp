@@ -38,6 +38,10 @@ public class Principal extends AbstractVerticle {
             Transfers.bindWarehouses(eb,
                     apiRouter.get("/almacenes/por_empresa/:empresaId"),
                     this.logger);
+
+            Transfers.bindWarehousesTraspasos(eb,
+                    apiRouter.post("/almacenes/traspasos"),
+                    this.logger);
         }
 
         vertx.createHttpServer().requestHandler(baseRouter).listen(port, http -> {

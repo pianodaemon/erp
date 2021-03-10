@@ -20,6 +20,10 @@ public class SyncDbBridge extends AbstractVerticle {
         bus.<JsonObject>consumer(Transfers.WAREHOUSES, message -> {
             Transfers.actOnWarehouses(message, this.logger);
         });
+
+        bus.<JsonObject>consumer(Transfers.WAREHOUSES_TRASPASOS_NUEVO, message -> {
+            Transfers.actOnWarehousesTraspasos(message, this.logger);
+        });
     }
 
     public static final int REQUIRED_WORKER_THREADS = 4;
