@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import org.javatuples.Pair;
+import org.javatuples.Triplet;
 import org.slf4j.Logger;
 
 public class PgsqlInteractions {
@@ -80,5 +81,69 @@ public class PgsqlInteractions {
         }
 
         return al;
+    }
+
+    public static String getWarehousesTraspasoNuevo(
+            final Integer usuarioId,
+            final Integer sucursalOrigenId,
+            final Integer almacenOrigenId,
+            final Integer sucursalDestinoId,
+            final Integer almacenDestinoId,
+            final String observaciones,
+            final String fechaTraspaso,
+            final ArrayList<Triplet<Integer, Double, Integer>> gridDetalle,
+            Logger logger) throws SQLException, NoSuchElementException {
+
+        String sqlArrLit = convertTraspasoDetalleToSqlArrayLiteral(gridDetalle);
+
+        String sqlQuery = String.format(
+                "SELECT * FROM inv_crear_traspaso(%d, %d, %d, %d, %d, '%s', '%s', %s::grid_renglon_traspaso[]) AS valor_retorno",
+                usuarioId,
+                sucursalOrigenId,
+                almacenOrigenId,
+                sucursalDestinoId,
+                almacenDestinoId,
+                observaciones,
+                fechaTraspaso,
+                sqlArrLit);
+
+        Connection conn = PgsqlConnPool.getInstance().getConnection();
+        String valorRetorno = "";
+
+        {
+            logger.info(sqlQuery);
+            try (PreparedStatement stmt = conn.prepareStatement(sqlQuery)) {
+                ResultSet rs = stmt.executeQuery();
+
+                if (rs.next()) {
+                    valorRetorno = rs.getString("valor_retorno");
+                } else {
+                    throw new NoSuchElementException("Error al invocar función de base de datos para crear traspaso");
+                }
+
+            } finally {
+                conn.close();
+            }
+        }
+
+        return valorRetorno;
+    }
+
+    private static String convertTraspasoDetalleToSqlArrayLiteral(ArrayList<Triplet<Integer, Double, Integer>> detalle) {
+
+        String r = "ARRAY[";
+        boolean first = true;
+
+        for (Triplet<Integer, Double, Integer> t : detalle) {
+
+            if (!first) {
+                r += ", ";
+            }
+            r += "(" + t.getValue0() + ", " + t.getValue1() + ", " + t.getValue2() + ")";
+            first = false;
+        }
+
+        r += "]";
+        return r;
     }
 }
