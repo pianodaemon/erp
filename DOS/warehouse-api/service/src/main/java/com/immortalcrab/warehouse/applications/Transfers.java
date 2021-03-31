@@ -1,6 +1,7 @@
 package com.immortalcrab.warehouse.applications;
 
 import com.immortalcrab.warehouse.persistence.PgsqlInteractions;
+import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.ReplyException;
@@ -12,6 +13,12 @@ import io.vertx.ext.web.Route;
 import io.vertx.ext.web.api.RequestParameters;
 import io.vertx.ext.web.api.validation.HTTPRequestValidationHandler;
 import io.vertx.ext.web.api.validation.ParameterType;
+import io.vertx.json.schema.Schema;
+import io.vertx.json.schema.SchemaParser;
+import io.vertx.json.schema.SchemaRouter;
+import io.vertx.json.schema.SchemaRouterOptions;
+import io.vertx.json.schema.NoSyncValidationException;
+import io.vertx.json.schema.ValidationException;
 import io.vertx.ext.web.handler.BodyHandler;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -158,30 +165,94 @@ public class Transfers {
         }
     }
 
-    public static Route bindWarehousesTraspasos(EventBus eb, Route route, Logger logger) {
+    public static Route bindWarehousesTraspasos(EventBus eb, Route route, Logger logger, Vertx vertx) {
 
-        var bodyHandler = BodyHandler.create();
+        SchemaParser parser = SchemaParser.createDraft201909SchemaParser(
+            SchemaRouter.create(vertx, new SchemaRouterOptions())
+        );
+        Schema schema = parser.parseFromString(
+                  "{\n"
+                + "  \"type\": \"object\",\n"
+                + "  \"properties\": {\n"
+                + "      \"usuarioId\"        : {\"type\": \"integer\"},\n"
+                + "      \"sucursalOrigenId\" : {\"type\": \"integer\"},\n"
+                + "      \"almacenOrigenId\"  : {\"type\": \"integer\"},\n"
+                + "      \"sucursalDestinoId\": {\"type\": \"integer\"},\n"
+                + "      \"almacenDestinoId\" : {\"type\": \"integer\"},\n"
+                + "      \"observaciones\"    : {\"type\": \"string\" },\n"
+                + "      \"fechaTraspaso\"    : {\"type\": \"string\" },\n"
+                + "      \"gridDetalle\"      : {\n"
+                + "          \"type\"       : \"array\",\n"
+                + "          \"items\"      : {\n"
+                + "              \"type\"      : \"object\",\n"
+                + "              \"properties\": {\n"
+                + "                  \"prodId\"   : {\"type\": \"integer\"},\n"
+                + "                  \"cantidad\" : {\"type\": \"number\" },\n"
+                + "                  \"presentId\": {\"type\": \"integer\"}\n"
+                + "                },\n"
+                + "              \"required\"  : [\"prodId\", \"cantidad\", \"presentId\"]\n"
+                + "            },\n"
+                + "          \"minItems\"   : 1,\n"
+                + "          \"uniqueItems\": true\n"
+                + "        }\n"
+                + "    },\n"
+                + "  \"required\": [\n"
+                + "      \"usuarioId\",\n"
+                + "      \"sucursalOrigenId\",\n"
+                + "      \"almacenOrigenId\",\n"
+                + "      \"sucursalDestinoId\",\n"
+                + "      \"almacenDestinoId\",\n"
+                + "      \"observaciones\",\n"
+                + "      \"fechaTraspaso\",\n"
+                + "      \"gridDetalle\"\n"
+                + "    ]\n"
+                + "}\n"
+        );
 
-        return route.handler(bodyHandler).handler(routingContext -> {
+        return route.handler(BodyHandler.create()).handler(routingContext -> {
+
             HttpServerResponse response = routingContext.response();
 
             {
                 JsonObject payload = routingContext.getBodyAsJson();
 
-                eb.<JsonObject>request(WAREHOUSES_TRASPASOS_NUEVO, payload, reply -> {
-                    if (reply.succeeded()) {
-                        JsonObject replyBody = reply.result().body();
-                        response
-                                .putHeader("content-type", "application/json; charset=utf-8")
-                                .end(Json.encodePrettily(replyBody));
-                    } else {
-                        ReplyException ex = (ReplyException) reply.cause();
-                        logger.warn("an error has occuried at the consumer {}", WAREHOUSES_TRASPASOS_NUEVO);
-                        response.setStatusCode(ex.failureCode()).end();
-                    }
-                });
-            }
+                try {
+                    schema.validateSync(payload);
+                    // Successful validation
+                    eb.<JsonObject>request(WAREHOUSES_TRASPASOS_NUEVO, payload, reply -> {
+                        if (reply.succeeded()) {
+                            JsonObject replyBody = reply.result().body();
+                            response
+                                    .putHeader("content-type", "application/json; charset=utf-8")
+                                    .end(Json.encodePrettily(replyBody));
+                        } else {
+                            ReplyException ex = (ReplyException) reply.cause();
+                            logger.warn("an error has occurred at the consumer {}", WAREHOUSES_TRASPASOS_NUEVO);
+                            response.setStatusCode(ex.failureCode()).end();
+                        }
+                    });
 
+                } catch (ValidationException e) {
+                    // Failed validation
+                    var jObj = new JsonObject("{\"msg\": \"Failed validation\"}");
+                    response
+                            .putHeader("content-type", "application/json; charset=utf-8")
+                            .setStatusCode(400)
+                            .end(Json.encodePrettily(jObj));
+
+                } catch (NoSyncValidationException e) {
+                    // Cannot validate synchronously. You must validate using validateAsync
+                    schema.validateAsync(payload).onComplete(ar -> {
+                        if (ar.succeeded()) {
+                            // Validation succeeded
+
+                        } else {
+                            // Validation failed
+                            ar.cause(); // Contains ValidationException
+                        }
+                    });
+                }
+            }
         });
     }
 
