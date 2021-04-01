@@ -168,8 +168,9 @@ public class Transfers {
     public static Route bindWarehousesTraspasos(EventBus eb, Route route, Logger logger, Vertx vertx) {
 
         SchemaParser parser = SchemaParser.createDraft201909SchemaParser(
-            SchemaRouter.create(vertx, new SchemaRouterOptions())
+                SchemaRouter.create(vertx, new SchemaRouterOptions())
         );
+
         Schema schema = parser.parseFromString(
                   "{\n"
                 + "  \"type\": \"object\",\n"
@@ -234,7 +235,11 @@ public class Transfers {
 
                 } catch (ValidationException e) {
                     // Failed validation
-                    var jObj = new JsonObject("{\"msg\": \"Failed validation\"}");
+                    var jObj = new JsonObject();
+
+                    jObj.put("msg", "Failed validation. " + e.toString());
+                    logger.error(e.toString());
+
                     response
                             .putHeader("content-type", "application/json; charset=utf-8")
                             .setStatusCode(400)
