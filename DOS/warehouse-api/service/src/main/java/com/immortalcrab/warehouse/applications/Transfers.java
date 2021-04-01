@@ -219,31 +219,20 @@ public class Transfers {
 
                 try {
                     schema.validateSync(payload);
-                    // Successful validation
-                    eb.<JsonObject>request(WAREHOUSES_TRASPASOS_NUEVO, payload, reply -> {
-                        if (reply.succeeded()) {
-                            JsonObject replyBody = reply.result().body();
-                            response
-                                    .putHeader("content-type", "application/json; charset=utf-8")
-                                    .end(Json.encodePrettily(replyBody));
-                        } else {
-                            ReplyException ex = (ReplyException) reply.cause();
-                            logger.warn("an error has occurred at the consumer {}", WAREHOUSES_TRASPASOS_NUEVO);
-                            response.setStatusCode(ex.failureCode()).end();
-                        }
-                    });
 
                 } catch (ValidationException e) {
                     // Failed validation
                     var jObj = new JsonObject();
 
                     jObj.put("msg", "Failed validation. " + e.toString());
-                    logger.error(e.toString());
+                    logger.warn(e.toString());
 
                     response
                             .putHeader("content-type", "application/json; charset=utf-8")
                             .setStatusCode(400)
                             .end(Json.encodePrettily(jObj));
+
+                    return;
 
                 } catch (NoSyncValidationException e) {
                     // Cannot validate synchronously. You must validate using validateAsync
@@ -256,7 +245,22 @@ public class Transfers {
                             ar.cause(); // Contains ValidationException
                         }
                     });
+
+                    return;
                 }
+
+                eb.<JsonObject>request(WAREHOUSES_TRASPASOS_NUEVO, payload, reply -> {
+                    if (reply.succeeded()) {
+                        JsonObject replyBody = reply.result().body();
+                        response
+                                .putHeader("content-type", "application/json; charset=utf-8")
+                                .end(Json.encodePrettily(replyBody));
+                    } else {
+                        ReplyException ex = (ReplyException) reply.cause();
+                        logger.warn("an error has occurred at the consumer {}", WAREHOUSES_TRASPASOS_NUEVO);
+                        response.setStatusCode(ex.failureCode()).end();
+                    }
+                });
             }
         });
     }
