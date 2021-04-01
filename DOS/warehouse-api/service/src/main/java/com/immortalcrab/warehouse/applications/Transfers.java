@@ -10,16 +10,17 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
-import io.vertx.ext.web.api.RequestParameters;
-import io.vertx.ext.web.api.validation.HTTPRequestValidationHandler;
-import io.vertx.ext.web.api.validation.ParameterType;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.validation.ValidationHandler;
+import io.vertx.ext.web.validation.RequestParameters;
+import io.vertx.ext.web.validation.builder.Parameters;
 import io.vertx.json.schema.Schema;
 import io.vertx.json.schema.SchemaParser;
 import io.vertx.json.schema.SchemaRouter;
 import io.vertx.json.schema.SchemaRouterOptions;
 import io.vertx.json.schema.NoSyncValidationException;
 import io.vertx.json.schema.ValidationException;
-import io.vertx.ext.web.handler.BodyHandler;
+import static io.vertx.json.schema.common.dsl.Schemas.intSchema;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
@@ -29,25 +30,31 @@ import org.slf4j.Logger;
 
 public class Transfers {
 
-    public static String EXISTANCE_PER_PRESENTATION = "existance-per-presentation";
-    public static String WAREHOUSES = "warehouses";
+    public static String WAREHOUSES                 = "warehouses";
     public static String WAREHOUSES_TRASPASOS_NUEVO = "warehouses-traspasos-nuevo";
+    public static String EXISTANCE_PER_PRESENTATION = "existance-per-presentation";
 
     private Transfers() {
     }
 
-    public static Route bindExistancePerPresentation(EventBus eb, Route route, Logger logger) {
+    public static Route bindExistancePerPresentation(EventBus eb, Route route, Logger logger, Vertx vertx) {
 
-        HTTPRequestValidationHandler valHandler = HTTPRequestValidationHandler.create()
-                .addPathParam("warehouseId", ParameterType.INT)
-                .addPathParam("productId", ParameterType.INT)
-                .addPathParam("presentationId", ParameterType.INT);
+        SchemaParser parser = SchemaParser.createDraft201909SchemaParser(
+                SchemaRouter.create(vertx, new SchemaRouterOptions())
+        );
+
+        ValidationHandler valHandler = ValidationHandler
+                .builder(parser)
+                .pathParameter(Parameters.param("warehouseId", intSchema()))
+                .pathParameter(Parameters.param("productId", intSchema()))
+                .pathParameter(Parameters.param("presentationId", intSchema()))
+                .build();
 
         return route.handler(valHandler).handler(routingContext -> {
             HttpServerResponse response = routingContext.response();
 
             {
-                RequestParameters params = routingContext.get("parsedParameters");
+                RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
 
                 JsonObject payload = new JsonObject()
                         .put("presentationId", params.pathParameter("presentationId").getInteger())
@@ -62,7 +69,7 @@ public class Transfers {
                                 .end(Json.encodePrettily(replyBody));
                     } else {
                         ReplyException ex = (ReplyException) reply.cause();
-                        logger.warn("an error has occuried at the consumer {}", EXISTANCE_PER_PRESENTATION);
+                        logger.warn("an error has occurred at the consumer {}", EXISTANCE_PER_PRESENTATION);
                         response.setStatusCode(ex.failureCode()).end();
                     }
                 });
@@ -99,16 +106,22 @@ public class Transfers {
         }
     }
 
-    public static Route bindWarehouses(EventBus eb, Route route, Logger logger) {
+    public static Route bindWarehouses(EventBus eb, Route route, Logger logger, Vertx vertx) {
 
-        HTTPRequestValidationHandler valHandler = HTTPRequestValidationHandler.create()
-                .addPathParam("empresaId", ParameterType.INT);
+        SchemaParser parser = SchemaParser.createDraft201909SchemaParser(
+                SchemaRouter.create(vertx, new SchemaRouterOptions())
+        );
+
+        ValidationHandler valHandler = ValidationHandler
+                .builder(parser)
+                .pathParameter(Parameters.param("empresaId", intSchema()))
+                .build();
 
         return route.handler(valHandler).handler(routingContext -> {
             HttpServerResponse response = routingContext.response();
 
             {
-                RequestParameters params = routingContext.get("parsedParameters");
+                RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
 
                 JsonObject payload = new JsonObject()
                         .put("empresaId", params.pathParameter("empresaId").getInteger());
@@ -121,7 +134,7 @@ public class Transfers {
                                 .end(Json.encodePrettily(replyBody));
                     } else {
                         ReplyException ex = (ReplyException) reply.cause();
-                        logger.warn("an error has occuried at the consumer {}", WAREHOUSES);
+                        logger.warn("an error has occurred at the consumer {}", WAREHOUSES);
                         response.setStatusCode(ex.failureCode()).end();
                     }
                 });
