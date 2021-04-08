@@ -30,17 +30,17 @@ public class Helper {
     
     public static int toInt(String str) {
         String res = str.trim();
-        return res.equals("") ? 0 : Integer.parseInt(res);
+        return res.equals("") ? 0 : Integer.parseInt(res.replaceAll(",", ""));
     }
     
     public static double toDouble(String str) {
         String res = str.trim();
-        return res.equals("") ? 0.0 : Double.parseDouble(res);
+        return res.equals("") ? 0.0 : Double.parseDouble(res.replaceAll(",", ""));
     }
     
     public static long toLong(String str) {
         String res = str.trim();
-        return res.equals("") ? 0 : Long.parseLong(res);
+        return res.equals("") ? 0 : Long.parseLong(res.replaceAll(",", ""));
     }
     
     public static String[] getCfdiengineConnParams() {
