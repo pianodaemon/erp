@@ -750,7 +750,7 @@ public class PrefacturasController {
         HashMap<String, String> success = this.getPdao()
             .selectFunctionValidateAaplicativo(data_string, app_selected, extra_data_array);
         
-        log.log(Level.INFO, TimeHelper.getFechaActualYMDH()+"Resultado de validacion {0}", success.get("success"));
+        log.log(Level.INFO, TimeHelper.getFechaActualYMDH() + " Resultado de validacion {0}", success.get("success"));
 
         if (success.get("success").equals("true")) {
 
@@ -834,10 +834,8 @@ public class PrefacturasController {
                 System.out.println("Folio: " + jsonretorno.get("folio"));
 
             } else {
-                if (actualizo.equals("0")) {
-                    jsonretorno.put("actualizo", actualizo);
-                    msjRespuesta = retorno.split(":")[1];
-                }
+                jsonretorno.put("actualizo", actualizo);
+                msjRespuesta = "Error en validacion. " + success.get("success");
             }
         }
         jsonretorno.put("success", success.get("success"));
