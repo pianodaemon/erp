@@ -1,37 +1,22 @@
-FROM debian:bullseye
+FROM python:3.9-slim-buster
 LABEL maintainer="edward@nygma.com"
 
-# getting last software catalog
-RUN apt-get update --fix-missing
+RUN apt-get update
+RUN apt-get install -y build-essential libpq-dev
 
-# Minimal deb packages required
-RUN apt-get install -y --no-install-recommends build-essential \
-    python3-wheel python3-setuptools python3-pip python3-dev python3-venv\
-    postgresql-client libpq-dev
+COPY service/dal               /service/dal
+COPY service/misc              /service/misc
+COPY service/requirements.txt  /service/requirements.txt
+COPY service/run.py            /service/run.py
+COPY protos                    /protos
 
-# Remove downloaded .debs from cache
-RUN apt-get clean
+WORKDIR /service
 
-# no longer needed list of packages
-RUN rm -rf /var/lib/apt/lists/*
+RUN python -m pip install --upgrade pip
+RUN python -m pip install -r requirements.txt
 
-ENV APP_DIR=/app
-COPY service $APP_DIR
-COPY protos /protos
-WORKDIR $APP_DIR
+RUN python -m grpc_tools.protoc -I../protos --python_out=. --grpc_python_out=. ../protos/sales.proto
 
-RUN pip3 install -r requirements.txt
+EXPOSE 10090
 
-# this is an initial approach
-# (a better one may be read a matrix within a txt)
-RUN python3 -m grpc_tools.protoc \
-    -I../protos \
-    --python_out=. \
-    --grpc_python_out=. \
-    ../protos/sales.proto
-
-RUN chmod 755 /app/docker-entrypoint.sh
-
-EXPOSE 10082 10082
-
-CMD ["/app/docker-entrypoint.sh"]
+CMD [ "python", "./run.py" ]
