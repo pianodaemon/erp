@@ -59,20 +59,6 @@ services:
         environment: *commonEnv
         networks:
           - operational_network
-    sales_ui:
-        container_name: 'sales_ui'
-        volumes:
-          - ./DOS/sales-api/protos:/sales-api-protos
-        build:
-          context: './DOS/sales-ui'
-          args:
-            NODE_ENV: 'production'
-            REACT_APP_HOST_API: 'http://localhost:8080/api/v1'
-            REACT_APP_HOST_AUTH: 'http://localhost:10090/v1'
-        ports:
-          - '80:80'
-        networks:
-          - operational_network
     cfdiengine:
         container_name: 'cfdiengine'
         build: './DOS/cfdiengine'
