@@ -190,12 +190,35 @@ class PagXml(BuilderGen):
                 moneda_dr, id_documento, xxx::character varying
                 FROM pagos WHERE numero_transaccion = """
         rowset = []
+
+        saldo_cfdi_q = """
+            SELECT saldo_factura::character varying
+              FROM erp_h_facturas
+             WHERE serie_folio = '{}'
+               AND NOT cancelacion
+        """
+
+        pagosxcfdi_q = """
+            SELECT pago_id, cantidad::character varying
+              FROM erp_pagos_detalles
+             WHERE serie_folio = '{}'
+               AND NOT cancelacion
+             ORDER BY pago_id DESC
+        """
+
         for row in self.pg_query(conn, "{0}{1}".format(q, pag_id)):
-            # Just taking first row of query result
+
+            rows = self.pg_query(conn, saldo_cfdi_q.format(row['serie_folio']))
+            saldo_cfdi = float(rows[0]['saldo_factura'])
+
+            rows = self.pg_query(conn, pagosxcfdi_q.format(row['serie_folio']))
+            n_pagos = len(rows)
+            saldo_ant = float(rows[0]['cantidad']) + saldo_cfdi
+
             rowset.append({
                 'NUMERO_OPERACION': row['numero_operacion'],
-                'IMP_SALDO_INSOLUTO': row['imp_saldo_insoluto'],
-                'IMP_SALDO_ANT': row['imp_saldo_ant'],
+                'IMP_SALDO_INSOLUTO': str(saldo_cfdi),
+                'IMP_SALDO_ANT': str(saldo_ant),
                 'ISO_4217': row['moneda_p'],
                 'MONTO': row['monto'],
                 'IMP_PAGADO': row['imp_pagado'],
@@ -205,6 +228,7 @@ class PagXml(BuilderGen):
                 'MONEDA_DR': row['moneda_dr'],
                 'UUID_DOC': row['id_documento'],
                 'TIPO_DE_CAMBIO_DR': row['xxx'],
+                'NUM_PARCIALIDAD': str(n_pagos),
             })
         return rowset
 
@@ -322,7 +346,7 @@ class PagXml(BuilderGen):
                 dr.setAttribute('ImpSaldoAnt', d['IMP_SALDO_ANT'])
                 dr.setAttribute('ImpPagado', d['IMP_PAGADO'])
                 dr.setAttribute('MonedaDR', d['MONEDA_DR'])
-                dr.setAttribute('NumParcialidad', '1')
+                dr.setAttribute('NumParcialidad', d['NUM_PARCIALIDAD'])
                 dr.setAttribute('MetodoDePagoDR', 'PPD')
                 if (d['MONEDA_DR']) == 'USD':
                    if (d['ISO_4217']) == 'MXN':
