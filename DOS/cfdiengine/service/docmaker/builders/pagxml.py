@@ -192,14 +192,14 @@ class PagXml(BuilderGen):
         rowset = []
 
         saldo_cfdi_q = """
-            SELECT saldo_factura::character varying
+            SELECT saldo_factura
               FROM erp_h_facturas
              WHERE serie_folio = '{}'
                AND NOT cancelacion
         """
 
         pagosxcfdi_q = """
-            SELECT pago_id, cantidad::character varying
+            SELECT pago_id, cantidad
               FROM erp_pagos_detalles
              WHERE serie_folio = '{}'
                AND NOT cancelacion
@@ -209,16 +209,16 @@ class PagXml(BuilderGen):
         for row in self.pg_query(conn, "{0}{1}".format(q, pag_id)):
 
             rows = self.pg_query(conn, saldo_cfdi_q.format(row['serie_folio']))
-            saldo_cfdi = float(rows[0]['saldo_factura'])
+            saldo_cfdi = rows[0]['saldo_factura']
 
             rows = self.pg_query(conn, pagosxcfdi_q.format(row['serie_folio']))
             n_pagos = len(rows)
-            saldo_ant = float(rows[0]['cantidad']) + saldo_cfdi
+            saldo_ant = rows[0]['cantidad'] + saldo_cfdi
 
             rowset.append({
                 'NUMERO_OPERACION': row['numero_operacion'],
-                'IMP_SALDO_INSOLUTO': str(saldo_cfdi),
-                'IMP_SALDO_ANT': str(saldo_ant),
+                'IMP_SALDO_INSOLUTO': str(round(saldo_cfdi, 2)),
+                'IMP_SALDO_ANT': str(round(saldo_ant, 2)),
                 'ISO_4217': row['moneda_p'],
                 'MONTO': row['monto'],
                 'IMP_PAGADO': row['imp_pagado'],
