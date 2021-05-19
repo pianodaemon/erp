@@ -180,6 +180,7 @@ xmlns:beans="http://www.springframework.org/schema/beans"
         
         <intercept-url pattern="/controllers/carteras/startup.agnux" access="ROLE_ADMIN,ROLE_COBRANZA" />
         <intercept-url pattern="/controllers/clientsantcancel/startup.agnux" access="ROLE_ADMIN,ROLE_CXC_CANCELA_ANTICIPO" />
+        <intercept-url pattern="/controllers/remisionesIMSS/startup.agnux" access="ROLE_ADMIN" />
         <intercept-url pattern="/controllers/agentes/startup.agnux" access="ROLE_ADMIN,ROLE_ALTA_AGENTE" />
         <intercept-url pattern="/controllers/clientsclasif1/startup.agnux" access="ROLE_ADMIN" />
         <intercept-url pattern="/controllers/clientsclasif2/startup.agnux" access="ROLE_ADMIN" />

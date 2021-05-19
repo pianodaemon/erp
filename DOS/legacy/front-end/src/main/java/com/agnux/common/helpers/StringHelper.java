@@ -9,6 +9,7 @@ import java.io.*;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -443,5 +444,9 @@ public class StringHelper {
         return matcher.matches();
     }
     
-    
+    public static Date parseDate(String strDate) throws Exception {
+        Date fDate = new SimpleDateFormat("yyyy-MM-dd").parse(strDate);
+        return fDate;
+    }
+
 }

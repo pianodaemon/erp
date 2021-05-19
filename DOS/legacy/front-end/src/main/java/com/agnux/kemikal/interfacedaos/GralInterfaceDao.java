@@ -22,6 +22,7 @@ public interface GralInterfaceDao {
     public String getXslDir();
     public String getXsdDir();
     public String getTmpDir();
+    public String getInvoicesPath();
     public String getZebraDir();
     public String getZebraInDir();
     public String getZebraOutDir();
