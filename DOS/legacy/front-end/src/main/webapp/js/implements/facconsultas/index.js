@@ -756,7 +756,7 @@ $(function() {
 				var $tipo_cambio = $('#forma-facconsultas-window').find('input[name=tipo_cambio]');
 				var $tipo_tipo_cambio_original = $('#forma-facconsultas-window').find('input[name=tipo_cambio_original]');
 				var $orden_compra = $('#forma-facconsultas-window').find('input[name=orden_compra]');
-				var	$orden_compra_original = $('#forma-facconsultas-window').find('input[name=orden_compra_original]');
+				var $orden_compra_original = $('#forma-facconsultas-window').find('input[name=orden_compra_original]');
 				
 				//var $campo_tc = $('#forma-facconsultas-window').find('input[name=tc]');
 				var $id_impuesto = $('#forma-facconsultas-window').find('input[name=id_impuesto]');
@@ -770,6 +770,7 @@ $(function() {
 				var $select_vendedor_original = $('#forma-facconsultas-window').find('select[name=vendedor_original]');
 				
 				var $select_metodo_pago = $('#forma-facconsultas-window').find('select[name=select_metodo_pago]');
+                                var $contra_recibo_id = $('#forma-facconsultas-window').find('input[name=contra_recibo_id]');
 				var $etiqueta_digit = $('#forma-facconsultas-window').find('input[name=digit]');
 				var $digitos = $('#forma-facconsultas-window').find('input[name=digitos]');
 				var $no_cuenta = $('#forma-facconsultas-window').find('input[name=no_cuenta]');
@@ -1143,8 +1144,13 @@ $(function() {
 						}
 					});
 					$select_metodo_pago.append(hmtl_metodo);
-					
-					
+
+                                        if (entry['datosFactura'][0]['contra_recibo_id'] == 0) {
+                                            $contra_recibo_id.val("");
+                                        } else {
+                                            $contra_recibo_id.val(entry['datosFactura'][0]['contra_recibo_id']);
+                                        }
+
 					$busca_cliente.hide();
 					
 					

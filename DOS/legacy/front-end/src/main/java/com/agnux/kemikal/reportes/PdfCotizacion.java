@@ -149,9 +149,9 @@ public class PdfCotizacion {
         parameters.put("clienteMunicipioEstado", String.format("%s, %s", clieMunicipio, clieEstado));
         parameters.put("clienteContacto", clieContacto);
         parameters.put("saludo", saludo);
-        parameters.put("subtotal", addSeparadorMiles(subtotal, ","));
-        parameters.put("impuesto", addSeparadorMiles(impuesto, ","));
-        parameters.put("total", addSeparadorMiles(total, ","));
+        parameters.put("subtotal", Helper.addSeparadorMiles(subtotal, ","));
+        parameters.put("impuesto", Helper.addSeparadorMiles(impuesto, ","));
+        parameters.put("total", Helper.addSeparadorMiles(total, ","));
         parameters.put("tiempoEntrega", tiempoEntrega);
         parameters.put("despedida", despedida);
         parameters.put("nombreUsuario", nombreUsuario);
@@ -169,9 +169,9 @@ public class PdfCotizacion {
         for (HashMap<String, String> m : lista_productos) {
             detalleCotGrid.add(new DetalleCotizacion(
                     String.format("%s, %s", m.get("producto"), m.get("presentacion")),
-                    addSeparadorMiles(m.get("cantidad"), ","),
-                    addSeparadorMiles(m.get("precio_unitario"), ","),
-                    addSeparadorMiles(m.get("importe"), ",")));
+                    Helper.addSeparadorMiles(m.get("cantidad"), ","),
+                    Helper.addSeparadorMiles(m.get("precio_unitario"), ","),
+                    Helper.addSeparadorMiles(m.get("importe"), ",")));
         }
 
         return new JRBeanCollectionDataSource(detalleCotGrid);
@@ -198,34 +198,6 @@ public class PdfCotizacion {
             default: mes = ""; break;
         }
         return String.format("%s de %s de %s", fechaLetra[2], mes, fechaLetra[0]);
-    }
-
-    private static String addSeparadorMiles(String input, String sep) {
-        String output = "";
-        String[] arr = input.split("\\.");
-        String s = arr[0];
-        int cantGrupos = s.length() / 3;
-        int cantCifras = s.length() % 3;
-        int pos = 0;
-
-        if (cantCifras != 0) {
-            output += s.substring(0, cantCifras);
-            if (cantGrupos > 0) {
-                output += sep;
-            }
-            pos = cantCifras;
-        }
-        for (int i = 1; i <= cantGrupos; i++) {
-            output += s.substring(pos, pos + 3);
-            if (i < cantGrupos) {
-                output += sep;
-            }
-            pos += 3;
-        }
-        if (arr.length > 1) {
-            output += "." + arr[1];
-        }
-        return output;
     }
 
     public ArrayList<HashMap<String, String>> getCondiciones_comerciales() {

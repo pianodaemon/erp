@@ -453,7 +453,13 @@
                                                     </td>
                                                     <td width="300">
                                                         <table border="0" class="gral">
-															<tr><td height="5">&nbsp;</td></tr>
+                                                            <tr>
+                                                                <td width="300" align="center">
+                                                                    <label for="folio_contra_recibo">Contra-Recibo IMSS</label>
+                                                                    <input type="text" id="folio_contra_recibo" name="contra_recibo_id" style="width:50px; text-align:center;" disabled>
+                                                                </td>
+                                                            </tr>
+                                                            <tr><td height="5">&nbsp;</td></tr>
                                                             <tr>
                                                                 <td width="300" align="center"><input type="button" id="reconstruir_pdf" value="Reconstruir PDF" style="width:100px; font-weight:bold;"></td>
                                                             </tr>

@@ -303,7 +303,8 @@ public class FacturasSpringDao implements FacturasInterfaceDao{
             + "fac_docs.cancelado,"
             + "fac_docs.fac_docs_tipo_cancelacion_id as tipo_cancel,"
             + "fac_docs.ctb_tmov_id_cancelacion as tmovid_cancel,"
-            + "fac_docs.motivo_cancelacion as motivo_cancel "
+            + "fac_docs.motivo_cancelacion as motivo_cancel,"
+            + "fac_docs.contra_recibo_id "
         +"FROM fac_docs "
         +"JOIN erp_h_facturas ON erp_h_facturas.serie_folio=fac_docs.serie_folio "
         +"LEFT JOIN cxc_clie ON cxc_clie.id=fac_docs.cxc_clie_id "
@@ -319,7 +320,7 @@ public class FacturasSpringDao implements FacturasInterfaceDao{
             new Object[]{new Integer(id_factura)}, new RowMapper() {
                 @Override
                 public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    HashMap<String, Object> row = new HashMap<String, Object>();
+                    HashMap<String, Object> row = new HashMap<>();
                     row.put("id",rs.getInt("id"));
                     row.put("serie_folio",rs.getString("serie_folio"));
                     row.put("fecha",rs.getString("fecha"));
@@ -356,6 +357,7 @@ public class FacturasSpringDao implements FacturasInterfaceDao{
                     row.put("tipo_cancel",rs.getInt("tipo_cancel"));
                     row.put("tmovid_cancel",rs.getInt("tmovid_cancel"));
                     row.put("motivo_cancel",rs.getString("motivo_cancel"));
+                    row.put("contra_recibo_id",rs.getInt("contra_recibo_id"));
                     return row;
                 }
             }

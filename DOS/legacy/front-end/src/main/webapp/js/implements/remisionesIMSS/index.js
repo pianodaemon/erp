@@ -1861,8 +1861,8 @@ $(function() {
 	}//termina convertir dolar pesos
 
 
-    
-    
+
+
 	//Carga combo de Tipos de Estatus de Remisiones IMSS
         $loadSelectStatusRemisionesIMSS = function(index) {
             var idx = index!=null?index:0;
@@ -2099,7 +2099,7 @@ $(function() {
 		
 		$tabs_li_funxionalidad();
 		
-		var input_json = document.location.protocol + '//' + document.location.host + '/'+controller+'/getCotizacion.json';
+		var input_json = document.location.protocol + '//' + document.location.host + controller + '/getCotizacion.json';
 		var $arreglo = {'id_cotizacion':id_to_show, 'iu':$('#lienzo_recalculable').find('input[name=iu]').val() };
                 
 		var $tr_tipo = $('#forma-cotizacions-window').find('#tr_tipo');
@@ -2114,7 +2114,8 @@ $(function() {
 		var $id_cotizacion = $('#forma-cotizacions-window').find('input[name=id_cotizacion]');
 		var $total_tr = $('#forma-cotizacions-window').find('input[name=total_tr]');
 		var $select_tipo_cotizacion = $('#forma-cotizacions-window').find('select[name=select_tipo_cotizacion]');
-		var $folio = $('#forma-cotizacions-window').find('input[name=folio]');
+		var $proveedor = $('#forma-cotizacions-window').find('input[name=proveedor]');
+            	var $folio = $('#forma-cotizacions-window').find('input[name=folio]');
 		
 		var $etiqueta_accion = $('#forma-cotizacions-window').find('#etiqueta_accion');
 		var $select_accion = $('#forma-cotizacions-window').find('select[name=select_accion]');
@@ -2173,7 +2174,7 @@ $(function() {
 		var $submit_actualizar = $('#forma-cotizacions-window').find('#submit');
 		
 		
-		$id_cotizacion.val(0);//para nueva cotizacion el folio es 0
+            	$id_cotizacion.val(0);//para nueva cotizacion el folio es 0
 		$vigencia.val(1);
 		$select_moneda_original.hide();
 		
@@ -2399,7 +2400,9 @@ $(function() {
 		$forma_selected.ajaxForm(options);
 		
 		$.post(input_json,$arreglo,function(entry){
-			//Almacenar el arreglo de unidades de medida en la variable
+
+                    	$proveedor.val(entry['proveedor'][0]['proveedor']);
+                    //Almacenar el arreglo de unidades de medida en la variable
 			arrayUM = entry['UM'];
 			
 			//Almacenar valor para variable que indica si se debe permitir el cambio de la unidad de medida
@@ -2764,7 +2767,8 @@ $(function() {
 				var $total_tr = $('#forma-cotizacions-window').find('input[name=total_tr]');
 				var $select_tipo_cotizacion = $('#forma-cotizacions-window').find('select[name=select_tipo_cotizacion]');
 				
-                                var $folio = $('#forma-cotizacions-window').find('input[name=folio]');
+                            	var $proveedor = $('#forma-cotizacions-window').find('input[name=proveedor]');
+                            	var $folio = $('#forma-cotizacions-window').find('input[name=folio]');
                                 var $numeroContrato = $('#forma-cotizacions-window').find('input[name=numeroContrato]');
                                 var $folioIMSS = $('#forma-cotizacions-window').find('input[name=folioIMSS]');
                                 var $conducto_pago = $('#forma-cotizacions-window').find('input[name=conducto_pago]');
@@ -2949,6 +2953,7 @@ $(function() {
                                     try {
                                         //alert("Aquí va!");
                                         
+                                        $proveedor.val(entry['proveedor']);
                                         $folio.val(entry['id']);
                                         $numeroContrato.val(entry['numero_contrato']);
                                         $folioIMSS.val(entry['folio_imss']);
@@ -3086,20 +3091,9 @@ $(function() {
 				
 				//alert($descripcion_larga.val());
 				$boton_genera_pdf.click(function(event){
-					var seleccionado="false";
-					var incluyeIva="false";
-					
-					if($check_descripcion_larga.is(':checked')){
-						seleccionado="true";
-					}
-					
-					if($check_incluye_iva.is(':checked')){
-						incluyeIva="true";
-					}
-					
-					var iu = $('#lienzo_recalculable').find('input[name=iu]').val();
-					var input_json = document.location.protocol + '//' + document.location.host + '/' + controller + '/getGeneraPdfCotizacion/'+$id_cotizacion.val()+'/'+seleccionado+'/'+incluyeIva+'/'+iu+'/out.json';
-					window.location.href=input_json;
+                                    var iu = $('#lienzo_recalculable').find('input[name=iu]').val();
+                                    var input_json = document.location.protocol + '//' + document.location.host + controller + '/getGeneraPdfRemisionIMSS/'+ $folio.val() + '/' + iu + '/out.json';
+                                    window.location.href = input_json;
 				});
 				
 				

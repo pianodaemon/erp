@@ -159,7 +159,7 @@
                                                         <tr><td colspan="2">&nbsp;</td></tr>
                                                         <tr>
                                                             <td align="right">Proveedor&nbsp;</td>
-                                                            <td><b>(0000058281) RR MEDICA SA DE CV</b></td>
+                                                            <td><input type="text" name="proveedor" value="" style="width:160px;" disabled></td>
                                                         </tr>
                                                         <tr><td colspan="2">&nbsp;</td></tr>
                                                         <tr>
@@ -257,7 +257,13 @@
                                                             <td>Estatus&nbsp;</td>
                                                             <td width="150"><SELECT NAME="statusRemisionIMSS" style="width:150px;"></SELECT></td>
                                                         </tr>
-                                                    </table>                                                    
+                                                        <tr><td colspan="3">&nbsp;</td></tr>
+                                                        <tr>
+                                                            <td></td>
+                                                            <td></td>
+                                                            <td width="150"><input type="button" id="genera_pdf" value="Generar PDF" style="font-weight: bold; width: 110px;"></td>
+                                                        </tr>
+                                                    </table>
                                                 </td>                                                
                                             </tr>
                                         </table>

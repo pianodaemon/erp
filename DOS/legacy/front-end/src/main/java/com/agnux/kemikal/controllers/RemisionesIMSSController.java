@@ -9,11 +9,10 @@ import com.agnux.common.obj.UserSessionData;
 import com.agnux.kemikal.interfacedaos.GralInterfaceDao;
 import com.agnux.kemikal.interfacedaos.HomeInterfaceDao;
 import com.agnux.kemikal.interfacedaos.PocInterfaceDao;
-import com.agnux.kemikal.reportes.pdfCotizacion;
+import com.agnux.kemikal.reportes.PdfRemisionIMSS;
 import com.itextpdf.text.DocumentException;
-import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -130,7 +129,7 @@ public class RemisionesIMSSController {
     ) {
            
         System.out.println("Entrando a getRemisionesIMSS.json...");
-        HashMap<String,ArrayList<HashMap<String, Object>>> jsonretorno = new HashMap<String,ArrayList<HashMap<String, Object>>>();
+        HashMap<String,ArrayList<HashMap<String, Object>>> jsonretorno = new HashMap<>();
         HashMap<String,String> has_busqueda = StringHelper.convert2hash(StringHelper.ascii2string(cadena_busqueda));
         System.out.println("has_busqueda="+has_busqueda);
         
@@ -139,6 +138,7 @@ public class RemisionesIMSSController {
         
         //decodificar id de usuario
         Integer id_usuario = Integer.parseInt(Base64Coder.decodeString(id_user_cod));
+        HashMap<String, String> usr = this.getHomeDao().getUserById(id_usuario);
         
         //variables para el buscador
         String folio = "'"+StringHelper.isNullString(String.valueOf(has_busqueda.get("folio")))+"'";
@@ -156,7 +156,7 @@ public class RemisionesIMSSController {
 
         
         
-        String data_string = app_selected+"___"+id_usuario+"___"+folio+"___"+cliente+"___"+fecha_inicial+"___"+fecha_final+"___"+tipo+"___"+incluye_crm+"___"+folioIMSS+"___"+numContrato+"___"+status;
+        String data_string = app_selected+"___"+id_usuario+"___"+folio+"___"+cliente+"___"+fecha_inicial+"___"+fecha_final+"___"+tipo+"___"+incluye_crm+"___"+folioIMSS+"___"+numContrato+"___"+status + "___" + usr.get("empresa_id");
         System.out.println("data_string="+data_string);
         //obtiene total de registros en base de datos, con los parametros de busqueda
         //int total_items = this.getPocDao().countAll(data_string);
@@ -349,7 +349,13 @@ public class RemisionesIMSSController {
         jsonretorno.put("Tc", tipoCambioActual);
         jsonretorno.put("Agentes", this.getPocDao().getAgentes(id_empresa, id_sucursal, obtener_todos_los_agentes));
         jsonretorno.put("Incoterms", this.getPocDao().getCotizacion_Incoterms(id_empresa, Integer.parseInt(id_cotizacion)));
-        
+
+        ArrayList<HashMap<String, String>> al = new ArrayList<>();
+        HashMap<String, String> hm = new HashMap<>();
+        hm.put("proveedor", userDat.get("empresa"));
+        al.add(hm);
+        jsonretorno.put("proveedor", al);
+
         return jsonretorno;
     }
     
@@ -605,24 +611,24 @@ public class RemisionesIMSSController {
         HashMap<String, String> succes = new HashMap<String, String>();
         System.out.println("Entró al Controller de Remisiones IMSS...");
         try {
-            System.out.println("identificador="+identificador);
-            System.out.println("numeroContrato="+numeroContrato);
-            System.out.println("folioIMSS="+folioIMSS);
-            System.out.println("conducto_pago="+conducto_pago);
-            System.out.println("total="+total);
-            System.out.println("fecha="+fecha);
-            System.out.println("fecha2="+fecha2);
-            System.out.println("statusRemisionIMSS="+statusRemisionIMSS);
-            System.out.println("doc1="+doc1);
-            System.out.println("doc2="+doc2);
-            System.out.println("doc3="+doc3);
-            System.out.println("doc4="+doc4);
-            System.out.println("doc5="+doc5);
-            System.out.println("doc6="+doc6);
-            System.out.println("doc7="+doc7);
-            System.out.println("doc8="+doc8);
-            System.out.println("doc9="+doc9);
-            System.out.println("doc10="+doc10);
+//            System.out.println("identificador="+identificador);
+//            System.out.println("numeroContrato="+numeroContrato);
+//            System.out.println("folioIMSS="+folioIMSS);
+//            System.out.println("conducto_pago="+conducto_pago);
+//            System.out.println("total="+total);
+//            System.out.println("fecha="+fecha);
+//            System.out.println("fecha2="+fecha2);
+//            System.out.println("statusRemisionIMSS="+statusRemisionIMSS);
+//            System.out.println("doc1="+doc1);
+//            System.out.println("doc2="+doc2);
+//            System.out.println("doc3="+doc3);
+//            System.out.println("doc4="+doc4);
+//            System.out.println("doc5="+doc5);
+//            System.out.println("doc6="+doc6);
+//            System.out.println("doc7="+doc7);
+//            System.out.println("doc8="+doc8);
+//            System.out.println("doc9="+doc9);
+//            System.out.println("doc10="+doc10);
             
             String arreglo[];
             //arreglo = new String[eliminado.length];
@@ -630,12 +636,12 @@ public class RemisionesIMSSController {
             int app_selected = 12;
             String command_selected = "new";
             String actualizo = "0";
-            
+
             //command_selected=select_accion;
-            String data_string = identificador + "___"+ numeroContrato + "___"+ folioIMSS + "___"+ conducto_pago + "___"+ total + "___"+ fecha + "___"+ fecha2 + "___"+ statusRemisionIMSS + "___"+ doc1 + "___" + doc2 + "___" + doc3 + "___" + doc4 + "___" + doc5 + "___" + doc6 + "___" + doc7 + "___" + doc8 + "___" + doc9 + "___" + doc10 + "___" + id_usuario.intValue();
+            String data_string = identificador + "___"+ numeroContrato + "___"+ folioIMSS + "___"+ conducto_pago + "___"+ total + "___"+ fecha + "___"+ fecha2 + "___"+ statusRemisionIMSS + "___"+ doc1 + "___" + doc2 + "___" + doc3 + "___" + doc4 + "___" + doc5 + "___" + doc6 + "___" + doc7 + "___" + doc8 + "___" + doc9 + "___" + doc10 + "___" + id_usuario.intValue() + "___" + user.getEmpresaId();
             //NLE
             log.log(Level.INFO, "data_string {0}", data_string);
-            System.out.println("data_string="+data_string);
+            System.out.println("data_string=" + data_string);
             
             succes = this.getPocDao().setRemisionIMSS(data_string, app_selected);
             
@@ -667,9 +673,11 @@ public class RemisionesIMSSController {
         ) {
         
         System.out.println("Entrando a getFormRemisionIMSS.json");
-        HashMap<String, String> jsonretorno = new HashMap<String, String>();
+        HashMap<String, String> jsonretorno;
         
-        jsonretorno= this.getPocDao().getFormRemisionIMSS(identificador);
+        jsonretorno = this.getPocDao().getFormRemisionIMSS(identificador);
+        Integer empresa_id = Integer.parseInt(jsonretorno.get("empresa_id"));
+        jsonretorno.put("proveedor", this.getGralDao().getRazonSocialEmpresaEmisora(empresa_id));
         
         return jsonretorno;
     }
@@ -813,154 +821,37 @@ public class RemisionesIMSSController {
         return jsonretorno;
     }
     
-    @RequestMapping(value = "/getGeneraPdfCotizacion/{id_cotizacion}/{incluye_img}/{incluye_iva}/{iu}/out.json", method = RequestMethod.GET ) 
-    public ModelAndView getGeneraPdfCotizacionJson(
-                @PathVariable("id_cotizacion") Integer id_cotizacion,
-                @PathVariable("incluye_img") String incluye_img,
-                @PathVariable("incluye_iva") String incluye_iva,
-                @PathVariable("iu") String id_user,
+    @RequestMapping(value = "/getGeneraPdfRemisionIMSS/{id_remision_imss}/{iu}/out.json", method = RequestMethod.GET ) 
+    public ModelAndView getGeneraPdfRemisionIMSSJson(
+                @PathVariable("id_remision_imss") Integer remision_imss_id,
+                @PathVariable("iu") String user_id,
                 HttpServletRequest request, 
                 HttpServletResponse response, 
                 Model model)
             throws ServletException, IOException, URISyntaxException, DocumentException, Exception {
-        
-        HashMap<String, String> userDat = new HashMap<String, String>();
-        HashMap<String, String> HeaderFooter = new HashMap<String, String>();
-        HashMap<String, String> datos = new HashMap<String, String>();
-        HashMap<String, String> saludo = new HashMap<String, String>();
-        HashMap<String, String> despedida = new HashMap<String, String>();
-        HashMap<String, String> datosEmisor = new HashMap<String, String>();
-        HashMap<String, String> datosReceptor = new HashMap<String, String>();
-        ArrayList<HashMap<String, String>> datosCotizacion = new ArrayList<HashMap<String, String>>();
-        ArrayList<HashMap<String, String>> datosCliPros = new ArrayList<HashMap<String, String>>();
-        ArrayList<HashMap<String, String>> lista_productos = new ArrayList<HashMap<String, String>>();
-        
-        ArrayList<HashMap<String, String>> condiciones_comerciales = new ArrayList<HashMap<String, String>>();
-        ArrayList<HashMap<String, String>> politicas_pago = new ArrayList<HashMap<String, String>>();
-        ArrayList<HashMap<String, String>> incoterms = new ArrayList<HashMap<String, String>>();
-        
-        System.out.println("Generando PDF de Cotizacion");
-        
-        Integer app_selected = 12; //aplicativo Cotizaciones
-        
+
+        System.out.println("Generando PDF de Remision IMSS");
+
         //decodificar id de usuario
-        Integer id_usuario = Integer.parseInt(Base64Coder.decodeString(id_user));
-        
-        userDat = this.getHomeDao().getUserById(id_usuario);
-        Integer id_empresa = Integer.parseInt(userDat.get("empresa_id"));
-        
-        String rfc_empresa = this.getGralDao().getRfcEmpresaEmisora(id_empresa);
-        String razon_social_empresa = this.getGralDao().getRazonSocialEmpresaEmisora(id_empresa);
-        
-        //obtener el directorio temporal
-        String dir_tmp = this.getGralDao().getTmpDir();
-        
-        //directorio de imagenes de productos
-        String dirImgProd = this.getGralDao().getProdImgDir()+rfc_empresa+"/";
-        
-        //ruta del la imagen del Logotipo
-        String rutaLogoEmpresa = this.getGralDao().getImagesDir()+rfc_empresa+"_logo.png";
-        
-        
-        String file_name = "COT_"+rfc_empresa+".pdf";
-        
-        //ruta de archivo de salida
-        String fileout = dir_tmp + file_name;
-        
-        datosEmisor.put("emp_razon_social", razon_social_empresa);
-        datosEmisor.put("emp_rfc", this.getGralDao().getRfcEmpresaEmisora(id_empresa));
-        datosEmisor.put("emp_calle", this.getGralDao().getCalleDomicilioFiscalEmpresaEmisora(id_empresa));
-        datosEmisor.put("emp_no_exterior", this.getGralDao().getNoExteriorDomicilioFiscalEmpresaEmisora(id_empresa));
-        datosEmisor.put("emp_colonia", this.getGralDao().getColoniaDomicilioFiscalEmpresaEmisora(id_empresa));
-        datosEmisor.put("emp_pais", this.getGralDao().getPaisDomicilioFiscalEmpresaEmisora(id_empresa));
-        datosEmisor.put("emp_estado", this.getGralDao().getEstadoDomicilioFiscalEmpresaEmisora(id_empresa));
-        datosEmisor.put("emp_municipio", this.getGralDao().getMunicipioDomicilioFiscalEmpresaEmisora(id_empresa));
-        datosEmisor.put("emp_cp", this.getGralDao().getCpDomicilioFiscalEmpresaEmisora(id_empresa));
-        datosEmisor.put("emp_pagina_web", this.getGralDao().getPaginaWebEmpresaEmisora(id_empresa));
-        datosEmisor.put("emp_telefono", this.getGralDao().getTelefonoEmpresaEmisora(id_empresa));
-        
-        HeaderFooter.put("titulo_reporte", "COTIZACIÓN");
-        HeaderFooter.put("periodo", "");
-        HeaderFooter.put("empresa", "");
-        HeaderFooter.put("codigo1", this.getGralDao().getCodigo1Iso(id_empresa, app_selected));
-        HeaderFooter.put("codigo2", this.getGralDao().getCodigo2Iso(id_empresa, app_selected));
-        
-        datosCotizacion = this.getPocDao().getCotizacion_Datos(id_cotizacion);
-        saludo = this.getPocDao().getCotizacion_Saludo(id_empresa);
-        despedida = this.getPocDao().getCotizacion_Despedida(id_empresa);
-        //obtiene las condiciones comerciales para la cotizacion
-        condiciones_comerciales = this.getPocDao().getCotizacion_CondicionesComerciales(id_empresa);
-        
-        //Obtiene las politicas de pago para la cotizacion
-        politicas_pago = this.getPocDao().getCotizacion_PolitizasPago(id_empresa);
-        
-        incoterms = this.getPocDao().getCotizacion_Incoterms(id_empresa, id_cotizacion);
-        
-        lista_productos = this.getPocDao().getCotizacion_DatosGrid(id_cotizacion);
-        datos.put("ruta_logo", rutaLogoEmpresa);
-        datos.put("file_out", fileout);
-        datos.put("dirImagenes", dirImgProd);
-        datos.put("tipo", datosCotizacion.get(0).get("tipo"));
-        datos.put("folio", datosCotizacion.get(0).get("folio"));
-        datos.put("fecha", datosCotizacion.get(0).get("fecha"));
-        datos.put("tc_usd", datosCotizacion.get(0).get("tc_usd"));
-        datos.put("observaciones", datosCotizacion.get(0).get("observaciones"));
-        datos.put("img_desc", incluye_img);
-        datos.put("nombre_usuario", datosCotizacion.get(0).get("nombre_usuario"));
-        datos.put("puesto_usuario", datosCotizacion.get(0).get("puesto_usuario"));
-        datos.put("correo_agente", datosCotizacion.get(0).get("correo_agente"));
-        datos.put("saludo", saludo.get("saludo"));
-        datos.put("despedida", despedida.get("despedida"));
-        datos.put("subtotal", datosCotizacion.get(0).get("subtotal"));
-        datos.put("impuesto", datosCotizacion.get(0).get("impuesto"));
-        datos.put("total", datosCotizacion.get(0).get("total"));
-        datos.put("dias_vigencia", datosCotizacion.get(0).get("dias_vigencia"));
-        datos.put("monedaAbr", datosCotizacion.get(0).get("monedaAbr"));
-        
-        //esta variable viene desde la vista
-        //hay un campo en la base de datos pero, no se esta utilizando en el pdf
-        datos.put("incluiyeIvaPdf", incluye_iva);
-        
-        
-        if(datosCotizacion.get(0).get("tipo").equals("1")){
-            datosCliPros = this.getPocDao().getCotizacion_DatosCliente(id_cotizacion);
-        }else{
-            datosCliPros = this.getPocDao().getCotizacion_DatosProspecto(id_cotizacion);
-        }
-        
-        datosReceptor.put("clieCalle", datosCliPros.get(0).get("calle"));
-        datosReceptor.put("clieNumero", datosCliPros.get(0).get("numero"));
-        datosReceptor.put("clieColonia", datosCliPros.get(0).get("colonia"));
-        datosReceptor.put("clieMunicipio", datosCliPros.get(0).get("municipio"));
-        datosReceptor.put("clieEstado", datosCliPros.get(0).get("estado"));
-        datosReceptor.put("cliePais", datosCliPros.get(0).get("pais"));
-        datosReceptor.put("clieCp", datosCliPros.get(0).get("cp"));
-        datosReceptor.put("clieTel", datosCliPros.get(0).get("telefono"));
-        datosReceptor.put("clieRfc", datosCliPros.get(0).get("rfc"));
-        datosReceptor.put("clieContacto", datosCliPros.get(0).get("contacto"));
-        datosReceptor.put("clieRazonSocial", datosCliPros.get(0).get("razon_social"));
-                
-        pdfCotizacion pdf = new pdfCotizacion(HeaderFooter, datosEmisor, datos,datosReceptor,lista_productos, condiciones_comerciales, politicas_pago, incoterms);
-        pdf.ViewPDF();
-        
-        
-        System.out.println("Recuperando archivo: " + fileout);
-        File file = new File(fileout);
-        int size = (int) file.length(); // Tamaño del archivo
-        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-        response.setBufferSize(size);
-        response.setContentLength(size);
+//        Integer id_usuario = Integer.parseInt(Base64Coder.decodeString(user_id));
+
+        HashMap<String, String> data = this.getPocDao().getFormRemisionIMSS(remision_imss_id);
+
+        Integer empresa_id = Integer.parseInt(data.get("empresa_id"));
+        String rfc_empresa = this.getGralDao().getRfcEmpresaEmisora(empresa_id);
+        String finalFilename = String.format("CR_IMSS_%s.pdf", rfc_empresa);
+        data.put("proveedor", this.getGralDao().getRazonSocialEmpresaEmisora(empresa_id));
+
+        byte[] pdfBytes = PdfRemisionIMSS.createPdf(data);
+        ByteArrayInputStream pdfInputStream = new ByteArrayInputStream(pdfBytes);
+
+        response.setBufferSize(pdfBytes.length);
+        response.setContentLength(pdfBytes.length);
         response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition","attachment; filename=\"" + file.getName() +"\"");
-        FileCopyUtils.copy(bis, response.getOutputStream());  	
+        response.setHeader("Content-Disposition","attachment; filename=\"" + finalFilename + "\"");
+        FileCopyUtils.copy(pdfInputStream, response.getOutputStream());
         response.flushBuffer();
         
-        FileHelper.delete(fileout);
-        
         return null;
-        
     }
-    
-    
-    
 }
