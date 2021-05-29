@@ -285,8 +285,8 @@ class FacXml(BuilderGen):
                     ))
             if impto_id > 0:
                 retenciones.append({
-                    'impuesto': 'ISR',
-                    'clave': '001',
+                    'impuesto': 'IVA',
+                    'clave': '002',
                     'importe': truncate(float(importe_sum), self.__NDECIMALS),
                     'tasa': tasa
                 })
@@ -621,7 +621,7 @@ class FacXml(BuilderGen):
         if i['IMPORTE_RET'] > 0:
             taxes.append(
                 retencion(
-                    i['IMPORTE'], "001", self.__place_tasa(i['TASA_RET']), self.__calc_imp_tax(
+                    i['IMPORTE'], "002", self.__place_tasa(i['TASA_RET']), self.__calc_imp_tax(
                         i['IMPORTE'], self.__place_tasa(i['TASA_RET'])
                     )
                 )

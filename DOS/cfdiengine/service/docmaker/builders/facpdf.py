@@ -513,7 +513,7 @@ class FacPdf(BuilderGen):
 
                 row = [
                     "{0} {1}%".format(
-                        'TAX' if dat['CAP_LOADED']['TL_DOC_LANG'] == 'ENGLISH' else TAXES[imp['IMPUESTO']],
+                        'TAX' if dat['CAP_LOADED']['TL_DOC_LANG'] == 'ENGLISH' else 'RET. ' + TAXES[imp['IMPUESTO']],
                         tasa
                     ),
                     dat['EXTRA_INFO']['CURRENCY_ABR'],
