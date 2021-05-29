@@ -3880,76 +3880,89 @@ public class PocSpringDao implements PocInterfaceDao{
     @Override
     public ArrayList<HashMap<String, Object>> getRemisionesIMSS_PaginaGrid(String data_string, int offset, int pageSize, String orderBy, String asc) {
 
-        System.out.println("Entrando a getCotizacion_PaginaGrid...");
-        System.out.println("data_string="+data_string);
-        System.out.println("offset="+offset);
-        System.out.println("pageSize="+pageSize);
-        System.out.println("orderBy="+orderBy);
-        System.out.println("asc="+asc);   
-        String cad[]=data_string.split("___");
+        System.out.println("Entrando a getRemisionesIMSS_PaginaGrid...");
+//        System.out.println("data_string="+data_string);
+//        System.out.println("offset="+offset);
+//        System.out.println("pageSize="+pageSize);
+//        System.out.println("orderBy="+orderBy);
+//        System.out.println("asc="+asc);
+        String cad[] = data_string.split("___");
 
-        System.out.println("cad[].length"+cad.length);
-        for (int i=0;i<cad.length;i++) {
-            System.out.println("cad["+i+"]="+cad[i]);
-            cad[i]=cad[i].replace("'","");
+        System.out.println("cad[].length" + cad.length);
+        for (int i = 0;i < cad.length; i++) {
+//            System.out.println("cad["+i+"]="+cad[i]);
+            cad[i] = cad[i].replace("'","");
         }
 
-        System.out.println("app_selected    cad[0]="+cad[0]);
-        System.out.println("id_usuario      cad[1]="+cad[1]);
-        System.out.println("folio           cad[2]="+cad[2]);
-        System.out.println("cliente         cad[3]="+cad[3]);
-        System.out.println("fecha_inicial   cad[4]="+cad[4]);
-        System.out.println("fecha_final     cad[5]="+cad[5]);
-        System.out.println("tipo            cad[6]="+cad[6]);
-        System.out.println("incluye_crm     cad[7]="+cad[7]);
-        System.out.println("folioIMSS       cad[8]="+cad[8]);
-        System.out.println("numContrato     cad[9]="+cad[9]);
-        System.out.println("status          cad[10]="+cad[10]);
-        //System.out.println("cad[10]="+cad[10]);
+//        System.out.println("app_selected    cad[0]="+cad[0]);
+//        System.out.println("id_usuario      cad[1]="+cad[1]);
+//        System.out.println("folio           cad[2]="+cad[2]);
+//        System.out.println("cliente         cad[3]="+cad[3]);
+//        System.out.println("fecha_inicial   cad[4]="+cad[4]);
+//        System.out.println("fecha_final     cad[5]="+cad[5]);
+//        System.out.println("tipo            cad[6]="+cad[6]);
+//        System.out.println("incluye_crm     cad[7]="+cad[7]);
+//        System.out.println("folioIMSS       cad[8]="+cad[8]);
+//        System.out.println("numContrato     cad[9]="+cad[9]);
+//        System.out.println("status          cad[10]="+cad[10]);
 
-        String sql_to_query="";
+        String sql_to_query = "";
         //String sql_busqueda = "select id from gral_bus_catalogos(?) as foo (id integer)";
         String sql_busqueda = "";
-        sql_busqueda += cad[2].isEmpty()?"":"AND erp_remisiones_imss.id::character varying ILIKE '%"+cad[2]+"%' ";            
-        sql_busqueda += cad[3].isEmpty()?"":"AND erp_remisiones_imss.cliente ILIKE '%"+cad[3]+"%' ";
-        sql_busqueda += cad[4].isEmpty()?"":"AND erp_remisiones_imss.fecha_expedicion::date = '"+cad[4]+"' ";
-        sql_busqueda += cad[5].isEmpty()?"":"AND erp_remisiones_imss.fecha_pago::date = '"+cad[5]+"' ";
-        sql_busqueda += cad[8].isEmpty()?"":"AND erp_remisiones_imss.folio_imss ILIKE '%"+cad[8]+"%' ";
-        sql_busqueda += cad[9].isEmpty()?"":"AND erp_remisiones_imss.numero_contrato ILIKE '%"+cad[9]+"%' ";
-        sql_busqueda += cad[10].isEmpty()?"":"AND erp_status_remisiones_imss.id::character varying ILIKE '%"+cad[10]+"%' ";
-        System.out.println("sql_busqueda="+sql_busqueda);
+        sql_busqueda += cad[2].isEmpty()?"":"AND erp_remisiones_imss.id::character varying ILIKE '%" + cad[2] + "%' ";
+        sql_busqueda += cad[3].isEmpty()?"":"AND erp_remisiones_imss.cliente ILIKE '%" + cad[3] + "%' ";
+        sql_busqueda += cad[4].isEmpty()?"":"AND erp_remisiones_imss.fecha_expedicion::date = '" + cad[4] + "' ";
+        sql_busqueda += cad[5].isEmpty()?"":"AND erp_remisiones_imss.fecha_pago::date = '" + cad[5] + "' ";
+        sql_busqueda += cad[8].isEmpty()?"":"AND erp_remisiones_imss.folio_imss ILIKE '%" + cad[8] + "%' ";
+        sql_busqueda += cad[9].isEmpty()?"":"AND erp_remisiones_imss.numero_contrato ILIKE '%" + cad[9] + "%' ";
+        sql_busqueda += cad[10].isEmpty()?"":"AND erp_status_remisiones_imss.id::character varying ILIKE '%" + cad[10] + "%' ";
+        System.out.println("sql_busqueda=" + sql_busqueda);
 
         if (cad[6].equals("1")){
-            sql_to_query = "SELECT DISTINCT erp_remisiones_imss.id, erp_remisiones_imss.cliente, erp_remisiones_imss.fecha_expedicion, erp_remisiones_imss.fecha_pago, erp_remisiones_imss.folio_imss, erp_remisiones_imss.numero_contrato, erp_status_remisiones_imss.id, erp_status_remisiones_imss.descripcion, erp_remisiones_imss.doc1, erp_remisiones_imss.doc2, erp_remisiones_imss.doc3, erp_remisiones_imss.doc4, erp_remisiones_imss.doc5, erp_remisiones_imss.doc6, erp_remisiones_imss.doc7, erp_remisiones_imss.doc8, erp_remisiones_imss.doc9, erp_remisiones_imss.doc10 "
-                    +"FROM erp_remisiones_imss, erp_status_remisiones_imss "
-                    +"WHERE erp_status_remisiones_imss.id=erp_remisiones_imss.id_status AND erp_remisiones_imss.borrado_logico=false "
-                    +"  AND erp_remisiones_imss.empresa_id = " + cad[11] + " "
-                    +sql_busqueda+" "
-                    +"order by "+orderBy+" "+asc+" limit "+pageSize+" OFFSET "+offset;
-        }else{
-            /*if (cad[7].equals("false")){
-            }else{
-            }*/
+            sql_to_query =
+                      "SELECT DISTINCT erp_remisiones_imss.id, "
+                    + "                erp_remisiones_imss.cliente, "
+                    + "                erp_remisiones_imss.fecha_expedicion, "
+                    + "                erp_remisiones_imss.fecha_pago, "
+                    + "                erp_remisiones_imss.folio_imss, "
+                    + "                erp_remisiones_imss.numero_contrato, "
+                    + "                erp_status_remisiones_imss.id, "
+                    + "                erp_status_remisiones_imss.descripcion, "
+                    + "                erp_remisiones_imss.doc1, "
+                    + "                erp_remisiones_imss.doc2, "
+                    + "                erp_remisiones_imss.doc3, "
+                    + "                erp_remisiones_imss.doc4, "
+                    + "                erp_remisiones_imss.doc5, "
+                    + "                erp_remisiones_imss.doc6, "
+                    + "                erp_remisiones_imss.doc7, "
+                    + "                erp_remisiones_imss.doc8, "
+                    + "                erp_remisiones_imss.doc9, "
+                    + "                erp_remisiones_imss.doc10 "
+                    + "  FROM erp_remisiones_imss, "
+                    + "       erp_status_remisiones_imss "
+                    + " WHERE erp_status_remisiones_imss.id      = erp_remisiones_imss.id_status "
+                    + "   AND erp_remisiones_imss.borrado_logico = false "
+                    + "   AND erp_remisiones_imss.empresa_id     = " + cad[11] + " "
+                    +     sql_busqueda + " "
+                    + " ORDER BY " + orderBy + " " + asc + " LIMIT " + pageSize + " OFFSET " + offset;
         }
 
-        System.out.println("data_string: "+data_string);
-        System.out.println("PaginaGrid: "+sql_to_query);
+        System.out.println("data_string: " + data_string);
+        System.out.println("PaginaGrid: "  + sql_to_query);
+
         ArrayList<HashMap<String, Object>> hm = (ArrayList<HashMap<String, Object>>) this.jdbcTemplate.query(
             sql_to_query,
-            //new Object[]{new String(data_string),new Integer(pageSize),new Integer(offset)}, new RowMapper() {
                 new Object[]{}, new RowMapper() {
                 @Override
                 public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    HashMap<String, Object> row = new HashMap<String, Object>();
+                    HashMap<String, Object> row = new HashMap<>();
                     row.put("id",rs.getInt("id"));
                     row.put("folio",rs.getInt("id"));
                     row.put("folio_imss",rs.getString("folio_imss"));
-                    //row.put("tipo",rs.getString("tipo"));
                     row.put("cliente",rs.getString("cliente"));
                     row.put("numero_contrato",rs.getString("numero_contrato"));
                     row.put("fecha_expedicion",rs.getString("fecha_expedicion"));
                     row.put("fecha_pago",rs.getString("fecha_pago"));
-                    //row.put("nombre_agente",rs.getString("nombre_agente"));
                     row.put("descripcion",rs.getString("descripcion"));
                     return row;
                 }

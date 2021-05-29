@@ -2672,14 +2672,20 @@ $(function() {
 		});
 		
 		
-		
+
 		
 		$submit_actualizar.bind('click',function(){
 			var trCount = $("tr", $grid_productos).size();
 			$total_tr.val(trCount);
-                        var remove = function() {$(this).remove();};
-			$('#forma-cotizacions-overlay').fadeOut(remove);
-                        jAlert("Contra Recibo IMMS registrado con &eacute;xito", 'Atenci&oacute;n!');
+
+                        if (validarForm($total.val())) {
+                            var remove = function() {$(this).remove();};
+                            $('#forma-cotizacions-overlay').fadeOut(remove);
+                            jAlert("Contra Recibo IMMS registrado con &eacute;xito", 'Atenci&oacute;n!');
+                            return true;
+                        } else {
+                            return false;
+                        }
                         //location.reload();
 			/*if(parseInt(trCount) > 0){
 				$grid_productos.find('tr').each(function (index){
@@ -2690,7 +2696,6 @@ $(function() {
 				jAlert('No hay datos para actualizar', 'Atencion!', function(r) { $sku_producto.focus(); });
 				return false;
 			}*/
-                    return true;
 		});
 		
 		//cerrar plugin
@@ -3145,10 +3150,13 @@ $(function() {
 						return false;
 					}
                                         */
-                                        var remove = function() {$(this).remove();};
-					$('#forma-cotizacions-overlay').fadeOut(remove);
-
-                                       return true;
+                                        if (validarForm($total.val())) {
+                                            var remove = function() {$(this).remove();};
+                                            $('#forma-cotizacions-overlay').fadeOut(remove);
+                                            return true;
+                                        } else {
+                                            return false;
+                                        }
 				});
 				
 				
@@ -3171,8 +3179,15 @@ $(function() {
 		}
 	}
         
-        
-        
+    var validarForm = function(valImporte) {
+        if (valImporte !== '' && valImporte !== '0') {
+            return true;
+        } else {
+            jAlert('El importe es obligatorio!');
+            return false;
+        }
+    };
+
         
     $get_datos_grid = function(){
         var input_json = document.location.protocol + '//' + document.location.host + '/'+controller+'/getRemisionesIMSS.json';
