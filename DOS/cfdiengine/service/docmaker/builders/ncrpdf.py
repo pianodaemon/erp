@@ -492,7 +492,7 @@ class NcrPdf(BuilderGen):
             TAXES = {'002':'IVA', '003':'IEPS'} # hardcode taxes as per SAT cat
 
             for imptras in dat['XML_PARSED']['TAXES']['TRAS']['DETAILS']:
-                _, tasa  = imptras['TASAOCUOTA'].split('.')
+                tasa = str(float(imptras['TASAOCUOTA']) * 100)
 
                 row = [
                     "{0} {1}%".format(
