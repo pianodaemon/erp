@@ -488,7 +488,6 @@ class NcrXml(BuilderGen):
             return z
 
         c.Impuestos = pyxb.BIND(
-            TotalImpuestosRetenidos=0,
             TotalImpuestosTrasladados=zigma(dat['TRASLADOS']),
             Traslados=pyxb.BIND(
                 *tuple([traslado(t['clave'], self.__place_tasa(t['tasa']), t['importe']) for t in dat['TRASLADOS']])
