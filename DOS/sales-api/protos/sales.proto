@@ -113,6 +113,7 @@ message PedidoRequest {
     int32 gralUsrIdAut    = 18;
     int32 gralImptosRetId = 19;
     double tasaRet        = 20;
+    int32 invProdAliasId  = 21;
   }
   repeated GridRenglonPedido gridDetalle = 27;
 }

@@ -138,7 +138,8 @@ def convert_to_sql_array_literal(grid_detalle):
             str(s.precioAut)       + ", " +
             str(s.gralUsrIdAut)    + ", " +
             str(s.gralImptosRetId) + ", " +
-            str(s.tasaRet)         +
+            str(s.tasaRet)         + ", " +
+            str(s.invProdAliasId)  +
             ")"
         )
         first = False
