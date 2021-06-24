@@ -2134,7 +2134,29 @@ $(function() {
 					trr += '<input type="text" 		name="sku" value="'+ sku +'" id="skuprod" class="borde_oculto" readOnly="true" style="width:110px;">';
 				trr += '</td>';
 				trr += '<td class="grid1" style="font-size: 11px;  border:1px solid #C1DAD7;" width="200">';
-					trr += '<input type="text" 		name="nombre" 	value="'+ titulo +'" id="nom" class="borde_oculto" readOnly="true" style="width:196px;">';
+					//trr += '<input type="text" 		name="nombre" 	value="'+ titulo +'" id="nom" class="borde_oculto" readOnly="true" style="width:196px;">';
+                                    let arrTitulo = titulo.split('||');
+                                    let option = '';
+                                    let arrOption;
+
+                                    if (arrTitulo.length == 1) {
+
+                                        arrOption = arrTitulo[0].split('|');
+
+                                        if (arrOption.length == 1) {
+                                            option += '<option value="0">' + arrOption[0] + '</option>';
+                                        } else {
+                                            option += '<option value="' + arrOption[0] + '">' + arrOption[1] + '</option>';
+                                        }
+
+                                    } else {
+
+                                        for (i of arrTitulo) {
+                                            arrOption = i.split('|');
+                                            option += '<option value="' + arrOption[0] + '">' + arrOption[1] + '</option>';
+                                        }
+                                    }
+                                    trr += '<select name="nombre" id="nom" class="nombre' + tr + '" style="width:196px;">' + option + '</select>';
 				trr += '</td>';
 				trr += '<td class="grid1" style="font-size: 11px;  border:1px solid #C1DAD7;" width="90">';
 					trr += '<select name="select_umedida" class="select_umedida'+ tr +'" style="width:86px;"></select>';
@@ -4770,7 +4792,34 @@ $(function() {
 									trr += '<input type="text" name="sku" value="'+ prod['codigo'] +'" id="skuprod" class="borde_oculto" readOnly="true" style="width:110px;">';
 							trr += '</td>';
 							trr += '<td class="grid1" style="font-size:11px;  border:1px solid #C1DAD7;" width="200">';
-								trr += '<input type="text" 	name="nombre" 	value="'+ prod['titulo'] +'" 	id="nom" class="borde_oculto" readOnly="true" style="width:196px;">';
+								// trr += '<input type="text" 	name="nombre" 	value="'+ prod['titulo'] +'" 	id="nom" class="borde_oculto" readOnly="true" style="width:196px;">';
+                                                                let arrTitulo = prod['titulo'].split('||');
+                                                                let option = '';
+                                                                let arrOption;
+
+                                                                if (arrTitulo.length == 1) {
+
+                                                                    arrOption = arrTitulo[0].split('|');
+
+                                                                    if (arrOption.length == 1) {
+                                                                        option += '<option value="0">' + arrOption[0] + '</option>';
+                                                                    } else {
+                                                                        option += '<option value="' + arrOption[0] + '">' + arrOption[1] + '</option>';
+                                                                    }
+
+                                                                } else {
+
+                                                                    for (i of arrTitulo) {
+                                                                        arrOption = i.split('|');
+
+                                                                        if (prod['inv_prod_alias_id'] == arrOption[0]) {
+                                                                            option += '<option value="' + arrOption[0] + '" selected>' + arrOption[1] + '</option>';
+                                                                        } else {
+                                                                            option += '<option value="' + arrOption[0] + '">' + arrOption[1] + '</option>';
+                                                                        }
+                                                                    }
+                                                                }
+                                                                trr += '<select name="nombre" id="nom" class="nombre' + tr + '" style="width:196px;">' + option + '</select>';
 							trr += '</td>';
 							trr += '<td class="grid1" style="font-size:11px;  border:1px solid #C1DAD7;" width="90">';
 								trr += '<select name="select_umedida" class="select_umedida'+ tr +'" style="width:86px;"></select>';

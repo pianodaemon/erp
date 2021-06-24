@@ -138,6 +138,7 @@
 									<li><a href="#tabx-2"><strong>Datos</strong></a></li>
 									<li><a href="#tabx-3"><strong>Contabilidad</strong></a></li>
 									<li><a href="#tabx-4"><strong>Descripciones</strong></a></li>
+                                                                        <li><a href="#tabx-5"><strong>Alias</strong></a></li>
                                 </ul>
                             </div>
                         </div>
@@ -746,8 +747,85 @@
                                         </table>
                                         
                                     </div>
-                                    
-                                    
+
+                                    <div id="tabx-5" class="contenidoPes" >
+
+                                        <table border="0">
+                                            <tr>
+                                                <td width="35"></td>
+                                                <td width="30">1.</td>
+                                                <td width="5"></td>
+                                                <td width="260"><input type="text" name="alias1" style="width:260px;"></td>
+                                                <td width="60"></td>
+                                                <td width="30">2.</td>
+                                                <td width="5"></td>
+                                                <td width="260"><input type="text" name="alias2" style="width:260px;"></td>
+                                                <td width="25" colspan="4"></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="12" height="10"></td>
+                                            </tr>
+                                            <tr>
+                                                <td width="35"></td>
+                                                <td width="30">3.</td>
+                                                <td width="5"></td>
+                                                <td width="260"><input type="text" name="alias3" style="width:260px;"></td>
+                                                <td width="60"></td>
+                                                <td width="30">4.</td>
+                                                <td width="5"></td>
+                                                <td width="260"><input type="text" name="alias4" style="width:260px;"></td>
+                                                <td width="25" colspan="4"></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="12" height="10"></td>
+                                            </tr>
+                                            <tr>
+                                                <td width="35"></td>
+                                                <td width="30">5.</td>
+                                                <td width="5"></td>
+                                                <td width="260"><input type="text" name="alias5" style="width:260px;"></td>
+                                                <td width="60"></td>
+                                                <td width="30">6.</td>
+                                                <td width="5"></td>
+                                                <td width="260"><input type="text" name="alias6" style="width:260px;"></td>
+                                                <td width="25" colspan="4"></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="12" height="10"></td>
+                                            </tr>
+                                            <tr>
+                                                <td width="35"></td>
+                                                <td width="30">7.</td>
+                                                <td width="5"></td>
+                                                <td width="260"><input type="text" name="alias7" style="width:260px;"></td>
+                                                <td width="60"></td>
+                                                <td width="30">8.</td>
+                                                <td width="5"></td>
+                                                <td width="260"><input type="text" name="alias8" style="width:260px;"></td>
+                                                <td width="25" colspan="4"></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="12" height="10"></td>
+                                            </tr>
+                                            <tr>
+                                                <td width="35"></td>
+                                                <td width="30">9.</td>
+                                                <td width="5"></td>
+                                                <td width="260"><input type="text" name="alias9" style="width:260px;"></td>
+                                                <td width="60"></td>
+                                                <td width="30">10.</td>
+                                                <td width="5"></td>
+                                                <td width="260"><input type="text" name="alias10" style="width:260px;"></td>
+                                                <td width="25" colspan="4"></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="12" height="10"></td>
+                                            </tr>
+
+                                        </table>
+
+                                    </div><!--termina tabx-5-->
+
                                 </div>
                             </div>
 

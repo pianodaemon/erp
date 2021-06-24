@@ -633,12 +633,15 @@ public class InvSpringDao implements InvInterfaceDao{
         + "WHERE inv_prod.id=?;";
 
 	System.out.println("getProducto_Datos: "+sql_query);
-        ArrayList<HashMap<String, String>> hm_producto = (ArrayList<HashMap<String, String>>) this.jdbcTemplate.query(
+
+        ArrayList<HashMap<String, String>> producto = (ArrayList<HashMap<String, String>>) this.jdbcTemplate.query(
             sql_query,
-            new Object[]{new Integer(id_producto)}, new RowMapper() {
+            new Object[] {new Integer(id_producto)},
+            new RowMapper() {
+
                 @Override
                 public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    HashMap<String, String> row = new HashMap<String, String>();
+                    HashMap<String, String> row = new HashMap<>();
                     row.put("id",rs.getString("id"));
                     row.put("sku",rs.getString("sku"));
                     row.put("descripcion",rs.getString("descripcion"));
@@ -686,10 +689,43 @@ public class InvSpringDao implements InvInterfaceDao{
                 }
             }
         );
-        return hm_producto;
+
+        for (HashMap<String, String> p : producto) {
+
+            sql_query = "SELECT alias_id, descripcion FROM inv_prod_alias WHERE producto_id = " + p.get("id") + ";";
+
+            ArrayList<HashMap<String, String>> alias = (ArrayList<HashMap<String, String>>) this.jdbcTemplate.query(
+                sql_query,
+                new Object[] {},
+                new RowMapper() {
+
+                    @Override
+                    public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                        HashMap<String, String> row = new HashMap<>();
+                        row.put("alias_id",    String.valueOf(rs.getInt("alias_id")));
+                        row.put("descripcion", rs.getString("descripcion"));
+                        return row;
+                    }
+                }
+            );
+
+            String aliasStr = "";
+            boolean primero = true;
+
+            for (HashMap<String, String> a : alias) {
+
+                if (!primero) {
+                    aliasStr += "||";
+                }
+                aliasStr += a.get("alias_id") + "|" + a.get("descripcion");
+                primero = false;
+            }
+
+            p.put("alias", aliasStr);
+        }
+
+        return producto;
     }
-
-
 
 
     //obtiene datos de Configuracion de Cuentas Contables para Productos

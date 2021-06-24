@@ -514,10 +514,10 @@ public class PocPedidosController {
             Model model
         ) {
         
-        HashMap<String,ArrayList<HashMap<String, String>>> jsonretorno = new HashMap<String,ArrayList<HashMap<String, String>>>();
-        HashMap<String, String> userDat = new HashMap<String, String>();
-        ArrayList<HashMap<String, String>> ArrayPres = new ArrayList<HashMap<String, String>>();
-        ArrayList<HashMap<String, String>> ArrayPresProcesado = new ArrayList<HashMap<String, String>>();
+        HashMap<String,ArrayList<HashMap<String, String>>> jsonretorno = new HashMap<>();
+        HashMap<String, String> userDat;
+        ArrayList<HashMap<String, String>> ArrayPres;
+        ArrayList<HashMap<String, String>> ArrayPresProcesado;
         
         //decodificar id de usuario
         Integer id_usuario = Integer.parseInt(Base64Coder.decodeString(id_user));
@@ -526,7 +526,7 @@ public class PocPedidosController {
         Integer id_empresa = Integer.parseInt(userDat.get("empresa_id"));
         Integer id_sucursal = Integer.parseInt(userDat.get("sucursal_id"));
         
-        ArrayPres = this.getPocDao().getPresentacionesProducto(sku.trim(),lista_precio,id_empresa);
+        ArrayPres = this.getPocDao().getPresentacionesAliasProducto(sku.trim(),lista_precio,id_empresa);
         ArrayPresProcesado = this.getPocDao().getVerificarImpuesto(id_sucursal, Integer.parseInt(idClient), ArrayPres);
         
         jsonretorno.put("Presentaciones", ArrayPresProcesado);
@@ -872,6 +872,7 @@ public class PocPedidosController {
         @RequestParam(value="eliminado", required=false)       String[] eliminado,
         @RequestParam(value="iddetalle", required=false)       String[] iddetalle,
         @RequestParam(value="idproducto", required=false)      String[] idproducto,
+        @RequestParam(value="nombre", required=false)          String[] aliasProdIds,
         @RequestParam(value="select_umedida", required=false)  String[] select_umedida,
         @RequestParam(value="id_presentacion", required=false) String[] id_presentacion,
         @RequestParam(value="id_imp_prod", required=false)     String[] id_impuesto,
@@ -994,7 +995,8 @@ public class PocPedidosController {
                     .setPrecioAut(Helper.toDouble(precio_autorizado))
                     .setGralUsrIdAut(Helper.toInt(id_user_autoriza))
                     .setGralImptosRetId(Helper.toInt(ret_id[i]))
-                    .setTasaRet(Helper.toDouble(ret_tasa[i])));
+                    .setTasaRet(Helper.toDouble(ret_tasa[i]))
+                    .setInvProdAliasId(Helper.toInt(aliasProdIds[i])));
         }
 
         //Serializar el arreglo
@@ -1093,7 +1095,7 @@ public class PocPedidosController {
             .setNumCuenta(pc.account)
             .setFolioCot(pc.no_cot);
 
-        HashMap<String, String> jsonretorno = new HashMap<String, String>();
+        HashMap<String, String> jsonretorno = new HashMap<>();
         HashMap<String, String> success = this.getPocDao().poc_val_cusorder(
             new Integer(id_usuario),
             tipo_cambio,

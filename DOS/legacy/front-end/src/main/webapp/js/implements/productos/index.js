@@ -2164,7 +2164,18 @@ $(function() {
 				
 				var $sku_minigrid = $('#forma-product-window').find('input[name=sku_minigrid]');
 				var $descr_prod_minigrid = $('#forma-product-window').find('input[name=descr_prod_minigrid]');
-				
+
+                                var $alias1  = $('#forma-product-window').find('input[name=alias1]');
+                                var $alias2  = $('#forma-product-window').find('input[name=alias2]');
+                                var $alias3  = $('#forma-product-window').find('input[name=alias3]');
+                                var $alias4  = $('#forma-product-window').find('input[name=alias4]');
+                                var $alias5  = $('#forma-product-window').find('input[name=alias5]');
+                                var $alias6  = $('#forma-product-window').find('input[name=alias6]');
+                                var $alias7  = $('#forma-product-window').find('input[name=alias7]');
+                                var $alias8  = $('#forma-product-window').find('input[name=alias8]');
+                                var $alias9  = $('#forma-product-window').find('input[name=alias9]');
+                                var $alias10 = $('#forma-product-window').find('input[name=alias10]');
+
 				//variables de los href
 				var $agregar_prod = $('#forma-product-window').find('a[href*=agregar_produ_minigrid]');
 				var $buscar_prod_ingrediente = $('#forma-product-window').find('a[href*=busca_producto_ingrediente]');
@@ -2473,8 +2484,52 @@ $(function() {
 					$namepdf.attr('value', entry['Producto'][0]['archivo_pdf']);
 					$descripcion_corta.text(entry['Producto'][0]['descripcion_corta']);
 					$descripcion_larga.text(entry['Producto'][0]['descripcion_larga']);
-					
-					
+                                        
+                                        let arrTitulo = entry['Producto'][0]['alias'].split('||');
+                                        let arrOption;
+
+                                        if (arrTitulo.length != 1 || arrTitulo[0] != '') {
+
+                                            for (i of arrTitulo) {
+                                                arrOption = i.split('|');
+
+                                                switch(arrOption[0]) {
+                                                    case '1':
+                                                        $alias1.val(arrOption[1]);
+                                                        break;
+                                                    case '2':
+                                                        $alias2.val(arrOption[1]);
+                                                        break;
+                                                    case '3':
+                                                        $alias3.val(arrOption[1]);
+                                                        break;
+                                                    case '4':
+                                                        $alias4.val(arrOption[1]);
+                                                        break;
+                                                    case '5':
+                                                        $alias5.val(arrOption[1]);
+                                                        break;
+                                                    case '6':
+                                                        $alias6.val(arrOption[1]);
+                                                        break;
+                                                    case '7':
+                                                        $alias7.val(arrOption[1]);
+                                                        break;
+                                                    case '8':
+                                                        $alias8.val(arrOption[1]);
+                                                        break;
+                                                    case '9':
+                                                        $alias9.val(arrOption[1]);
+                                                        break;
+                                                    case '10':
+                                                        $alias10.val(arrOption[1]);
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
+                                            }
+                                        }
+
 					if(entry['Producto'][0]['archivo_img'] != ""){
 						button_img.text('Cambiar Imagen');
 						$nameimg.val(entry['Producto'][0]['archivo_img']);

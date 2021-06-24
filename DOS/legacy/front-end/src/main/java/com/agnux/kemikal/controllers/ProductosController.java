@@ -564,15 +564,25 @@ public class ProductosController {
             @RequestParam(value="edito_imagen", required=true) String edito_imagen,
             @RequestParam(value="check_flete", required=false) String check_flete,
             @RequestParam(value="no_clie", required=true) String no_clie,
-            @RequestParam(value="clave_cfdi_claveprodserv", required=true) String clave_cfdi_claveprodserv,            
-            Model model,@ModelAttribute("user") UserSessionData user
+            @RequestParam(value="clave_cfdi_claveprodserv", required=true) String clave_cfdi_claveprodserv,
+            @RequestParam(value="alias1",  required=false) String alias1,
+            @RequestParam(value="alias2",  required=false) String alias2,
+            @RequestParam(value="alias3",  required=false) String alias3,
+            @RequestParam(value="alias4",  required=false) String alias4,
+            @RequestParam(value="alias5",  required=false) String alias5,
+            @RequestParam(value="alias6",  required=false) String alias6,
+            @RequestParam(value="alias7",  required=false) String alias7,
+            @RequestParam(value="alias8",  required=false) String alias8,
+            @RequestParam(value="alias9",  required=false) String alias9,
+            @RequestParam(value="alias10", required=false) String alias10,
+            Model model, @ModelAttribute("user") UserSessionData user
         ) {
             
             System.out.println("*** Entrando a Productos editJson ****");
             System.out.println("clave_cfdi_claveprodserv="+clave_cfdi_claveprodserv);
-            HashMap<String, String> jsonretorno = new HashMap<String, String>();
-            HashMap<String, String> succes = new HashMap<String, String>();
-            HashMap<String, String> userDat = new HashMap<String, String>();
+            HashMap<String, String> jsonretorno = new HashMap<>();
+            HashMap<String, String> success;
+            HashMap<String, String> userDat;
             Integer app_selected = 8;
             String command_selected = "new";
             Integer id_usuario= user.getUserId();//variable para el id  del usuario
@@ -701,12 +711,23 @@ public class ProductosController {
                     no_clie+"___"+//44
                     select_moneda+"___"+//45
                     select_retencion+"___"+//46
-                    clave_cfdi_claveprodserv;//47
-            succes = this.getInvDao().selectFunctionValidateAaplicativo(data_string,app_selected,extra_data_array);
+                    clave_cfdi_claveprodserv + "___" + //47
+                    alias1.trim() + "___" + // 48
+                    alias2.trim() + "___" + // 49
+                    alias3.trim() + "___" + // 50
+                    alias4.trim() + "___" + // 51
+                    alias5.trim() + "___" + // 52
+                    alias6.trim() + "___" + // 53
+                    alias7.trim() + "___" + // 54
+                    alias8.trim() + "___" + // 55
+                    alias9.trim() + "___" + // 56
+                    alias10.trim();         // 57
+
+            success = this.getInvDao().selectFunctionValidateAaplicativo(data_string,app_selected,extra_data_array);
             
             String actualizo = "0";
             
-            if( String.valueOf(succes.get("success")).equals("true") ){
+            if( String.valueOf(success.get("success")).equals("true") ){
                 actualizo = this.getInvDao().selectFunctionForThisApp(data_string, extra_data_array);
                 
                 //mover los archivos de tmp a resources
@@ -731,10 +752,11 @@ public class ProductosController {
                 }
             }
             
-            jsonretorno.put("success",String.valueOf(succes.get("success")));
+            jsonretorno.put("success", success.get("success"));
             
-            log.log(Level.INFO, "Salida json {0}", String.valueOf(jsonretorno.get("success")));
-        return jsonretorno;
+            log.log(Level.INFO, "Salida json {0}", jsonretorno.get("success"));
+
+            return jsonretorno;
     }
     
     

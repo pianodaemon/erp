@@ -301,7 +301,8 @@ public class PocSpringDao implements PocInterfaceDao{
             + "(case when poc_pedidos_detalle.autorizado=true then 1 else 0 end) as status_aut,"
             + "poc_pedidos_detalle.precio_aut,"
             + "poc_pedidos_detalle.gral_usr_id_aut,"
-            + "poc_pedidos_detalle.requiere_aut "
+            + "poc_pedidos_detalle.requiere_aut, "
+            + "poc_pedidos_detalle.inv_prod_alias_id "
         + "FROM poc_pedidos_detalle "
         + "LEFT JOIN inv_prod on inv_prod.id = poc_pedidos_detalle.inv_prod_id "
         + "LEFT JOIN inv_prod_unidades on inv_prod_unidades.id = poc_pedidos_detalle.inv_prod_unidad_id "
@@ -310,9 +311,11 @@ public class PocSpringDao implements PocInterfaceDao{
         + "WHERE poc_pedidos_detalle.poc_pedido_id=? ORDER BY poc_pedidos_detalle.id;";
         
         //System.out.println("Obtiene datos grid prefactura: "+sql_query);
-        ArrayList<HashMap<String, String>> hm_grid = (ArrayList<HashMap<String, String>>) this.jdbcTemplate.query(
+        ArrayList<HashMap<String, String>> grid = (ArrayList<HashMap<String, String>>) this.jdbcTemplate.query(
             sql_query,
-            new Object[]{new Integer(id_pedido)}, new RowMapper() {
+            new Object[] {new Integer(id_pedido)},
+            new RowMapper() {
+
                 @Override
                 public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
                     HashMap<String, String> row = new HashMap<String, String>();
@@ -352,12 +355,54 @@ public class PocSpringDao implements PocInterfaceDao{
                     
                     row.put("status_aut",String.valueOf(rs.getInt("status_aut"))+"&&&"+StringHelper.roundDouble(rs.getDouble("precio_aut"),4)+"&&&"+Base64Coder.encodeString(String.valueOf(rs.getInt("gral_usr_id_aut"))));
                     row.put("requiere_aut",String.valueOf(rs.getBoolean("requiere_aut")));
+                    row.put("inv_prod_alias_id", String.valueOf(rs.getInt("inv_prod_alias_id")));
                     
                     return row;
                 }
             }
         );
-        return hm_grid;
+
+        for (HashMap<String, String> p : grid) {
+
+            sql_query = "SELECT alias_id, descripcion FROM inv_prod_alias WHERE producto_id = " + p.get("inv_prod_id")
+                    + "   ORDER BY alias_id ASC;";
+
+            ArrayList<HashMap<String, String>> alias = (ArrayList<HashMap<String, String>>) this.jdbcTemplate.query(
+                sql_query,
+                new Object[] {},
+                new RowMapper() {
+
+                    @Override
+                    public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                        HashMap<String, String> row = new HashMap<>();
+                        row.put("alias_id",    String.valueOf(rs.getInt("alias_id")));
+                        row.put("descripcion", rs.getString("descripcion"));
+                        return row;
+                    }
+                }
+            );
+
+            String aliasStr = "0|" + p.get("titulo");
+
+            for (HashMap<String, String> a : alias) {
+
+                String aliasIdStr = a.get("alias_id");
+                String descripcion = a.get("descripcion");
+                aliasStr += "||" + aliasIdStr + "|" + descripcion;
+
+                if (aliasIdStr.equals(p.get("inv_prod_alias_id"))) {
+                    p.put("inv_prod_alias", descripcion);
+                }
+            }
+
+            p.put("titulo", aliasStr);
+
+            if (alias.isEmpty()) {
+                p.put("inv_prod_alias", "");
+            }
+        }
+
+        return grid;
     }
 
 
@@ -1665,8 +1710,116 @@ public class PocSpringDao implements PocInterfaceDao{
         
         return hm;
     }
-    
-    
+
+    @Override
+    public ArrayList<HashMap<String, String>> getPresentacionesAliasProducto(String sku,String lista_precio, Integer id_empresa) {
+        String sql_query;
+        String precio;
+
+        if (lista_precio.equals("0")) {
+            precio = " 0::double precision AS precio,"
+                    + "0::integer  AS id_moneda,"
+                    + "0::double precision AS tc,"
+                    + "'1'::character varying  AS exis_prod_lp ";
+        } else {
+            precio = " (CASE WHEN inv_pre.precio_"+lista_precio+" IS NULL THEN 0 ELSE inv_pre.precio_"+lista_precio+" END ) AS precio,"
+                    + "(CASE WHEN inv_pre.gral_mon_id_pre"+lista_precio+" IS NULL THEN 0 ELSE inv_pre.gral_mon_id_pre"+lista_precio+" END ) AS id_moneda,"
+                    + "(CASE WHEN inv_pre.gral_mon_id_pre1 IS NULL THEN 0 ELSE (SELECT valor FROM erp_monedavers WHERE momento_creacion<=now() AND moneda_id=inv_pre.gral_mon_id_pre"+lista_precio+" ORDER BY momento_creacion DESC LIMIT 1) END ) AS tc, "
+                    + "(CASE WHEN inv_pre.precio_"+lista_precio+" IS NULL THEN 'El producto con &eacute;sta presentaci&oacute;n no se encuentra en el cat&aacute;logo de Listas de Precios.\nEs necesario asignarle un precio.' ELSE '1' END ) AS exis_prod_lp ";
+        }
+
+        sql_query = "SELECT "
+            + "inv_prod.id, "
+            + "inv_prod.sku, "
+            + "inv_prod.descripcion AS titulo, "
+            + "inv_prod.gral_impto_id AS id_impto_prod, "
+            + "inv_prod.unidad_id, "
+            + "(CASE WHEN inv_prod.gral_impto_id=0 THEN 0 ELSE gral_imptos.iva_1 END) AS valor_impto_prod, "
+            + "(CASE WHEN inv_prod.ieps=0 THEN 0 ELSE gral_ieps.id END) AS ieps_id, "
+            + "(CASE WHEN inv_prod.ieps=0 THEN 0 ELSE gral_ieps.tasa END) AS ieps_tasa, "
+            + "(CASE WHEN inv_prod.gral_imptos_ret_id=0 THEN 0 ELSE gral_imptos_ret.id END) AS ret_id, "
+            + "(CASE WHEN inv_prod.gral_imptos_ret_id=0 THEN 0 ELSE gral_imptos_ret.tasa END) AS ret_tasa, "
+            + "(CASE WHEN inv_prod.descripcion_larga IS NULL THEN '' ELSE inv_prod.descripcion_larga END) AS descripcion_larga,"
+            + "(CASE WHEN inv_prod.archivo_img='' THEN '' ELSE inv_prod.archivo_img END) AS archivo_img,"
+            + "(CASE WHEN inv_prod_unidades.titulo IS NULL THEN '' ELSE inv_prod_unidades.titulo END) AS unidad,"
+            + "(CASE WHEN inv_prod_presentaciones.id IS NULL THEN 0 ELSE inv_prod_presentaciones.id END) AS id_presentacion,"
+            + "(CASE WHEN inv_prod_presentaciones.titulo IS NULL THEN '' ELSE inv_prod_presentaciones.titulo END) AS presentacion, "
+            + "(CASE WHEN inv_prod_unidades.decimales IS NULL THEN 0 ELSE inv_prod_unidades.decimales END) AS  decimales, "
+            + precio + " "
+            + "FROM inv_prod "
+            + "LEFT JOIN inv_prod_unidades on inv_prod_unidades.id = inv_prod.unidad_id "
+            + "LEFT JOIN inv_prod_pres_x_prod on inv_prod_pres_x_prod.producto_id = inv_prod.id "
+            + "LEFT JOIN inv_prod_presentaciones on inv_prod_presentaciones.id = inv_prod_pres_x_prod.presentacion_id "
+            + "LEFT JOIN gral_imptos ON gral_imptos.id=inv_prod.gral_impto_id "
+            + "LEFT JOIN gral_ieps ON gral_ieps.id=inv_prod.ieps "
+            + "LEFT JOIN gral_imptos_ret ON gral_imptos_ret.id=inv_prod.gral_imptos_ret_id "
+            + "LEFT JOIN inv_pre ON (inv_pre.inv_prod_id=inv_prod.id AND inv_pre.inv_prod_presentacion_id=inv_prod_pres_x_prod.presentacion_id AND inv_pre.borrado_logico=false) "
+            + "WHERE inv_prod.empresa_id = " + id_empresa + " AND inv_prod.sku ILIKE '" + sku + "' AND inv_prod.borrado_logico=false;";
+
+        ArrayList<HashMap<String, String>> presentaciones = (ArrayList<HashMap<String, String>>) this.jdbcTemplate.query(
+            sql_query,
+            new Object[] {},
+            new RowMapper() {
+
+                @Override
+                public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    HashMap<String, String> row = new HashMap<>();
+                    row.put("id",               String.valueOf(rs.getInt("id")));
+                    row.put("id_impto_prod",    String.valueOf(rs.getInt("id_impto_prod")));
+                    row.put("valor_impto_prod", StringHelper.roundDouble(rs.getString("valor_impto_prod"),2));
+                    row.put("ieps_id",          String.valueOf(rs.getInt("ieps_id")));
+                    row.put("ieps_tasa",        StringHelper.roundDouble(rs.getString("ieps_tasa"),2));
+                    row.put("ret_id",           String.valueOf(rs.getInt("ret_id")));
+                    row.put("ret_tasa",         StringHelper.roundDouble(rs.getString("ret_tasa"),2));
+                    row.put("sku",              rs.getString("sku"));
+                    row.put("titulo",           rs.getString("titulo"));
+                    row.put("descripcion_larga",rs.getString("descripcion_larga"));
+                    row.put("archivo_img",      rs.getString("archivo_img"));
+                    row.put("unidad_id",        String.valueOf(rs.getInt("unidad_id")));
+                    row.put("unidad",           rs.getString("unidad"));
+                    row.put("id_presentacion",  String.valueOf(rs.getInt("id_presentacion")));
+                    row.put("presentacion",     rs.getString("presentacion"));
+                    row.put("decimales",        rs.getString("decimales"));
+                    row.put("precio",           StringHelper.roundDouble(rs.getString("precio"),4));
+                    row.put("exis_prod_lp",     rs.getString("exis_prod_lp"));
+                    row.put("id_moneda",        String.valueOf(rs.getInt("id_moneda")));
+                    row.put("tc",               StringHelper.roundDouble(rs.getString("tc"),4));
+                    return row;
+                }
+            }
+        );
+
+        for (HashMap<String, String> p : presentaciones) {
+
+            sql_query = "SELECT alias_id, descripcion FROM inv_prod_alias WHERE producto_id = " + p.get("id") + ";";
+
+            ArrayList<HashMap<String, String>> alias = (ArrayList<HashMap<String, String>>) this.jdbcTemplate.query(
+                sql_query,
+                new Object[] {},
+                new RowMapper() {
+
+                    @Override
+                    public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                        HashMap<String, String> row = new HashMap<>();
+                        row.put("alias_id",    String.valueOf(rs.getInt("alias_id")));
+                        row.put("descripcion", rs.getString("descripcion"));
+                        return row;
+                    }
+                }
+            );
+
+            String aliasStr = "0|" + p.get("titulo");
+
+            for (HashMap<String, String> a : alias) {
+                aliasStr += "||" + a.get("alias_id") + "|" + a.get("descripcion");
+            }
+
+            p.put("titulo", aliasStr);
+        }
+
+        return presentaciones;
+    }
+
     //Buscador de Unidades(Vehiculos)
     @Override
     public ArrayList<HashMap<String, String>> getBuscadorUnidades(String no_eco, String marca, Integer id_empresa, Integer id_sucursal) {
