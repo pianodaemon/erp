@@ -382,6 +382,7 @@ public class PocSpringDao implements PocInterfaceDao{
                 }
             );
 
+            boolean haceMatch = false;
             String aliasStr = "0|" + p.get("titulo");
 
             for (HashMap<String, String> a : alias) {
@@ -392,12 +393,13 @@ public class PocSpringDao implements PocInterfaceDao{
 
                 if (aliasIdStr.equals(p.get("inv_prod_alias_id"))) {
                     p.put("inv_prod_alias", descripcion);
+                    haceMatch = true;
                 }
             }
 
             p.put("titulo", aliasStr);
 
-            if (alias.isEmpty()) {
+            if (alias.isEmpty() || !haceMatch) {
                 p.put("inv_prod_alias", "");
             }
         }
