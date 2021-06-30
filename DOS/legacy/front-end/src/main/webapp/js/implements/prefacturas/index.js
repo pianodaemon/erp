@@ -3152,8 +3152,14 @@ $(function() {
 									trr += '<input type="text" name="sku'+ tr +'" value="'+ prod['sku'] +'" id="skuprod" class="borde_oculto" readOnly="true" style="width:110px;">';
 							trr += '</td>';
 							trr += '<td class="grid1" style="font-size: 11px;  border:1px solid #C1DAD7;" width="202">';
-								trr += '<input type="text" 	name="nombre'+ tr +'" 	value="'+ prod['titulo'] +'" 	id="nom" class="borde_oculto" readOnly="true" style="width:198px;">';
-							trr += '</td>';
+
+                                                            if (prod['inv_prod_alias'] !== '') {
+								trr += '<input type="text" name="nombre' + tr + '" value="' + prod['inv_prod_alias'] + '" id="nom" class="borde_oculto" readOnly="true" style="width:198px;">';
+                                                            } else {
+                                                                trr += '<input type="text" name="nombre' + tr + '" value="' + prod['titulo'] + '" id="nom" class="borde_oculto" readOnly="true" style="width:198px;">';
+                                                            }
+
+                                                        trr += '</td>';
 							trr += '<td class="grid1" style="font-size: 11px;  border:1px solid #C1DAD7;" width="90">';
 								trr += '<input type="hidden" name="idUnidad" id="idUnidad" value="'+prod['unidad_id']+'">';
 								trr += '<input type="text" 	name="unidad'+ tr +'" 	value="'+ prod['unidad'] +'" 	id="uni" class="borde_oculto" readOnly="true" style="width:86px;">';

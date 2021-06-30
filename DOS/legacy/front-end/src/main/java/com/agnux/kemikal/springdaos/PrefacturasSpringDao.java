@@ -236,7 +236,7 @@ public class PrefacturasSpringDao implements PrefacturasInterfaceDao{
             new Object[]{new Integer(id_prefactura)}, new RowMapper() {
                 @Override
                 public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    HashMap<String, Object> row = new HashMap<String, Object>();
+                    HashMap<String, Object> row = new HashMap<>();
                     row.put("id",String.valueOf(rs.getInt("id")));
                     row.put("folio_pedido",rs.getString("folio_pedido"));
                     row.put("proceso_flujo_id",rs.getInt("proceso_flujo_id"));
@@ -308,7 +308,8 @@ public class PrefacturasSpringDao implements PrefacturasInterfaceDao{
             + "gral_mon.descripcion as moneda, "
             + "erp_prefacturas_detalles.descto, "
             + "erp_prefacturas_detalles.gral_imptos_ret_id as ret_id,"
-            + "(erp_prefacturas_detalles.tasa_ret * 100) AS ret_tasa "
+            + "(erp_prefacturas_detalles.tasa_ret * 100) AS ret_tasa, "
+            + "erp_prefacturas_detalles.inv_prod_alias_id "
         + "FROM erp_prefacturas "
         + "JOIN erp_prefacturas_detalles on erp_prefacturas_detalles.prefacturas_id=erp_prefacturas.id "
         + "LEFT JOIN gral_mon on gral_mon.id = erp_prefacturas.moneda_id "
@@ -316,14 +317,15 @@ public class PrefacturasSpringDao implements PrefacturasInterfaceDao{
         + "LEFT JOIN inv_prod_unidades on inv_prod_unidades.id = erp_prefacturas_detalles.inv_prod_unidad_id "
         + "LEFT JOIN inv_prod_presentaciones on inv_prod_presentaciones.id = erp_prefacturas_detalles.presentacion_id "
         + "WHERE erp_prefacturas.id="+id_prefactura;
-                        
-        //System.out.println("Obtiene datos grid prefactura: "+sql_query);
-        ArrayList<HashMap<String, Object>> hm_grid = (ArrayList<HashMap<String, Object>>) this.jdbcTemplate.query(
+
+        ArrayList<HashMap<String, Object>> grid = (ArrayList<HashMap<String, Object>>) this.jdbcTemplate.query(
             sql_query,  
-            new Object[]{}, new RowMapper() {
+            new Object[] {},
+            new RowMapper() {
+
                 @Override
                 public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    HashMap<String, Object> row = new HashMap<String, Object>();
+                    HashMap<String, Object> row = new HashMap<>();
                     row.put("id_detalle",rs.getInt("id_detalle"));
                     row.put("producto_id",rs.getString("producto_id"));
                     row.put("sku",rs.getString("sku"));
@@ -348,12 +350,46 @@ public class PrefacturasSpringDao implements PrefacturasInterfaceDao{
                     row.put("descto",StringHelper.roundDouble(rs.getDouble("descto"),4) );
                     row.put("ret_id",String.valueOf(rs.getInt("ret_id")));
                     row.put("ret_tasa",StringHelper.roundDouble(rs.getString("ret_tasa"),2));
+                    row.put("inv_prod_alias_id", rs.getInt("inv_prod_alias_id"));
                     
                     return row;
                 }
             }
         );
-        return hm_grid;
+
+        for (HashMap<String, Object> p : grid) {
+
+            ArrayList<HashMap<String, Object>> alias = (ArrayList<HashMap<String, Object>>) this.jdbcTemplate.query(
+                "SELECT alias_id, descripcion FROM inv_prod_alias WHERE producto_id = ?;",
+                new Object[] {Integer.parseInt((String) p.get("producto_id"))},
+                new RowMapper() {
+
+                    @Override
+                    public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                        HashMap<String, Object> row = new HashMap<>();
+                        row.put("alias_id",    rs.getInt("alias_id"));
+                        row.put("descripcion", rs.getString("descripcion"));
+                        return row;
+                    }
+                }
+            );
+
+            boolean haceMatch = false;
+
+            for (HashMap<String, Object> a : alias) {
+
+                if (a.get("alias_id") == p.get("inv_prod_alias_id")) {
+                    p.put("inv_prod_alias", a.get("descripcion"));
+                    haceMatch = true;
+                }
+            }
+
+            if (alias.isEmpty() || !haceMatch) {
+                p.put("inv_prod_alias", "");
+            }
+        }
+
+        return grid;
     }
     
     
