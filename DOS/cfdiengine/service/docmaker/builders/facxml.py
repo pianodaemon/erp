@@ -196,7 +196,9 @@ class FacXml(BuilderGen):
             (erp_prefacturas_detalles.tasa_ret * 100::double precision) AS ret_tasa,
             erp_prefacturas_detalles.gral_ieps_id as ieps_id,
             erp_prefacturas_detalles.tipo_impuesto_id as impto_id,
-            erp_prefacturas_detalles.gral_imptos_ret_id as ret_id
+            erp_prefacturas_detalles.gral_imptos_ret_id as ret_id,
+            erp_prefacturas_detalles.producto_id,
+            erp_prefacturas_detalles.inv_prod_alias_id
             FROM erp_prefacturas
             JOIN erp_prefacturas_detalles on erp_prefacturas_detalles.prefacturas_id=erp_prefacturas.id
             LEFT JOIN inv_prod on inv_prod.id = erp_prefacturas_detalles.producto_id
@@ -205,8 +207,18 @@ class FacXml(BuilderGen):
             LEFT JOIN cfdi_claveunidad on inv_prod_unidades.cfdi_unidad_id = cfdi_claveunidad.id
             LEFT JOIN cfdi_claveprodserv on inv_prod.cfdi_prodserv_id = cfdi_claveprodserv.id
             WHERE erp_prefacturas_detalles.prefacturas_id="""
+
+        alias_sql = '''SELECT descripcion FROM inv_prod_alias WHERE producto_id = {0} AND alias_id = {1};'''
+
         rowset = []
         for row in self.pg_query(conn, "{0}{1}".format(SQL, prefact_id)):
+
+            alias = ''
+            if row['inv_prod_alias_id'] > 0:
+                alias_rowset = self.pg_query(conn, alias_sql.format(row['producto_id'], row['inv_prod_alias_id']))
+                if alias_rowset:
+                    alias = alias_rowset[0]['descripcion']
+
             rowset.append({
                 'SKU': row['sku'],
                 'DESCRIPCION': unidecode.unidecode(row['descripcion']),
@@ -225,7 +237,8 @@ class FacXml(BuilderGen):
                 'TASA_RET': row['ret_tasa'],
                 'IEPS_ID': row['ieps_id'],
                 'IMPUESTO_ID': row['impto_id'],
-                'RET_ID': row['ret_id']
+                'RET_ID': row['ret_id'],
+                'PROD_ALIAS': alias
             })
         return rowset
 
@@ -506,11 +519,12 @@ class FacXml(BuilderGen):
 
         c.Conceptos = pyxb.BIND()
         for i in dat['CONCEPTOS']:
+            alias = i['PROD_ALIAS'] if i['PROD_ALIAS'] else i['DESCRIPCION']
             c.Conceptos.append(pyxb.BIND(
                 Cantidad=i['CANTIDAD'],
                 ClaveUnidad=i['UNIDAD'],
                 ClaveProdServ=i['PRODSERV'],
-                Descripcion=i['DESCRIPCION'],
+                Descripcion=alias,
                 ValorUnitario=i['PRECIO_UNITARIO'],
                 NoIdentificacion=i['SKU'],  # optional
                 Importe=truncate(i['IMPORTE'], self.__NDECIMALS),
