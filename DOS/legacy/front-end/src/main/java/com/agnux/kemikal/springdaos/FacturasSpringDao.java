@@ -384,7 +384,8 @@ public class FacturasSpringDao implements FacturasInterfaceDao{
                 + "fac_docs_detalles.cantidad_devolucion, "
                 + "fac_docs_detalles.gral_ieps_id AS id_ieps,"
                 + "(fac_docs_detalles.valor_ieps * 100::double precision) AS tasa_ieps, "
-                + "((fac_docs_detalles.cantidad * fac_docs_detalles.precio_unitario) * fac_docs_detalles.valor_ieps) AS importe_ieps "
+                + "((fac_docs_detalles.cantidad * fac_docs_detalles.precio_unitario) * fac_docs_detalles.valor_ieps) AS importe_ieps, "
+                + "fac_docs_detalles.inv_prod_alias_id "
         +"FROM fac_docs_detalles "
         +"LEFT JOIN inv_prod on inv_prod.id = fac_docs_detalles.inv_prod_id  "
         +"LEFT JOIN inv_prod_unidades on inv_prod_unidades.id = fac_docs_detalles.inv_prod_unidad_id  "
@@ -393,12 +394,12 @@ public class FacturasSpringDao implements FacturasInterfaceDao{
         
         //System.out.println("Obtiene datos grid FACTURA: "+sql_query);
         //System.out.println("id_factura: "+id_factura);
-        ArrayList<HashMap<String, Object>> hm_grid = (ArrayList<HashMap<String, Object>>) this.jdbcTemplate.query(
+        ArrayList<HashMap<String, Object>> grid = (ArrayList<HashMap<String, Object>>) this.jdbcTemplate.query(
             sql_query,  
             new Object[]{new Integer(id_factura)}, new RowMapper() {
                 @Override
                 public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    HashMap<String, Object> row = new HashMap<String, Object>();
+                    HashMap<String, Object> row = new HashMap<>();
                     row.put("inv_prod_id",rs.getString("inv_prod_id"));
                     row.put("codigo_producto",rs.getString("codigo_producto"));
                     row.put("titulo",rs.getString("titulo"));
@@ -414,11 +415,43 @@ public class FacturasSpringDao implements FacturasInterfaceDao{
                     row.put("id_ieps",String.valueOf(rs.getInt("id_ieps")));
                     row.put("tasa_ieps",StringHelper.roundDouble(rs.getDouble("tasa_ieps"),2) );
                     row.put("importe_ieps",StringHelper.roundDouble(rs.getDouble("importe_ieps"),4) );
+                    row.put("inv_prod_alias_id", rs.getInt("inv_prod_alias_id"));
                     return row;
                 }
             }
         );
-        return hm_grid;
+
+        for (HashMap<String, Object> p : grid) {
+
+            sql_query = "SELECT descripcion "
+                    + "    FROM inv_prod_alias "
+                    + "   WHERE producto_id = ? "
+                    + "     AND alias_id = ?;";
+
+            ArrayList<HashMap<String, Object>> alias = (ArrayList<HashMap<String, Object>>) this.jdbcTemplate.query(
+                sql_query,
+                new Object[] {Integer.parseInt((String) p.get("inv_prod_id")), p.get("inv_prod_alias_id")},
+                new RowMapper() {
+
+                    @Override
+                    public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                        HashMap<String, Object> row = new HashMap<>();
+                        row.put("descripcion", rs.getString("descripcion"));
+                        return row;
+                    }
+                }
+            );
+
+            for (HashMap<String, Object> a : alias) {
+                p.put("inv_prod_alias", a.get("descripcion"));
+            }
+
+            if (alias.isEmpty()) {
+                p.put("inv_prod_alias", "");
+            }
+        }
+
+        return grid;
     }
     
     

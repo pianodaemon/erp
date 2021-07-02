@@ -1173,8 +1173,14 @@ $(function() {
 									trr += '<INPUT TYPE="text" name="sku'+ tr +'" value="'+ prod['codigo_producto'] +'" id="skuprod" class="borde_oculto" readOnly="true" style="width:110px;">';
 							trr += '</td>';
 							trr += '<td class="grid1" style="font-size: 11px;  border:1px solid #C1DAD7;" width="202">';
-								trr += '<INPUT TYPE="text" 	name="nombre'+ tr +'" 	value="'+ prod['titulo'] +'" 	id="nom" class="borde_oculto" readOnly="true" style="width:198px;">';
-							trr += '</td>';
+
+                                                            if (prod['inv_prod_alias'] !== '') {
+                                                                trr += '<INPUT TYPE="text" name="nombre' + tr + '" value="' + prod['inv_prod_alias'] + '" id="nom" class="borde_oculto" readOnly="true" style="width:198px;">';
+                                                            } else {
+                                                                trr += '<INPUT TYPE="text" name="nombre' + tr + '" value="' + prod['titulo'] + '" id="nom" class="borde_oculto" readOnly="true" style="width:198px;">';
+                                                            }
+
+                                                        trr += '</td>';
 							trr += '<td class="grid1" style="font-size: 11px;  border:1px solid #C1DAD7;" width="90">';
 								trr += '<INPUT TYPE="text" 	name="unidad'+ tr +'" 	value="'+ prod['unidad'] +'" 	id="uni" class="borde_oculto" readOnly="true" style="width:86px;">';
 							trr += '</td>';

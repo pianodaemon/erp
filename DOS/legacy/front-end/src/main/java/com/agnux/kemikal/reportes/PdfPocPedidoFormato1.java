@@ -246,7 +246,21 @@ public class PdfPocPedidoFormato1 {
                     }
 
                     if (omega.equals("titulo")){
-                        celda = new PdfPCell(new Paragraph(registro.get(omega)+registro.get("etiqueta_ieps"),smallFont));
+
+                        String aliasId = registro.get("inv_prod_alias_id");
+                        String[] aliasArr = registro.get(omega).split("\\|\\|");
+                        String newTitulo = "";
+
+                        for (String i : aliasArr) {
+                            String[] aliasValArr = i.split("\\|");
+
+                            if (aliasValArr[0].equals(aliasId)) {
+                                newTitulo = aliasValArr[1];
+                                break;
+                            }
+                        }
+
+                        celda = new PdfPCell(new Paragraph(newTitulo + registro.get("etiqueta_ieps"),smallFont));
                         celda.setHorizontalAlignment(Element.ALIGN_LEFT);
                         celda.setVerticalAlignment(Element.ALIGN_MIDDLE);
                         celda.setBorder(0);
