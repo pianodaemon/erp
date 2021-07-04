@@ -390,7 +390,7 @@ public class FacturasSpringDao implements FacturasInterfaceDao{
         +"LEFT JOIN inv_prod on inv_prod.id = fac_docs_detalles.inv_prod_id  "
         +"LEFT JOIN inv_prod_unidades on inv_prod_unidades.id = fac_docs_detalles.inv_prod_unidad_id  "
         +"LEFT JOIN inv_prod_presentaciones on inv_prod_presentaciones.id = fac_docs_detalles.inv_prod_presentacion_id  "
-        +"WHERE fac_docs_detalles.fac_doc_id = ? ORDER BY fac_docs_detalles.id;";
+        +"WHERE fac_docs_detalles.fac_doc_id = ? ORDER BY fac_docs_detalles.id ASC;";
         
         //System.out.println("Obtiene datos grid FACTURA: "+sql_query);
         //System.out.println("id_factura: "+id_factura);

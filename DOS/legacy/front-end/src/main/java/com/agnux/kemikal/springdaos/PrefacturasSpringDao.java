@@ -316,7 +316,8 @@ public class PrefacturasSpringDao implements PrefacturasInterfaceDao{
         + "LEFT JOIN inv_prod on inv_prod.id = erp_prefacturas_detalles.producto_id "
         + "LEFT JOIN inv_prod_unidades on inv_prod_unidades.id = erp_prefacturas_detalles.inv_prod_unidad_id "
         + "LEFT JOIN inv_prod_presentaciones on inv_prod_presentaciones.id = erp_prefacturas_detalles.presentacion_id "
-        + "WHERE erp_prefacturas.id="+id_prefactura;
+        + " WHERE erp_prefacturas.id = " + id_prefactura
+        + " ORDER BY erp_prefacturas_detalles.id ASC;";
 
         ArrayList<HashMap<String, Object>> grid = (ArrayList<HashMap<String, Object>>) this.jdbcTemplate.query(
             sql_query,  
