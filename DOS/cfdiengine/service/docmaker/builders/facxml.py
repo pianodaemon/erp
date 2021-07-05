@@ -207,11 +207,12 @@ class FacXml(BuilderGen):
             LEFT JOIN cfdi_claveunidad on inv_prod_unidades.cfdi_unidad_id = cfdi_claveunidad.id
             LEFT JOIN cfdi_claveprodserv on inv_prod.cfdi_prodserv_id = cfdi_claveprodserv.id
             WHERE erp_prefacturas_detalles.prefacturas_id="""
+        order_clause = ' ORDER BY erp_prefacturas_detalles.id ASC;'
 
         alias_sql = '''SELECT descripcion FROM inv_prod_alias WHERE producto_id = {0} AND alias_id = {1};'''
 
         rowset = []
-        for row in self.pg_query(conn, "{0}{1}".format(SQL, prefact_id)):
+        for row in self.pg_query(conn, "{0}{1}{2}".format(SQL, prefact_id, order_clause)):
 
             alias = ''
             if row['inv_prod_alias_id'] > 0:
