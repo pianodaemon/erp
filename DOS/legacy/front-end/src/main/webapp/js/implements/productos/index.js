@@ -813,7 +813,9 @@ $(function() {
 				$valor_maximo.attr('disabled','-1');
 				$valor_minimo.attr('disabled','-1');
 				$punto_reorden.attr('disabled','-1');
-                $clave_cfdi_claveprodserv.attr('disabled','-1');
+                                if (typeof $clave_cfdi_claveprodserv !== 'undefined') {
+                                    $clave_cfdi_claveprodserv.attr('disabled','-1');
+                                }
 			}
 		}
 		
@@ -849,7 +851,9 @@ $(function() {
 				$valor_maximo.removeAttr('disabled');
 				$valor_minimo.removeAttr('disabled');
 				$punto_reorden.removeAttr('disabled');
-                $clave_cfdi_claveprodserv.removeAttr('disabled');
+                                if (typeof $clave_cfdi_claveprodserv !== 'undefined') {
+                                    $clave_cfdi_claveprodserv.removeAttr('disabled');
+                                }
 			}
 		}
 	}//termina  habilitar y deshabilitar campos
