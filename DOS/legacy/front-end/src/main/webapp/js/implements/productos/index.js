@@ -2498,12 +2498,12 @@ $(function() {
 					//estatus
 					$select_estatus.children().remove();
 					var status_html = '';		
-					if( entry['Producto'][0]['cxp_prov_id']=='true'){
-						status_html = '<option value="true" selected="yes">Activo</option>';
+					if (entry['Producto'][0]['estatus'] == 'true') {
+						status_html += '<option value="true" selected>Activo</option>';
 						status_html += '<option value="false">Inactivo</option>';
-					}else{
-						status_html = '<option value="true">Activo</option>';
-						status_html += '<option value="false" selected="yes">Inactivo</option>';	
+					} else {
+						status_html += '<option value="true">Activo</option>';
+						status_html += '<option value="false" selected>Inactivo</option>';
 					}
 					$select_estatus.append(status_html);
 					
