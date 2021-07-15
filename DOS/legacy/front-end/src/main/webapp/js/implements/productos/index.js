@@ -1516,7 +1516,7 @@ $(function() {
 					if($incluye_produccion.val()=='false'){
 						//aqui solo debe entrar cuando la empresa no incluya modulo de produccion
 						//tipo 1=Terminado, 2=Intermedio, 8=Desarrollo, 3=Kit
-						if( parseInt(tipo_anterior)!=1 || parseInt(tipo_anterior)!=2 || parseInt(tipo_anterior)!=8 || parseInt(tipo_anterior)!=3){
+						if (parseInt(tipo_anterior) != 1 && parseInt(tipo_anterior) != 2 && parseInt(tipo_anterior) != 8 && parseInt(tipo_anterior) != 3) {
 							tipo_anterior=0;
 						}
 					}else{
