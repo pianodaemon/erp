@@ -1258,6 +1258,7 @@ $(function() {
 						.easyTooltip({tooltipId: "easyTooltip2",content: tmp.split(':')[1]});
 					}
 				}
+				jAlert('Hay algunos errores. Revise los campos en las diferentes pestañas.', '¡Atencion!');
 			};
 		}
 		
@@ -2336,6 +2337,7 @@ $(function() {
 								.easyTooltip({tooltipId: "easyTooltip2",content: tmp.split(':')[1]});
 							}
 						}
+						jAlert('Hay algunos errores. Revise los campos en las diferentes pestañas.', '¡Atencion!');
 					};
 				}
 				
