@@ -813,9 +813,6 @@ $(function() {
 				$valor_maximo.attr('disabled','-1');
 				$valor_minimo.attr('disabled','-1');
 				$punto_reorden.attr('disabled','-1');
-                                if (typeof $clave_cfdi_claveprodserv !== 'undefined') {
-                                    $clave_cfdi_claveprodserv.attr('disabled','-1');
-                                }
 			}
 		}
 		
@@ -851,9 +848,6 @@ $(function() {
 				$valor_maximo.removeAttr('disabled');
 				$valor_minimo.removeAttr('disabled');
 				$punto_reorden.removeAttr('disabled');
-                                if (typeof $clave_cfdi_claveprodserv !== 'undefined') {
-                                    $clave_cfdi_claveprodserv.removeAttr('disabled');
-                                }
 			}
 		}
 	}//termina  habilitar y deshabilitar campos
@@ -2657,8 +2651,7 @@ $(function() {
 									$densidad,
 									$valor_maximo,
 									$valor_minimo,
-									$punto_reorden,
-									$clave_cfdi_claveprodserv);
+									$punto_reorden);
 							}else{
 									//$deshabilitar_campos("habilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres);
 							}
