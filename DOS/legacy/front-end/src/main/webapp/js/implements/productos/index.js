@@ -780,7 +780,7 @@ $(function() {
 	
 	
 	//habilitar y deshabilitar campos
-	$deshabilitar_campos = function(estado,$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden, $clave_cfdi_claveprodserv){
+	$deshabilitar_campos = function(estado,$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden){
 		if(estado == 'desahabilitar'){
 			$agregar_pres.hide();
 			$remover_pres.hide();
@@ -813,9 +813,6 @@ $(function() {
 				$valor_maximo.attr('disabled','-1');
 				$valor_minimo.attr('disabled','-1');
 				$punto_reorden.attr('disabled','-1');
-                                if (typeof $clave_cfdi_claveprodserv !== 'undefined') {
-                                    $clave_cfdi_claveprodserv.attr('disabled','-1');
-                                }
 			}
 		}
 		
@@ -851,9 +848,6 @@ $(function() {
 				$valor_maximo.removeAttr('disabled');
 				$valor_minimo.removeAttr('disabled');
 				$punto_reorden.removeAttr('disabled');
-                                if (typeof $clave_cfdi_claveprodserv !== 'undefined') {
-                                    $clave_cfdi_claveprodserv.removeAttr('disabled');
-                                }
 			}
 		}
 	}//termina  habilitar y deshabilitar campos
@@ -1553,7 +1547,7 @@ $(function() {
 					
 					//Habilitar campos cuando sea diferente de 3=KIT, 4=SERVICIOS
 					if( parseInt(valor_tipo)!=3 && parseInt(valor_tipo)!=4){
-						$deshabilitar_campos("habilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden, $clave_cfdi_claveprodserv);
+						$deshabilitar_campos("habilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden);
 						$tipo_producto_anterior.val(valor_tipo);
 					}
 					
@@ -1561,7 +1555,7 @@ $(function() {
 						//Aqui solo debe entrar cuando la empresa no incluya modulo de produccion
 						//tipo=1  PROD TERMINADO, 2=INTERMEDIO, DESARROLLO
 						if( parseInt(valor_tipo)==1 || parseInt(valor_tipo)==2 || parseInt(valor_tipo)==8){
-							$deshabilitar_campos("habilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden, $clave_cfdi_claveprodserv);
+							$deshabilitar_campos("habilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden);
 							$tipo_producto_anterior.val(valor_tipo);
 							//visualizar grid para agregar productos componentes
 							
@@ -1572,7 +1566,7 @@ $(function() {
 					
 					//tipo=3 es KIT
 					if( parseInt(valor_tipo)==3 ){
-						$deshabilitar_campos("desahabilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden, $clave_cfdi_claveprodserv);
+						$deshabilitar_campos("desahabilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden);
 						$tipo_producto_anterior.val(valor_tipo);
 						
 						//visualizar grid para agregar productos componentes
@@ -1582,7 +1576,7 @@ $(function() {
 					
 					//tipo=4 es SERVICIOS
 					if( parseInt(valor_tipo)==4 ){
-						$deshabilitar_campos("desahabilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden, $clave_cfdi_claveprodserv);
+						$deshabilitar_campos("desahabilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden);
 						$tipo_producto_anterior.val(valor_tipo);
 						
 						//Recargar select de unidades. Carga solo la unidad SERVICIO
@@ -2712,8 +2706,7 @@ $(function() {
 									$densidad,
 									$valor_maximo,
 									$valor_minimo,
-									$punto_reorden,
-									$clave_cfdi_claveprodserv);
+									$punto_reorden);
 							}else{
 									//$deshabilitar_campos("habilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres);
 							}
