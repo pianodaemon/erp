@@ -1552,7 +1552,7 @@ $(function() {
 					
 					
 					//Habilitar campos cuando sea diferente de 3=KIT, 4=SERVICIOS
-					if( parseInt(valor_tipo)!=3 || parseInt(valor_tipo)!=4){
+					if (parseInt(valor_tipo) != 3 && parseInt(valor_tipo) != 4) {
 						$deshabilitar_campos("habilitar",$proveedor,$tiempos_de_entrega,$select_prod_tipo,$select_estatus,$select_seccion,$select_grupo,$select_linea,$select_marca,$select_clase,$select_familia,$select_subfamilia,$select_unidad,$select_clasifstock,$select_iva,$select_ieps,$check_noserie,$check_nom,$check_nolote,$check_pedimento,$check_stock,$check_ventaext,$check_compraext,$select_disponibles,$select_seleccionados,$agregar_pres,$remover_pres,$densidad, $valor_maximo, $valor_minimo, $punto_reorden);
 						$tipo_producto_anterior.val(valor_tipo);
 					}
