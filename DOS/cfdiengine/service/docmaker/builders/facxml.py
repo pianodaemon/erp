@@ -530,7 +530,7 @@ class FacXml(BuilderGen):
                 NoIdentificacion=i['SKU'],  # optional
                 Importe=truncate(i['IMPORTE'], self.__NDECIMALS),
                 Descuento=i['DESCTO'] if i['DESCTO'] > 0 else None,
-                Impuestos=self.__tag_impuestos(i) if i['TASA_IMPUESTO'] > 0 else None
+                Impuestos=self.__tag_impuestos(i) if i['TASA_IMPUESTO'] >= 0 else None
             ))
 
         def traslado(c, tc, imp):
@@ -606,7 +606,7 @@ class FacXml(BuilderGen):
                 Impuesto=c, TasaOCuota=tc, Importe=imp)
 
         taxes = []
-        if i['IMPORTE_IMPUESTO'] > 0:
+        if i['IMPORTE_IMPUESTO'] >= 0:
             base = self.__calc_base(self.__abs_importe(i), self.__place_tasa(i['TASA_IEPS']))
             taxes.append(
                 traslado(
@@ -649,7 +649,7 @@ class FacXml(BuilderGen):
     def __tag_impuestos(self, i):
         notaxes = True
         kwargs = {}
-        if i['IMPORTE_IMPUESTO'] > 0 or i['IMPORTE_IEPS'] > 0 or i['IMPORTE_RET'] > 0:
+        if i['IMPORTE_IMPUESTO'] >= 0 or i['IMPORTE_IEPS'] > 0 or i['IMPORTE_RET'] > 0:
             notaxes = False
             if self.__tag_traslados(i):
                 kwargs['Traslados'] = self.__tag_traslados(i)
