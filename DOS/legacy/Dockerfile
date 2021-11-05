@@ -1,5 +1,5 @@
 FROM dockette/jessie AS legacy-builder
-MAINTAINER eplauchu@agnux.com
+MAINTAINER enygma@immortalcrabsystems.com
 
 RUN apt-get update
 
