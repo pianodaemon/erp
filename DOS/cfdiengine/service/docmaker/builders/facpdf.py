@@ -465,7 +465,7 @@ class FacPdf(BuilderGen):
             cont = [ [''], ["IMPORTE CON LETRA"] ]
             (c,d) = dat['XML_PARSED']['CFDI_TOTAL'].split('.')
             n = numspatrans(c)
-            result = "{0} {1} {2}0/100 {3}".format(
+            result = "{0} {1} {2}/100 {3}".format(
                 n.upper(),
                 dat['EXTRA_INFO']['CURRENCY_NAME'],
                 d,

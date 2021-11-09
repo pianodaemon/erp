@@ -19,7 +19,7 @@ impt_class='PedidoRR'
 class PedidoRR(BuilderGen):
 
     __CAPTIONS = {
-            'TL_DOC_NAME': 'REMISION DEL PEDIDO'
+            'TL_DOC_NAME': 'REMISION DEL PEDIDO',
             'TL_PEDIDO_NUM': 'NO.',
             'TL_ORDER_DATE': 'FECHA DE PEDIDO',
             'TL_DOC_DATE': 'FECHA DE REMISION',
