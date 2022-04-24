@@ -3,20 +3,21 @@ ECHO = /bin/echo
 BASE		:= $(shell /bin/pwd)
 OPERATIONAL	:= $(BASE)/DOS
 
-all:	reports legacy
+all:	sandra legacy
 
 legacy:
 	(MACROS_INCLUDE=make.macros && export MACROS_INCLUDE && \
 	OPERATIONAL=$(OPERATIONAL) && export OPERATIONAL && \
 	cd $(OPERATIONAL)/legacy && make);
 
-reports:
+sandra:
 	(MACROS_INCLUDE=make.macros && export MACROS_INCLUDE && \
 	OPERATIONAL=$(OPERATIONAL) && export OPERATIONAL && \
-	cd $(OPERATIONAL)/reports && make);
+	cd $(OPERATIONAL)/sandra && python3 -mvenv . && \
+        . ./bin/activate && make);
 
 clean:
 	(MACROS_INCLUDE=make.macros && export MACROS_INCLUDE && \
 	OPERATIONAL=$(OPERATIONAL) && export OPERATIONAL && \
-	cd $(OPERATIONAL)/reports && make clean && \
+	cd $(OPERATIONAL)/sandra && make clean && \
 	cd $(OPERATIONAL)/legacy && make clean);
