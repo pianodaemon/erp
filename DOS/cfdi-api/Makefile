@@ -23,3 +23,6 @@ setup:
 
 clean:
 	- rm -rf ${SCHEMA_MOD_OUT}
+	- rm -rf $(COMPONENT_DIR)/bin
+	- rm -rf $(COMPONENT_DIR)/lib64
+	- rm -rf $(COMPONENT_DIR)/lib
