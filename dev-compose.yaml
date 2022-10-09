@@ -31,7 +31,7 @@ services:
           - operational_network
     rdbms_dos:
         container_name: 'rdbms_dos'
-        image: 'debezium/postgres'
+        image: 'debezium/postgres:11-alpine'
         ports:
           - '5432:5432'
         environment: *commonEnv

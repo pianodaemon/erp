@@ -1,4 +1,4 @@
-FROM python:3.6-slim-buster
+FROM python:3.9-slim-buster
 LABEL maintainer="eplauchu@agnux.com"
 
 RUN apt-get update

@@ -1,4 +1,4 @@
-lxml==3.7.1
+lxml==4.9.1
 psycopg2==2.8.6
 PyXB==1.2.5
 qrcode==5.3
