@@ -532,7 +532,7 @@ public class PrefacturasController {
     }
     
     
-    private String editarPrefactura(PrefacturaRequest prefacturaRequest) {
+    private String[] editarPrefactura(PrefacturaRequest prefacturaRequest) {
 
         ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString("SALES"))
             .usePlaintext()
@@ -541,15 +541,17 @@ public class PrefacturasController {
         SalesGrpc.SalesBlockingStub blockingStub = SalesGrpc.newBlockingStub(channel);
 
         PrefacturaResponse prefacturaResponse;
-        String valorRetorno = "0:";
+        String[] retornoArr = {"0:", ""};
 
         try {
             prefacturaResponse = blockingStub.editPrefactura(prefacturaRequest);
-            valorRetorno = prefacturaResponse.getValorRetorno();
-            log.log(Level.INFO, "Prefactura edit Response valorRetorno: {0}", valorRetorno);
+            retornoArr[0] = prefacturaResponse.getValorRetorno();
+            log.log(Level.INFO, "Prefactura edit Response valorRetorno: {0}", retornoArr[0]);
+            retornoArr[1] = prefacturaResponse.getJsonRepr();
+            log.log(Level.INFO, "json Representation: {0}", retornoArr[1]);
 
         } catch (StatusRuntimeException e) {
-            valorRetorno += "Error en llamada a procedimiento remoto.";
+            retornoArr[0] += "Error en llamada a procedimiento remoto.";
             log.log(Level.SEVERE, "gRPC failed: {0}", e.getStatus());
 
         } finally {
@@ -561,7 +563,7 @@ public class PrefacturasController {
             }
         }
 
-        return valorRetorno;
+        return retornoArr;
     }
     
     //edicion y nuevo
@@ -628,7 +630,7 @@ public class PrefacturasController {
         Integer app_selected = 13;
         String command_selected = "";
         String actualizo = "0";
-        String retorno = "";
+        String[] retornoArr;
         String folio = "";
 
         //Variable para el id  del usuario
@@ -754,14 +756,14 @@ public class PrefacturasController {
 
         if (success.get("success").equals("true")) {
 
-            retorno = editarPrefactura(prefacturaRequestBuilder.build());
+            retornoArr = editarPrefactura(prefacturaRequestBuilder.build());
 
             //retorna un 1, si se  actualizo correctamente
-            actualizo = retorno.split(":")[0];
+            actualizo = retornoArr[0].split(":")[0];
 
             if (select_tipo_documento == 2) {
                 //cuando es remision aqui retorna el folio de la remision
-                folio = retorno.split(":")[1];
+                folio = retornoArr[0].split(":")[1];
                 jsonretorno.put("folio", folio);
             }
 
