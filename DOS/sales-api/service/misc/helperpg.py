@@ -1,7 +1,7 @@
 import psycopg2
 import psycopg2.extras
 
-from misc.common import env_property
+from .common import env_property
 
 class EmptySetError(Exception):
     pass

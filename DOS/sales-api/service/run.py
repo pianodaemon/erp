@@ -100,7 +100,7 @@ class Sales(sales_pb2_grpc.SalesServicer):
     def EditPrefactura(self, request, context):
         print("------ edit prefactura:\n", request)
 
-        valor_retorno = facturacion.edit_prefactura(
+        valor_retorno, json_repr = facturacion.edit_prefactura(
             request.usuarioId,
             request.prefacturaId,
             request.clienteId,
@@ -127,7 +127,8 @@ class Sales(sales_pb2_grpc.SalesServicer):
             request.gridDetalle
         )
         return sales_pb2.PrefacturaResponse(
-            valorRetorno='{}'.format(valor_retorno)
+            valorRetorno='{}'.format(valor_retorno),
+            jsonRepr='{}'.format(json_repr)
         )
 
 

@@ -1,4 +1,9 @@
+import json
+import psycopg2
 from misc.helperpg import run_stored_procedure
+from dal.factura import FactRepr
+from misc.error import FatalError
+from .helperpg import HelperPg
 
 def edit_prefactura(usuario_id,     prefactura_id,      cliente_id,      moneda_id,
                     observaciones,  tipo_cambio,        vendedor_id,     condiciones_id,
@@ -65,7 +70,14 @@ def edit_prefactura(usuario_id,     prefactura_id,      cliente_id,      moneda_
             )
 
     rmsg = run_stored_procedure(sql)
-    return rmsg[0]
+    json_repr = ''
+
+    if rmsg[0] == '1:':
+        dat = __create(__open_dbms_conn(), usr_id=usuario_id, prefact_id=prefactura_id)
+        convert_decimal_type(dat)
+        json_repr = json.dumps(dat)
+
+    return (rmsg[0], json_repr)
 
 
 def convert_to_sql_array_literal(grid_detalle):
@@ -101,3 +113,32 @@ def convert_to_sql_array_literal(grid_detalle):
     rens_str += "]"
 
     return rens_str
+
+
+def __create(conn, **kwargs):
+    """runs data acquisition"""
+    dat = None
+
+    try:
+        fac = FactRepr()
+        dat = fac.data_acq(conn, **kwargs)
+        return dat
+    except FatalError:
+        raise
+    finally:
+        conn.close()
+
+
+def __open_dbms_conn():
+    """opens a connection to postgresql"""
+    try:
+        return HelperPg.connect()
+    except psycopg2.Error as e:
+        raise FatalError("dbms was not connected")
+    except KeyError as e:
+        raise FatalError("slack pgsql configuration")
+
+
+def convert_decimal_type(dat):
+    for i in dat['conceptos']:
+        i['precio_unitario'] = float(i['precio_unitario'])
