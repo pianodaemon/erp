@@ -6222,3 +6222,5083 @@ BEGIN
 
 END;
 $$;
+
+
+CREATE OR REPLACE FUNCTION public.gral_adm_catalogos(
+	campos_data text,
+	extra_data text[])
+    RETURNS character varying
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+DECLARE
+	
+	--###################################
+	--# Wrtten by: Noe Martinez    	    #
+	--# mailto: gpmarsan@gmail.com	    #
+	--# 12 / marzo / 2012               #
+	--###################################
+
+	--estas  variables se utilizan en la mayoria de los catalogos
+	str_data text[];
+	str_percep text[];
+	str_deduc text[];
+	
+	app_selected integer;
+	command_selected text;
+	valor_retorno character varying;
+	usuario_id integer;
+	emp_id integer;
+	suc_id integer;
+	ultimo_id integer;
+	espacio_tiempo_ejecucion timestamp with time zone = now();
+	ano_actual integer;
+	mes_actual integer;
+	id_almacen integer=0;
+	exis integer=0;
+	
+	id_tipo_consecutivo integer=0;
+	prefijo_consecutivo character varying = '';
+	nuevo_consecutivo bigint=0;
+	nuevo_folio character varying = '';
+	incluye_modulo_produccion boolean;
+	incluye_modulo_contabilidad boolean;
+	incluye_modulo_envasado boolean;
+	controlExisPres boolean = false;--Variable que indica si se debe controlar las existencias por presentaciones
+	incluye_nomina boolean:=false;
+	
+	--seran eliminadas
+	nombre_consecutivo character varying = '';
+	cadena_extra character varying = '';
+	ultimo_cosecutivo_proveedor character varying;
+	folio_proveedor character varying;
+	
+	--variables para catalogo de clientes
+	str_filas text[];
+	total_filas integer;--total de elementos de arreglo
+	cont_fila integer;--contador de filas o posiciones del arreglo
+	factura_en boolean;
+	descarga_xml boolean;
+	numero_control_client character varying;
+	ultimo_cosecutivo_cliente character varying;
+	
+	--variables para catalogo de productos
+	ultimo_cosecutivo_producto character varying;
+	nuevo_sku character varying;
+	tipo_producto integer;
+	id_producto integer;
+	str_pres text[];
+	tot_filas integer;--total de elementos de arreglo de id de presentaciones
+	meta_imp character varying='';
+	
+	--variable para prefacturas
+	ultimo_id_proceso integer;
+	
+	--variable para pagos
+	folio_transaccion bigint;
+	ultimo_cosecutivo_transaccion character varying;
+	id_forma_pago integer;
+	id_anticipo integer;
+	monto_anticipo_actual double precision;
+	saldo_anticipo double precision;
+	rowCount integer;
+	item text[];
+	iterar text[];
+	veces int:=0;
+	incrementa int:=1;
+	sql_pagos text; 
+	fila record;
+	fila2 record;
+	suma_pagos double precision=0;
+	suma_notas_credito double precision=0;
+	
+	total_factura double precision;
+	monto_pagos double precision;
+	nuevacantidad_monto_pago double precision;
+	nuevo_saldo_factura double precision;
+	suma_pagos_efectuados  double precision;
+	
+	id_pago integer:=0;
+	monto_cancelado double precision:=0;
+	id_pagos_detalles integer;
+	nuevacantidad_monto_cancelados double precision:=0;
+	total_monto_cancelados double precision;
+	serie_folio_cancel character varying:='';
+	id_moneda_factura integer:=0;
+	id_moneda_anticipo integer:=0; 
+	tipo_cambio_pago double precision:=0;
+	
+	ultimo_id_usr integer=0;
+	eliminar_registro boolean=true;
+	valor1 double precision:=0;
+
+	cont_alias integer := 0;
+	cont_alias_idx integer := 0;
+BEGIN
+	--convertir cadena en arreglo
+	SELECT INTO str_data string_to_array(''||campos_data||'','___');
+	
+	--aplicativo seleccionado
+	app_selected := str_data[1]::integer;
+	
+	command_selected := str_data[2];--new, edit, delete. Para aplicativo 14 pagos: pago, anticipo, cancelacion
+	
+	-- usuario que utiliza el aplicativo
+	usuario_id := str_data[3]::integer;
+	
+	/*
+	--obtiene empresa_id y sucursal_id
+	SELECT gral_suc.empresa_id, gral_usr_suc.gral_suc_id FROM gral_usr_suc 	JOIN gral_suc ON gral_suc.id = gral_usr_suc.gral_suc_id
+	WHERE gral_usr_suc.gral_usr_id = usuario_id
+	INTO emp_id, suc_id;
+	*/
+	
+	--obtiene empresa_id, sucursal_id y sucursal_id
+  	SELECT gral_suc.empresa_id, gral_usr_suc.gral_suc_id,inv_suc_alm.almacen_id FROM gral_usr_suc 
+	JOIN gral_suc ON gral_suc.id = gral_usr_suc.gral_suc_id
+	JOIN inv_suc_alm ON inv_suc_alm.sucursal_id = gral_suc.id
+	WHERE gral_usr_suc.gral_usr_id=usuario_id
+	INTO emp_id, suc_id, id_almacen;
+	
+	
+	SELECT EXTRACT(YEAR FROM espacio_tiempo_ejecucion) INTO ano_actual;
+	SELECT EXTRACT(MONTH FROM espacio_tiempo_ejecucion) INTO mes_actual;
+	
+	valor_retorno:='0';
+	
+	--Query para verificar si la empresa actual incluye Control de Existencias por Presentacion
+	SELECT control_exis_pres,nomina,incluye_contabilidad FROM gral_emp WHERE id=emp_id 
+	INTO controlExisPres, incluye_nomina,incluye_modulo_contabilidad;
+	
+	-- Catalogo de Almacenes
+	IF app_selected = 1 THEN
+		IF command_selected = 'new' THEN
+			INSERT INTO inv_alm(
+				titulo,--str_data[5]
+				calle,--str_data[6]
+				numero,--str_data[7]
+				colonia,--str_data[8]
+				codigo_postal,--str_data[9]
+				gral_pais_id,--str_data[10]::integer
+				gral_edo_id,--str_data[11]::integer
+				gral_mun_id,--str_data[12]::integer
+				tel_1,--str_data[13]
+				tel_2,--str_data[14]
+				tel_1_ext,--str_data[15]
+				tel_2_ext,--str_data[16]
+				responsable,--str_data[17]
+				responsable_puesto,--str_data[18]
+				responsable_email,--str_data[19]
+				almacen_tipo_id,--str_data[20]::integer
+				compras,--str_data[21]::boolean
+				consignacion,--str_data[22]::boolean
+				explosion_mat,--str_data[23]::boolean
+				garantias,--str_data[24]::boolean
+				reabastecimiento,--str_data[25]::boolean
+				recepcion_mat,--str_data[26]::boolean
+				reporteo,--str_data[27]::boolean
+				traspaso,--str_data[28]::boolean
+				ventas,--str_data[29]::boolean
+				borrado_logico,--false
+				momento_creacion--now()
+			) VALUES(str_data[5],str_data[6],str_data[7],str_data[8],str_data[9],str_data[10]::integer,str_data[11]::integer,str_data[12]::integer,str_data[13],str_data[14],str_data[15],str_data[16],str_data[17],str_data[18],str_data[19],str_data[20]::integer,str_data[21]::boolean,str_data[22]::boolean,str_data[23]::boolean,str_data[24]::boolean,str_data[25]::boolean,str_data[26]::boolean,str_data[27]::boolean,str_data[28]::boolean,str_data[29]::boolean,false,now()) 
+			RETURNING id INTO ultimo_id;
+			
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+			
+			IF extra_data[1] != 'sin datos' THEN
+				--RAISE EXCEPTION '%' ,extra_data[cont_fila]::integer;
+				FOR cont_fila IN 1 .. total_filas LOOP
+					INSERT INTO inv_suc_alm(almacen_id,sucursal_id) VALUES(ultimo_id, extra_data[cont_fila]::integer);
+				END LOOP;
+			END IF;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			
+			UPDATE inv_alm SET 
+				titulo=str_data[5],
+				calle=str_data[6],
+				numero=str_data[7],
+				colonia=str_data[8],
+				codigo_postal=str_data[9],
+				gral_pais_id=str_data[10]::integer,
+				gral_edo_id=str_data[11]::integer,
+				gral_mun_id=str_data[12]::integer,
+				tel_1=str_data[13],
+				tel_2=str_data[14],
+				tel_1_ext=str_data[15],
+				tel_2_ext=str_data[16],
+				responsable=str_data[17],
+				responsable_puesto=str_data[18],
+				responsable_email=str_data[19],
+				almacen_tipo_id=str_data[20]::integer,
+				compras=str_data[21]::boolean,
+				consignacion=str_data[22]::boolean,
+				explosion_mat=str_data[23]::boolean,
+				garantias=str_data[24]::boolean,
+				reabastecimiento=str_data[25]::boolean,
+				recepcion_mat=str_data[26]::boolean,
+				reporteo=str_data[27]::boolean,
+				traspaso=str_data[28]::boolean,
+				ventas=str_data[29]::boolean,
+				momento_actualizacion=now()
+			WHERE id = str_data[4]::integer;
+
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+			IF extra_data[1] != 'sin datos' THEN
+				DELETE FROM inv_suc_alm WHERE almacen_id=str_data[4]::integer;
+				FOR cont_fila IN 1 .. total_filas LOOP
+					INSERT INTO inv_suc_alm(almacen_id,sucursal_id) VALUES(str_data[4]::integer, extra_data[cont_fila]::integer);
+				END LOOP;
+			END IF;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE inv_alm SET borrado_logico=true, momento_baja=now() WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de Almacenes
+
+	
+	-- Catalogo de Proveedores
+	IF app_selected = 2 THEN
+		IF command_selected = 'new' THEN
+
+			id_tipo_consecutivo:=2;--Folio de proveedor
+			
+			--aqui entra para tomar el consecutivo del folio  la sucursal actual
+			UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+			WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+			
+			--concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+			nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+
+			INSERT INTO cxp_prov(
+				folio,--nuevo_folio
+				rfc,--str_data[6]
+				curp,--str_data[7]
+				razon_social,--str_data[8]
+				clave_comercial,--str_data[9]
+				calle,--str_data[10]
+				numero,--str_data[11]
+				colonia,--str_data[12]
+				cp,--str_data[13]
+				entre_calles,--str_data[14]
+				pais_id,--str_data[15]::integer
+				estado_id,--str_data[16]::integer
+				municipio_id,--str_data[17]::integer
+				localidad_alternativa,--str_data[18]
+				telefono1,--str_data[19]
+				extension1,--str_data[20]
+				fax,--str_data[21]
+				telefono2,--str_data[22]
+				extension2,--str_data[23]
+				correo_electronico,--str_data[24]
+				web_site,--str_data[25]
+				impuesto,--str_data[26]::integer
+				cxp_prov_zona_id,--str_data[27]::integer
+				grupo_id,--str_data[28]::integer
+				proveedortipo_id,--str_data[29]::integer
+				clasif_1,--str_data[30]::integer
+				clasif_2,--str_data[31]::integer
+				clasif_3,--str/controllers/facturas/startup.agnux_data[32]::integer
+				moneda_id,--str_data[33]::integer
+				tiempo_entrega_id,--str_data[34]::integer
+				estatus,--str_data[35]::boolean
+				limite_credito,--str_data[36]::double precision
+				dias_credito_id,--str_data[37]::integer
+				descuento,--str_data[38]::double precision
+				credito_a_partir,--str_data[39]::integer
+				cxp_prov_tipo_embarque_id,--str_data[40]::integer
+				flete_pagado,--str_data[41]::boolean
+				condiciones,--str_data[42]
+				observaciones,--str_data[43]
+				vent_contacto,--str_data[44]
+				vent_puesto,--str_data[45]
+				vent_calle,--str_data[46]
+				vent_numero,--/controllers/facturas/startup.agnuxstr_data[47]
+				vent_colonia,--str_data[48]
+				vent_cp,--str_data[49]
+				vent_entre_calles,--str_data[50]
+				vent_pais_id,--str_data[51]::integer
+				vent_estado_id,--str_data[52]::integer
+				vent_municipio_id,--str_data[53]::integer
+				vent_telefono1,--str_data[54]
+				vent_extension1,--str_data[55]
+				vent_fax,--str_data[56]
+				vent_telefono2,--str_data[57]
+				vent_extension2,--str_data[58]
+				vent_email,--str_data[59]
+				cob_contacto,--str_data[60]
+				cob_puesto,--str_data[61]
+				cob_calle,--str_data[62]
+				cob_numero,--str_data[63]
+				cob_colonia,--str_data[64]
+				cob_cp,--str_data[65]
+				cob_entre_calles,--str_data[66]
+				cob_pais_id,--str_data[67]::integer
+				cob_estado_id,--str_data[68]::integer
+				cob_municipio_id,--str_data[69]::integer
+				cob_telefono1,--str_data[70]
+				cob_extension1,--str_data[71]
+				cob_fax,--str_data[72]
+				cob_telefono2,--str_data[73]
+				cob_extension2,--str_data[74]
+				cob_email,--str_data[75]
+				comentarios,--str_data[76]
+				ctb_cta_id_pasivo,--str_data[77]::integer,
+				ctb_cta_id_egreso,--str_data[78]::integer,
+				ctb_cta_id_ietu,--str_data[79]::integer,
+				ctb_cta_id_comple,--str_data[80]::integer,
+				ctb_cta_id_pasivo_comple,--str_data[81]::integer,
+				transportista,--str_data[82]::boolean,
+				empresa_id,--emp_id
+				sucursal_id,--suc_id
+				borrado_logico,--false,
+				momento_creacion,--now()
+				id_usuario_creacion--usuario_id
+			)
+			VALUES(nuevo_folio,str_data[6],str_data[7],str_data[8],str_data[9],str_data[10],str_data[11],str_data[12],str_data[13],str_data[14],str_data[15]::integer,str_data[16]::integer,str_data[17]::integer,str_data[18],str_data[19],str_data[20],str_data[21],str_data[22],str_data[23],str_data[24],str_data[25],str_data[26]::integer,str_data[27]::integer,str_data[28]::integer,str_data[29]::integer,str_data[30]::integer,str_data[31]::integer,str_data[32]::integer,str_data[33]::integer,str_data[34]::integer,str_data[35]::boolean,str_data[36]::double precision,str_data[37]::integer,str_data[38]::double precision,str_data[39]::integer,str_data[40]::integer,str_data[41]::boolean,str_data[42],str_data[43],str_data[44],str_data[45],str_data[46],str_data[47],str_data[48],str_data[49],str_data[50],str_data[51]::integer,str_data[52]::integer,str_data[53]::integer,str_data[54],str_data[55],str_data[56],str_data[57],str_data[58],str_data[59],str_data[60],str_data[61],str_data[62],str_data[63],str_data[64],str_data[65],str_data[66],str_data[67]::integer,str_data[68]::integer,str_data[69]::integer,str_data[70],str_data[71],str_data[72],str_data[73],str_data[74],str_data[75],str_data[76], str_data[77]::integer, str_data[78]::integer, str_data[79]::integer, str_data[80]::integer, str_data[81]::integer, str_data[82]::boolean, emp_id, suc_id, false, now(), usuario_id);
+			
+			/*
+			INSERT INTO cxp_prov(
+				folio,--nuevo_folio
+				rfc,--str_data[6]
+				curp,--str_data[7]
+				razon_social,--str_data[8]
+				clave_comercial,--str_data[9]
+				calle,--str_data[10]
+				numero,--str_data[11]
+				colonia,--str_data[12]
+				cp,--str_data[13]
+				entre_calles,--str_data[14]
+				pais_id,--str_data[15]::integer
+				estado_id,--str_data[16]::integer
+				municipio_id,--str_data[17]::integer
+				localidad_alternativa,--str_data[18]
+				telefono1,--str_data[19]
+				extension1,--str_data[20]
+				fax,--str_data[21]
+				telefono2,--str_data[22]
+				extension2,--str_data[23]
+				correo_electronico,--str_data[24]
+				web_site,--str_data[25]
+				impuesto,--str_data[26]::integer
+				cxp_prov_zona_id,--str_data[27]::integer
+				grupo_id,--str_data[28]::integer
+				proveedortipo_id,--str_data[29]::integer
+				clasif_1,--str_data[30]::integer
+				clasif_2,--str_data[31]::integer
+				clasif_3,--str/controllers/facturas/startup.agnux_data[32]::integer
+				moneda_id,--str_data[33]::integer
+				tiempo_entrega_id,--str_data[34]::integer
+				estatus,--str_data[35]::boolean
+				limite_credito,--str_data[36]::double precision
+				dias_credito_id,--str_data[37]::integer
+				descuento,--str_data[38]::double precision
+				credito_a_partir,--str_data[39]::integer
+				cxp_prov_tipo_embarque_id,--str_data[40]::integer
+				flete_pagado,--str_data[41]::boolean
+				condiciones,--str_data[42]
+				observaciones,--str_data[43]
+				vent_contacto,--str_data[44]
+				vent_puesto,--str_data[45]
+				vent_calle,--str_data[46]
+				vent_numero,--/controllers/facturas/startup.agnuxstr_data[47]
+				vent_colonia,--str_data[48]
+				vent_cp,--str_data[49]
+				vent_entre_calles,--str_data[50]
+				vent_pais_id,--str_data[51]::integer
+				vent_estado_id,--str_data[52]::integer
+				vent_municipio_id,--str_data[53]::integer
+				vent_telefono1,--str_data[54]
+				vent_extension1,--str_data[55]
+				vent_fax,--str_data[56]
+				vent_telefono2,--str_data[57]
+				vent_extension2,--str_data[58]
+				vent_email,--str_data[59]
+				cob_contacto,--str_data[60]
+				cob_puesto,--str_data[61]
+				cob_calle,--str_data[62]
+				cob_numero,--str_data[63]
+				cob_colonia,--str_data[64]
+				cob_cp,--str_data[65]
+				cob_entre_calles,--str_data[66]
+				cob_pais_id,--str_data[67]::integer
+				cob_estado_id,--str_data[68]::integer
+				cob_municipio_id,--str_data[69]::integer
+				cob_telefono1,--str_data[70]
+				cob_extension1,--str_data[71]
+				cob_fax,--str_data[72]
+				cob_telefono2,--str_data[73]
+				cob_extension2,--str_data[74]
+				cob_email,--str_data[75]
+				comentarios,--str_data[76]
+				ctb_cta_id_pasivo,--str_data[77]::integer,
+				transportista,--str_data[78]::boolean,
+				empresa_id,--emp_id
+				sucursal_id,--suc_id
+				borrado_logico,--false,
+				momento_creacion,--now()
+				id_usuario_creacion--usuario_id
+			)
+			VALUES(nuevo_folio,str_data[6],str_data[7],str_data[8],str_data[9],str_data[10],str_data[11],str_data[12],str_data[13],str_data[14],str_data[15]::integer,str_data[16]::integer,str_data[17]::integer,str_data[18],str_data[19],str_data[20],str_data[21],str_data[22],str_data[23],str_data[24],str_data[25],str_data[26]::integer,str_data[27]::integer,str_data[28]::integer,str_data[29]::integer,str_data[30]::integer,str_data[31]::integer,str_data[32]::integer,str_data[33]::integer,str_data[34]::integer,str_data[35]::boolean,str_data[36]::double precision,str_data[37]::integer,str_data[38]::double precision,str_data[39]::integer,str_data[40]::integer,str_data[41]::boolean,str_data[42],str_data[43],str_data[44],str_data[45],str_data[46],str_data[47],str_data[48],str_data[49],str_data[50],str_data[51]::integer,str_data[52]::integer,str_data[53]::integer,str_data[54],str_data[55],str_data[56],str_data[57],str_data[58],str_data[59],str_data[60],str_data[61],str_data[62],str_data[63],str_data[64],str_data[65],str_data[66],str_data[67]::integer,str_data[68]::integer,str_data[69]::integer,str_data[70],str_data[71],str_data[72],str_data[73],str_data[74],str_data[75],str_data[76], str_data[77]::integer,str_data[78]::boolean, emp_id, suc_id, false, now(), usuario_id);
+			*/
+			valor_retorno := '1';
+		END IF;
+
+		
+		IF command_selected = 'edit' THEN 
+			/*
+			UPDATE cxp_prov SET rfc=str_data[6],curp=str_data[7],razon_social=str_data[8],clave_comercial=str_data[9],calle=str_data[10],numero=str_data[11],colonia=str_data[12],cp=str_data[13],entre_calles=str_data[14],pais_id=str_data[15]::integer,estado_id=str_data[16]::integer,municipio_id=str_data[17]::integer,localidad_alternativa=str_data[18],telefono1=str_data[19],extension1=str_data[20],fax=str_data[21],telefono2=str_data[22],extension2=str_data[23],correo_electronico=str_data[24],web_site=str_data[25],impuesto=str_data[26]::integer,cxp_prov_zona_id=str_data[27]::integer,grupo_id=str_data[28]::integer,proveedortipo_id=str_data[29]::integer,clasif_1=str_data[30]::integer,clasif_2=str_data[31]::integer,clasif_3=str_data[32]::integer,moneda_id=str_data[33]::integer,tiempo_entrega_id=str_data[34]::integer,estatus=str_data[35]::boolean,limite_credito=str_data[36]::double precision,dias_credito_id=str_data[37]::integer,
+				descuento=str_data[38]::double precision,credito_a_partir=str_data[39]::integer,cxp_prov_tipo_embarque_id=str_data[40]::integer,flete_pagado=str_data[41]::boolean,condiciones=str_data[42],observaciones=str_data[43],vent_contacto=str_data[44],vent_puesto=str_data[45],vent_calle=str_data[46],vent_numero=str_data[47],vent_colonia=str_data[48],vent_cp=str_data[49],vent_entre_calles=str_data[50],vent_pais_id=str_data[51]::integer,vent_estado_id=str_data[52]::integer,vent_municipio_id=str_data[53]::integer,vent_telefono1=str_data[54],vent_extension1=str_data[55],vent_fax=str_data[56],vent_telefono2=str_data[57],vent_extension2=str_data[58],vent_email=str_data[59],cob_contacto=str_data[60],cob_puesto=str_data[61],cob_calle=str_data[62],cob_numero=str_data[63],cob_colonia=str_data[64],cob_cp=str_data[65],cob_entre_calles=str_data[66],cob_pais_id=str_data[67]::integer,cob_estado_id=str_data[68]::integer,cob_municipio_id=str_data[69]::integer,
+				cob_telefono1=str_data[70],cob_extension1=str_data[71],cob_fax=str_data[72],cob_telefono2=str_data[73],cob_extension2=str_data[74],cob_email=str_data[75],comentarios=str_data[76], ctb_cta_id_pasivo=str_data[77]::integer,transportista=str_data[78]::boolean, momento_actualizacion=now(),id_usuario_actualizacion=usuario_id
+			WHERE id = str_data[4]::integer;
+			*/
+			UPDATE cxp_prov SET rfc=str_data[6],curp=str_data[7],razon_social=str_data[8],clave_comercial=str_data[9],calle=str_data[10],numero=str_data[11],colonia=str_data[12],cp=str_data[13],entre_calles=str_data[14],pais_id=str_data[15]::integer,estado_id=str_data[16]::integer,municipio_id=str_data[17]::integer,localidad_alternativa=str_data[18],telefono1=str_data[19],extension1=str_data[20],fax=str_data[21],telefono2=str_data[22],extension2=str_data[23],correo_electronico=str_data[24],web_site=str_data[25],impuesto=str_data[26]::integer,cxp_prov_zona_id=str_data[27]::integer,grupo_id=str_data[28]::integer,proveedortipo_id=str_data[29]::integer,clasif_1=str_data[30]::integer,clasif_2=str_data[31]::integer,clasif_3=str_data[32]::integer,moneda_id=str_data[33]::integer,tiempo_entrega_id=str_data[34]::integer,estatus=str_data[35]::boolean,limite_credito=str_data[36]::double precision,dias_credito_id=str_data[37]::integer,
+				descuento=str_data[38]::double precision,credito_a_partir=str_data[39]::integer,cxp_prov_tipo_embarque_id=str_data[40]::integer,flete_pagado=str_data[41]::boolean,condiciones=str_data[42],observaciones=str_data[43],vent_contacto=str_data[44],vent_puesto=str_data[45],vent_calle=str_data[46],vent_numero=str_data[47],vent_colonia=str_data[48],vent_cp=str_data[49],vent_entre_calles=str_data[50],vent_pais_id=str_data[51]::integer,vent_estado_id=str_data[52]::integer,vent_municipio_id=str_data[53]::integer,vent_telefono1=str_data[54],vent_extension1=str_data[55],vent_fax=str_data[56],vent_telefono2=str_data[57],vent_extension2=str_data[58],vent_email=str_data[59],cob_contacto=str_data[60],cob_puesto=str_data[61],cob_calle=str_data[62],cob_numero=str_data[63],cob_colonia=str_data[64],cob_cp=str_data[65],cob_entre_calles=str_data[66],cob_pais_id=str_data[67]::integer,cob_estado_id=str_data[68]::integer,cob_municipio_id=str_data[69]::integer,
+				cob_telefono1=str_data[70],cob_extension1=str_data[71],cob_fax=str_data[72],cob_telefono2=str_data[73],cob_extension2=str_data[74],cob_email=str_data[75],comentarios=str_data[76], ctb_cta_id_pasivo=str_data[77]::integer, ctb_cta_id_egreso=str_data[78]::integer, ctb_cta_id_ietu=str_data[79]::integer, ctb_cta_id_comple=str_data[80]::integer, ctb_cta_id_pasivo_comple=str_data[81]::integer, transportista=str_data[82]::boolean, momento_actualizacion=now(),id_usuario_actualizacion=usuario_id
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE cxp_prov SET borrado_logico=true, momento_baja=now(), id_usuario_baja=usuario_id WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;
+	--Termina catalogo de proveedores
+	
+
+	--Catalogo de Empleados
+	IF app_selected = 4 THEN
+		IF command_selected = 'new' THEN
+
+			id_tipo_consecutivo:=15;--Consecutivo de clave empleado
+			
+			--aqui entra para tomar el consecutivo del folio  la sucursal actual
+			UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+			WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+			
+			--concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+			nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+			
+			--RAISE EXCEPTION '%','datos: '||extra_data;
+			--RAISE EXCEPTION '%','nombre_consecutivo: '||nombre_consecutivo;
+			--RAISE EXCEPTION '%','cadena_extra: '||cadena_extra;
+			--RAISE EXCEPTION '%','numero_control_client: '||numero_control_client;
+
+			IF trim(str_data[13])='' THEN
+				str_data[13]:='2014-01-01';
+			END IF;
+
+			IF trim(str_data[61])='' THEN
+				str_data[61]:='0';
+			END IF;
+
+			IF trim(str_data[62])='' THEN
+				str_data[62]:='0';
+			END IF;
+			
+			INSERT INTO gral_empleados(
+				clave,--nuevo_folio,                       
+				nombre_pila,--=str_data[5],
+				apellido_paterno,--=str_data[6],
+				apellido_materno,--=str_data[7],
+				imss,--=str_data[8],
+				infonavit,--=str_data[9],
+				curp,--=str_data[10],
+				rfc,--=str_data[11],
+				fecha_nacimiento,--=str_data[12]::date,
+				fecha_ingreso,--=str_data[13]::date,
+				gral_escolaridad_id,--=str_data[14]::integer,
+				gral_sexo_id,--=str_data[15]::integer,
+				gral_civil_id,--=str_data[16]::integer,
+				gral_religion_id,--=str_data[17]::integer,
+				gral_sangretipo_id,--=str_data[30]::integer,
+				gral_puesto_id,--=str_data[33]::integer,
+				gral_categ_id,--=str_data[35]::integer,
+				gral_suc_id_empleado,--=str_data[34]::integer,
+				telefono,--=str_data[18],
+				telefono_movil,--=str_data[19],
+				correo_personal,--=str_data[20],
+				gral_pais_id,--=str_data[21]::integer,
+				gral_edo_id,--=str_data[22]::integer,
+				gral_mun_id,--=str_data[23]::integer,
+				calle,--=str_data[24],
+				numero,--=str_data[25],
+				colonia,--=str_data[26],
+				cp,--=str_data[27],
+				contacto_emergencia,--=str_data[28],
+				telefono_emergencia,--=str_data[29],
+				enfermedades,--=str_data[31],
+				alergias,--=str_data[32],
+				comentarios,--=str_data[36],
+				comision_agen,--=str_data[41],
+				region_id_agen,--=str_data[48],
+				comision2_agen,--=str_data[42],
+				comision3_agen,--=str_data[43],
+				comision4_agen,--=str_data[44],
+				dias_tope_comision,--=str_data[45],
+				dias_tope_comision2,--=str_data[46],
+				dias_tope_comision3,--=str_data[47],
+				tipo_comision,--str_data[49]::integer,
+				monto_tope_comision,--=str_data[50],
+				monto_tope_comision2,--=str_data[51],
+				monto_tope_comision3,--=str_data[52],
+				correo_empresa,--str_data[53],
+				no_int,--str_data[54],
+				nom_regimen_contratacion_id,--str_data[55]::integer,
+				nom_tipo_contrato_id,--str_data[56]::integer,
+				nom_tipo_jornada_id,--str_data[57]::integer,
+				nom_periodicidad_pago_id,--str_data[58]::integer,
+				tes_ban_id,--str_data[59]::integer,
+				nom_riesgo_puesto_id,--str_data[60]::integer,
+				salario_base,--str_data[61]::double precision,
+				salario_integrado,--str_data[62]::double precision,
+				registro_patronal,--str_data[63],
+				clabe, --str_data[64],
+				genera_nomina, --str_data[67]::boolean,
+				gral_depto_id, --str_data[68]::integer,
+				momento_creacion,--now()
+				gral_usr_id_creacion,
+				gral_emp_id,
+				gralsuc_id
+				)VALUES (
+				--Información: data_string: 4___new___1___0___[3]ADMIN___[4]SANTOS___[5]CAMPOS___[6]12345678901___[7]12345678901___[8]MASN831210MK7___[9]MASN831210MK7___[10]2012-08-09___[11]2012-08-15___3___2___2___7___1234567891_________2___19___986___AV.JUAREZ___12___MARIA LUISA___64988___EZEQUIEL CARDENAS___1234567891___2_________4
+					nuevo_folio,                       
+					str_data[5],
+					str_data[6],
+					str_data[7],
+					str_data[8],
+					str_data[9],
+					str_data[10],
+					str_data[11],
+					str_data[12]::date,
+					str_data[13]::date,
+					str_data[14]::integer,
+					str_data[15]::integer,
+					str_data[16]::integer,
+					str_data[17]::integer,
+					str_data[30]::integer,
+					str_data[33]::integer,
+					str_data[35]::integer,
+					str_data[34]::integer,
+					str_data[18],
+					str_data[19],
+					str_data[20],
+					str_data[21]::integer,
+					str_data[22]::integer,
+					str_data[23]::integer,
+					str_data[24],
+					str_data[25],
+					str_data[26],
+					str_data[27],
+					str_data[28],
+					str_data[29],
+					str_data[31],
+					str_data[32],
+					str_data[36],
+					str_data[41]::double precision,
+					str_data[48]::integer,
+					str_data[42]::double precision,
+					str_data[43]::double precision,
+					str_data[44]::double precision,
+					str_data[45]::double precision,
+					str_data[46]::double precision,
+					str_data[47]::double precision,
+					str_data[49]::integer,
+					str_data[50]::double precision,
+					str_data[51]::double precision,
+					str_data[52]::double precision,
+					str_data[53],
+					str_data[54],
+					str_data[55]::integer,
+					str_data[56]::integer,
+					str_data[57]::integer,
+					str_data[58]::integer,
+					str_data[59]::integer,
+					str_data[60]::integer,
+					str_data[61]::double precision,
+					str_data[62]::double precision,
+					str_data[63],
+					str_data[64],
+					str_data[67]::boolean,
+					str_data[68]::integer,
+					now(),
+					usuario_id::integer,
+					emp_id::integer, 
+					suc_id::integer 
+				)RETURNING id INTO ultimo_id;
+				
+
+			IF trim(str_data[37])<>'' THEN 
+				--Si existe el nombre del usuario hay que crear el registro.
+				
+				--Crea el usuario
+				INSERT INTO gral_usr(username,password,enabled,gral_empleados_id)VALUES(str_data[37],str_data[38],str_data[40]::boolean,ultimo_id::integer)
+				RETURNING id INTO ultimo_id_usr;
+				
+				--Asigna sucursal al usuario
+				INSERT INTO gral_usr_suc(gral_usr_id,gral_suc_id) VALUES(ultimo_id_usr,str_data[34]::integer);
+				
+				total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+				cont_fila:=1;
+				
+				IF extra_data[1]<>'sin datos' THEN
+					FOR cont_fila IN 1 .. total_filas LOOP
+						SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+						--Aqui se vuelven a crear los registros para asignar roles al usuario
+						INSERT INTO gral_usr_rol(gral_usr_id,gral_rol_id) VALUES(ultimo_id_usr,extra_data[cont_fila]::integer);
+					END LOOP;
+				END IF;
+			END IF;
+
+			
+			--Verificar si incluye NOMINA
+			IF incluye_nomina THEN 
+				--str_data[65] Percepciones
+				IF str_data[65] is not null AND str_data[65]!='' THEN
+					--Convertir en arreglo la cadena de Percepciones
+					SELECT INTO str_percep string_to_array(str_data[65],',');
+					
+					FOR iter_y IN array_lower(str_percep,1) .. array_upper(str_percep,1) LOOP
+						INSERT INTO gral_empleado_percep(gral_empleado_id,nom_percep_id) VALUES (ultimo_id,str_percep[iter_y]::integer);
+					END LOOP;
+				END IF;
+
+				--str_data[66] deducciones
+				IF str_data[66] is not null AND str_data[66]!='' THEN
+					--Convertir en arreglo la cadena de Percepciones
+					SELECT INTO str_deduc string_to_array(str_data[66],',');
+					
+					FOR iter_y IN array_lower(str_deduc,1) .. array_upper(str_deduc,1) LOOP
+						INSERT INTO gral_empleado_deduc(gral_empleado_id,nom_deduc_id) VALUES (ultimo_id,str_deduc[iter_y]::integer);
+					END LOOP;
+				END IF;
+			END IF;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			--SELECT INTO str_data string_to_array(''||campos_data||'','___');
+			--RAISE EXCEPTION '%',str_data[1];
+			--RAISE EXCEPTION '%',identificador;
+			UPDATE gral_empleados SET 
+				nombre_pila=str_data[5],
+				apellido_paterno=str_data[6],
+				apellido_materno=str_data[7],
+				imss=str_data[8],
+				infonavit=str_data[9],
+				curp=str_data[10],
+				rfc=str_data[11],
+				fecha_nacimiento=str_data[12]::date,
+				fecha_ingreso=str_data[13]::date,
+				gral_escolaridad_id=str_data[14]::integer,
+				gral_sexo_id=str_data[15]::integer,
+				gral_civil_id=str_data[16]::integer,
+				gral_religion_id=str_data[17]::integer,
+				gral_sangretipo_id=str_data[30]::integer,
+				gral_puesto_id=str_data[33]::integer,
+				gral_categ_id=str_data[35]::integer,
+				gral_suc_id_empleado=str_data[34]::integer,
+				telefono=str_data[18],
+				telefono_movil=str_data[19],
+				correo_personal=str_data[20],
+				gral_pais_id=str_data[21]::integer,
+				gral_edo_id=str_data[22]::integer,
+				gral_mun_id=str_data[23]::integer,
+				calle=str_data[24],
+				numero=str_data[25],
+				colonia=str_data[26],
+				cp=str_data[27],
+				contacto_emergencia=str_data[28],
+				telefono_emergencia=str_data[29],
+				enfermedades=str_data[31],
+				alergias=str_data[32],
+				comentarios=str_data[36],
+				comision_agen=str_data[41]::double precision,
+				region_id_agen=str_data[48]::integer,
+				comision2_agen=str_data[42]::double precision,
+				comision3_agen=str_data[43]::double precision,
+				comision4_agen=str_data[44]::double precision,
+				dias_tope_comision=str_data[45]::double precision,
+				dias_tope_comision2=str_data[46]::double precision,
+				dias_tope_comision3=str_data[47]::double precision,
+				tipo_comision=str_data[49]::integer,
+				monto_tope_comision=str_data[50]::double precision,
+				monto_tope_comision2=str_data[51]::double precision,
+				monto_tope_comision3=str_data[52]::double precision,
+				correo_empresa=str_data[53],
+				no_int=str_data[54],
+				nom_regimen_contratacion_id=str_data[55]::integer,
+				nom_tipo_contrato_id=str_data[56]::integer,
+				nom_tipo_jornada_id=str_data[57]::integer,
+				nom_periodicidad_pago_id=str_data[58]::integer,
+				tes_ban_id=str_data[59]::integer,
+				nom_riesgo_puesto_id=str_data[60]::integer,
+				salario_base=str_data[61]::double precision,
+				salario_integrado=str_data[62]::double precision,
+				registro_patronal=str_data[63],
+				clabe=str_data[64],
+				genera_nomina=str_data[67]::boolean,
+				gral_depto_id=str_data[68]::integer,
+				momento_actualizacion=now()::timestamp with time zone,
+				gral_usr_id_actualizacion=usuario_id
+			WHERE id=str_data[4]::integer;
+			
+			
+			IF trim(str_data[37])<>'' THEN 
+				IF (SELECT count(id) FROM gral_usr WHERE gral_empleados_id=str_data[4]::integer)<=0 THEN 
+					--Crea el usuario
+					INSERT INTO gral_usr(username,password,enabled,gral_empleados_id)VALUES(str_data[37],str_data[38],str_data[40]::boolean,str_data[4]::integer)
+					RETURNING id INTO ultimo_id_usr;
+				ELSE
+					UPDATE gral_usr SET username=str_data[37], password=str_data[38], enabled=str_data[40]::boolean
+					WHERE gral_empleados_id=str_data[4]::integer RETURNING id INTO ultimo_id_usr;
+				END IF;
+				
+				--Buscar el registro en gral_usr_suc
+				SELECT count(id) FROM gral_usr_suc WHERE gral_usr_id=ultimo_id_usr INTO exis;
+				
+				IF exis > 0 THEN
+					--Actualizar la sucursal del usuario
+					UPDATE gral_usr_suc SET gral_suc_id=str_data[34]::integer WHERE gral_usr_id=ultimo_id_usr;
+				ELSE 
+					--Crear registro
+					INSERT INTO gral_usr_suc(gral_usr_id, gral_suc_id)VALUES(ultimo_id_usr, str_data[34]::integer);
+				END IF;
+			ELSE
+				IF (SELECT count(id) FROM gral_usr WHERE gral_empleados_id=str_data[4]::integer AND enabled=true)>=0 THEN 
+					UPDATE gral_usr SET enabled=false WHERE gral_empleados_id=str_data[4]::integer AND enabled=true;
+				END IF;
+			END IF;
+			
+			
+			--Elimina todos los roles asignados actualmente
+			delete from gral_usr_rol where gral_usr_id=ultimo_id_usr;
+
+			IF trim(str_data[37])<>'' THEN 
+				total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+				cont_fila:=1;
+
+				--RAISE EXCEPTION '%','extra_data[1]: '||extra_data[1];
+				
+				IF extra_data[1]<>'sin_datos' THEN
+					FOR cont_fila IN 1 .. total_filas LOOP
+						SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+						--Aqui se vuelven a crear los registros
+						INSERT INTO gral_usr_rol(gral_usr_id,gral_rol_id  )
+						VALUES(ultimo_id_usr,extra_data[cont_fila]::integer);
+					END LOOP;
+				END IF;
+			END IF;
+
+			--Verificar si incluye NOMINA
+			IF incluye_nomina THEN 
+				--Elimina las Percepciones asignadas actualmente
+				delete from gral_empleado_percep where gral_empleado_id=str_data[4]::integer;
+				
+				--str_data[65] Percepciones
+				IF str_data[65] is not null AND str_data[65]!='' THEN
+					--Convertir en arreglo la cadena de Percepciones
+					SELECT INTO str_percep string_to_array(str_data[65],',');
+					--Aqui se vuelven a crear registros de las percepciones asignadas
+					FOR iter_y IN array_lower(str_percep,1) .. array_upper(str_percep,1) LOOP
+						INSERT INTO gral_empleado_percep(gral_empleado_id,nom_percep_id) VALUES (str_data[4]::integer,str_percep[iter_y]::integer);
+					END LOOP;
+				END IF;
+
+				--Elimina las Deducciones asignadas actualmente
+				delete from gral_empleado_deduc where gral_empleado_id=str_data[4]::integer;
+				
+				--str_data[66] deducciones
+				IF str_data[66] is not null AND str_data[66]!='' THEN
+					--Convertir en arreglo la cadena de Percepciones
+					SELECT INTO str_deduc string_to_array(str_data[66],',');
+
+					--Aqui se vuelven a crear registros de las Deducciones asignadas
+					FOR iter_y IN array_lower(str_deduc,1) .. array_upper(str_deduc,1) LOOP
+						INSERT INTO gral_empleado_deduc(gral_empleado_id,nom_deduc_id) VALUES (str_data[4]::integer,str_deduc[iter_y]::integer);
+					END LOOP;
+				END IF;
+			END IF;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE gral_empleados SET borrado_logico=true,  momento_baja=now(), gral_usr_id_baja=usuario_id::integer 
+			WHERE id=str_data[4]::integer;
+			
+			--Deshabilitar usuario y cambiar el nombre del username, esto para evitar conservar el nombre del usuario.
+			--No es posible eliminar el registro porque se utliza como llave foranea en varias tablas
+			UPDATE gral_usr SET username='01010101010101010101010101010101010101010101010101', enabled=false WHERE gral_empleados_id=str_data[4]::integer;
+			
+			valor_retorno := '1';
+		END IF;
+
+	END IF;--termina catalogo de empleados
+	
+	
+	
+	
+	-- Catalogo de Clientes
+	IF app_selected = 5 THEN
+		IF command_selected = 'new' THEN
+
+			id_tipo_consecutivo:=1;--Folio de proveedor
+			
+			--aqui entra para tomar el consecutivo del folio  la sucursal actual
+			UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+			WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+			
+			--concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+			nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+			
+			--RAISE EXCEPTION '%','emp_id: '||emp_id;
+			--RAISE EXCEPTION '%','nombre_consecutivo: '||nombre_consecutivo;
+			--RAISE EXCEPTION '%','cadena_extra: '||cadena_extra;
+			--RAISE EXCEPTION '%','numero_control_client: '||numero_control_client;
+			
+			INSERT INTO cxc_clie(
+					numero_control,--nuevo_folio
+					rfc,--str_data[6]
+					curp,--str_data[7]
+					razon_social,--str_data[8]
+					clave_comercial,--str_data[9]
+					calle,--str_data[10]
+					numero,--str_data[11]
+					entre_calles,--str_data[12]
+					numero_exterior,--str_data[13]
+					colonia,--str_data[14]
+					cp,--str_data[15]
+					pais_id,--str_data[16]::integer
+					estado_id,--str_data[17]::integer
+					municipio_id,--str_data[18]::integer
+					localidad_alternativa,--str_data[19]
+					telefono1,--str_data[20]
+					extension1,--str_data[21]
+					fax,--str_data[22]
+					telefono2,--str_data[23]
+					extension2,--str_data[24]
+					email,--str_data[25]
+					cxc_agen_id,--str_data[26]::integer
+					contacto,--str_data[27]
+					zona_id,--str_data[28]::integer
+					cxc_clie_grupo_id,--str_data[29]::integer
+					clienttipo_id,--str_data[30]::integer
+					clasif_1,--str_data[31]::integer
+					clasif_2,--str_data[32]::integer
+					clasif_3,--str_data[33]::integer
+					moneda,--str_data[34]::integer
+					filial,--str_data[35]::boolean
+					estatus,--str_data[36]::boolean
+					gral_imp_id,--str_data[37]::integer
+					limite_credito,--str_data[38]::double precision
+					dias_credito_id,--str_data[39]::integer
+					credito_suspendido,--str_data[40]::boolean
+					credito_a_partir,--str_data[41]::integer
+					cxp_prov_tipo_embarque_id,--str_data[42]::integer
+					dias_caducidad_cotizacion,--str_data[43]::integer
+					condiciones,--str_data[44]
+					observaciones,--str_data[45]
+					contacto_compras_nombre,--str_data[46]
+					contacto_compras_puesto,--str_data[47]
+					contacto_compras_calle,--str_data[48]
+					contacto_compras_numero,--str_data[49]
+					contacto_compras_colonia,--str_data[50]
+					contacto_compras_cp,--str_data[51]
+					contacto_compras_entre_calles,--str_data[52]
+					contacto_compras_pais_id,--str_data[53]::integer
+					contacto_compras_estado_id,--str_data[54]::integer
+					contacto_compras_municipio_id,--str_data[55]::integer
+					contacto_compras_telefono1,--str_data[56]
+					contacto_compras_extension1,--str_data[57]
+					contacto_compras_fax,--str_data[58]
+					contacto_compras_telefono2,--str_data[59]
+					contacto_compras_extension2,--str_data[60]
+					contacto_compras_email,--str_data[61]
+					contacto_pagos_nombre,--str_data[62]
+					contacto_pagos_puesto,--str_data[63]
+					contacto_pagos_calle,--str_data[64]
+					contacto_pagos_numero,--str_data[65]
+					contacto_pagos_colonia,--str_data[66]
+					contacto_pagos_cp,--str_data[67]
+					contacto_pagos_entre_calles,--str_data[68]
+					contacto_pagos_pais_id,--str_data[69]::integer
+					contacto_pagos_estado_id,--str_data[70]::integer
+					contacto_pagos_municipio_id,--str_data[71]::integer
+					contacto_pagos_telefono1,--str_data[72]
+					contacto_pagos_extension1,--str_data[73]
+					contacto_pagos_fax,--str_data[74]
+					contacto_pagos_telefono2,--str_data[75]
+					contacto_pagos_extension2,--str_data[76]
+					contacto_pagos_email,--str_data[77]
+					empresa_immex,--str_data[78]::boolean,
+					tasa_ret_immex,--str_data[79]::double precision,
+					dia_revision,--str_data[80]::smallint,
+					dia_pago,--str_data[81]::smallint,
+					cta_pago_mn,--str_data[82],
+					cta_pago_usd,--str_data[83],
+					ctb_cta_id_activo,--str_data[84]::integer,
+					ctb_cta_id_ingreso,--str_data[85]::integer,
+					ctb_cta_id_ietu,--str_data[86]::integer,
+					ctb_cta_id_comple,--str_data[87]::integer,
+					ctb_cta_id_activo_comple,--str_data[88]::integer,
+					lista_precio,--str_data[89]::integer,
+					fac_metodos_pago_id,--str_data[90]::integer,
+					empresa_id,--emp_id
+					sucursal_id,--suc_id
+					borrado_logico,--false
+					momento_creacion,--now()
+					id_usuario_creacion--usuario_id
+				)VALUES (
+					nuevo_folio,
+					str_data[6],
+					str_data[7],
+					str_data[8],
+					str_data[9],
+					str_data[10],
+					str_data[11],
+					str_data[12],
+					str_data[13],
+					str_data[14],
+					str_data[15],
+					str_data[16]::integer,
+					str_data[17]::integer,
+					str_data[18]::integer,
+					str_data[19],
+					str_data[20],
+					str_data[21],
+					str_data[22],
+					str_data[23],
+					str_data[24],
+					str_data[25],
+					str_data[26]::integer,
+					str_data[27],
+					str_data[28]::integer,
+					str_data[29]::integer,
+					str_data[30]::integer,
+					str_data[31]::integer,
+					str_data[32]::integer,
+					str_data[33]::integer,
+					str_data[34]::integer,
+					str_data[35]::boolean,
+					str_data[36]::boolean,
+					str_data[37]::integer,
+					str_data[38]::double precision,
+					str_data[39]::integer,
+					str_data[40]::boolean,
+					str_data[41]::integer,
+					str_data[42]::integer,
+					str_data[43]::integer,
+					str_data[44],
+					str_data[45],
+					str_data[46],
+					str_data[47],
+					str_data[48],
+					str_data[49],
+					str_data[50],
+					str_data[51],
+					str_data[52],
+					str_data[53]::integer,
+					str_data[54]::integer,
+					str_data[55]::integer,
+					str_data[56],
+					str_data[57],
+					str_data[58],
+					str_data[59],
+					str_data[60],
+					str_data[61],
+					str_data[62],
+					str_data[63],
+					str_data[64],
+					str_data[65],
+					str_data[66],
+					str_data[67],
+					str_data[68],
+					str_data[69]::integer,
+					str_data[70]::integer,
+					str_data[71]::integer,
+					str_data[72],
+					str_data[73],
+					str_data[74],
+					str_data[75],
+					str_data[76],
+					str_data[77],
+					str_data[78]::boolean,
+					str_data[79]::double precision,
+					str_data[80]::smallint,
+					str_data[81]::smallint,
+					str_data[82],
+					str_data[83],
+					str_data[84]::integer,
+					str_data[85]::integer,
+					str_data[86]::integer,
+					str_data[87]::integer,
+					str_data[88]::integer,
+					str_data[89]::integer,
+					str_data[90]::integer,
+					emp_id,
+					suc_id,
+					false,
+					now(),
+					usuario_id
+				)RETURNING id INTO ultimo_id;
+			
+				
+			
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+			
+			IF extra_data[1] != 'sin datos' THEN
+				FOR cont_fila IN 1 .. total_filas LOOP
+					SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+					--str_filas[1] calle
+					--str_filas[2] numero
+					--str_filas[3] colonia
+					--str_filas[4] idpais
+					--str_filas[5] identidad
+					--str_filas[6] idlocalidad
+					--str_filas[7] codigop
+					--str_filas[8] localternativa
+					--str_filas[9] telefono
+					--str_filas[10] numfax
+					
+					INSERT INTO erp_clients_consignacions(cliente_id, calle, numero, colonia, pais_id, estado_id, municipio_id, cp, localidad_alternativa, telefono, fax, momento_creacion)
+					VALUES(ultimo_id, str_filas[1], str_filas[2], str_filas[3], str_filas[4]::integer, str_filas[5]::integer, str_filas[6]::integer, str_filas[7], str_filas[8], str_filas[9], str_filas[10], now());
+					
+				END LOOP;
+				
+			END IF;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			--SELECT INTO str_data string_to_array(''||campos_data||'','___');
+			--RAISE EXCEPTION '%',str_data[1];
+			--RAISE EXCEPTION '%',identificador;
+			UPDATE cxc_clie SET 
+					rfc=str_data[6],
+					curp=str_data[7],
+					razon_social=str_data[8],
+					clave_comercial=str_data[9],
+					calle=str_data[10],
+					numero=str_data[11],
+					entre_calles=str_data[12],
+					numero_exterior=str_data[13],
+					colonia=str_data[14],
+					cp=str_data[15],
+					pais_id=str_data[16]::integer,
+					estado_id=str_data[17]::integer,
+					municipio_id=str_data[18]::integer,
+					localidad_alternativa=str_data[19],
+					telefono1=str_data[20],
+					extension1=str_data[21],
+					fax=str_data[22],
+					telefono2=str_data[23],
+					extension2=str_data[24],
+					email=str_data[25],
+					cxc_agen_id=str_data[26]::integer,
+					contacto=str_data[27],
+					zona_id=str_data[28]::integer,
+					cxc_clie_grupo_id=str_data[29]::integer,
+					clienttipo_id=str_data[30]::integer,
+					clasif_1=str_data[31]::integer,
+					clasif_2=str_data[32]::integer,
+					clasif_3=str_data[33]::integer,
+					moneda=str_data[34]::integer,
+					filial=str_data[35]::boolean,
+					estatus=str_data[36]::boolean,
+					gral_imp_id=str_data[37]::integer,
+					limite_credito=str_data[38]::double precision,
+					dias_credito_id=str_data[39]::integer,
+					credito_suspendido=str_data[40]::boolean,
+					credito_a_partir=str_data[41]::integer,
+					cxp_prov_tipo_embarque_id=str_data[42]::integer,
+					dias_caducidad_cotizacion=str_data[43]::integer,
+					condiciones=str_data[44],
+					observaciones=str_data[45],
+					contacto_compras_nombre=str_data[46],
+					contacto_compras_puesto=str_data[47],
+					contacto_compras_calle=str_data[48],
+					contacto_compras_numero=str_data[49],
+					contacto_compras_colonia=str_data[50],
+					contacto_compras_cp=str_data[51],
+					contacto_compras_entre_calles=str_data[52],
+					contacto_compras_pais_id=str_data[53]::integer,
+					contacto_compras_estado_id=str_data[54]::integer,
+					contacto_compras_municipio_id=str_data[55]::integer,
+					contacto_compras_telefono1=str_data[56],
+					contacto_compras_extension1=str_data[57],
+					contacto_compras_fax=str_data[58],
+					contacto_compras_telefono2=str_data[59],
+					contacto_compras_extension2=str_data[60],
+					contacto_compras_email=str_data[61],
+					contacto_pagos_nombre=str_data[62],
+					contacto_pagos_puesto=str_data[63],
+					contacto_pagos_calle=str_data[64],
+					contacto_pagos_numero=str_data[65],
+					contacto_pagos_colonia=str_data[66],
+					contacto_pagos_cp=str_data[67],
+					contacto_pagos_entre_calles=str_data[68],
+					contacto_pagos_pais_id=str_data[69]::integer,
+					contacto_pagos_estado_id=str_data[70]::integer,
+					contacto_pagos_municipio_id=str_data[71]::integer,
+					contacto_pagos_telefono1=str_data[72],
+					contacto_pagos_extension1=str_data[73],
+					contacto_pagos_fax=str_data[74],
+					contacto_pagos_telefono2=str_data[75],
+					contacto_pagos_extension2=str_data[76],
+					contacto_pagos_email=str_data[77],
+					empresa_immex=str_data[78]::boolean,
+					tasa_ret_immex=str_data[79]::double precision,
+					dia_revision=str_data[80]::smallint,
+					dia_pago=str_data[81]::smallint,
+					cta_pago_mn=str_data[82],
+					cta_pago_usd=str_data[83],
+					ctb_cta_id_activo=str_data[84]::integer,
+					ctb_cta_id_ingreso=str_data[85]::integer,
+					ctb_cta_id_ietu=str_data[86]::integer,
+					ctb_cta_id_comple=str_data[87]::integer,
+					ctb_cta_id_activo_comple=str_data[88]::integer,
+					lista_precio=str_data[89]::integer,
+					fac_metodos_pago_id=str_data[90]::integer,
+					momento_actualizacion = now(),
+					id_usuario_actualizacion = usuario_id,
+					empresa_id=emp_id,
+					sucursal_id=suc_id
+			WHERE id=str_data[4]::integer;
+			
+			--eliminar direcciones de este cliente en la tabla clients_consignacions
+			DELETE FROM erp_clients_consignacions WHERE cliente_id = str_data[4]::integer;
+			
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+			
+			IF extra_data[1] != 'sin datos' THEN
+				FOR cont_fila IN 1 .. total_filas LOOP
+					SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+					--aqui se vuelven a crear los registros
+					INSERT INTO erp_clients_consignacions(cliente_id,calle,numero,colonia,pais_id,estado_id,municipio_id,cp,localidad_alternativa,telefono,fax,momento_creacion)
+					VALUES(str_data[3]::integer,str_filas[1],str_filas[2],str_filas[3],str_filas[4]::integer,str_filas[5]::integer,str_filas[6]::integer,str_filas[7],str_filas[8],str_filas[9],str_filas[10],now());
+					
+				END LOOP;
+				
+			END IF;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE cxc_clie SET borrado_logico=true, momento_baja=now(),id_usuario_baja = str_data[3]::integer WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+
+	END IF;--termina catalogo de clientes
+	
+	
+	
+	-- Catalogo de Productos
+	IF app_selected = 8 THEN
+		
+		IF str_data[15]::integer=0 THEN
+			meta_imp:='exento';
+		END IF;
+		IF str_data[15]::integer=1 THEN
+			meta_imp:='iva_1';
+		END IF;
+		IF str_data[15]::integer=2 THEN
+			meta_imp:='tasa_cero';
+		END IF;
+		
+		--query para verificar si la Empresa actual incluye Modulo de Produccion, Modulo de Contabilidad y Modulo de Envasado
+		SELECT incluye_produccion, incluye_contabilidad, encluye_envasado FROM gral_emp WHERE id=emp_id INTO incluye_modulo_produccion, incluye_modulo_contabilidad, incluye_modulo_envasado;
+		
+		IF command_selected = 'new' THEN
+			id_tipo_consecutivo:=3;--Folio de pproducto
+
+			--alter para catalogo productos
+			--ALTER TABLE inv_prod ADD COLUMN archivo_pdf character varying DEFAULT '';
+			
+			--aqui entra para tomar el consecutivo del folio  la sucursal actual
+			--UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+			--WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+			
+			--concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+			--nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+			nuevo_folio := str_data[31];
+			tipo_producto:=str_data[18]::integer;
+			INSERT INTO inv_prod(	
+				sku,--nuevo_folio
+				descripcion,--str_data[5]
+				codigo_barras,--str_data[6]
+				tentrega,--str_data[7]::integer,
+				inv_clas_id,--str_data[8]::integer
+				inv_stock_clasif_id,--str_data[9]::integer
+				estatus,--str_data[10]::boolean
+				inv_prod_familia_id,--str_data[11]::integer
+				subfamilia_id,--str_data[12]::integer
+				inv_prod_grupo_id,--str_data[13]::integer
+				ieps,--str_data[14]::integer
+				--meta_impuesto,--meta_imp
+				gral_impto_id,--str_data[15]::integer,
+				inv_prod_linea_id,--str_data[16]::integer
+				inv_mar_id,--str_data[17]::integer
+				tipo_de_producto_id,--str_data[18]::integer
+				inv_seccion_id,--str_data[19]::integer
+				unidad_id,--str_data[20]::integer
+				requiere_numero_lote,--str_data[21]::boolean
+				requiere_nom,--str_data[22]::boolean
+				requiere_numero_serie,--str_data[23]::boolean
+				requiere_pedimento,--str_data[24]::boolean
+				permitir_stock,--str_data[25]::boolean
+				venta_moneda_extranjera,--str_data[26]::boolean
+				compra_moneda_extranjera,--str_data[27]::boolean
+				cxp_prov_id,--str_data[29]::integer
+				densidad,--str_data[30]::double precision
+				valor_maximo,--str_data[32]::double precision
+				valor_minimo,--str_data[33]::double precision
+				punto_reorden,--str_data[34]::double precision
+				ctb_cta_id_gasto, --str_data[35]::integer,
+				ctb_cta_id_costo_venta, --str_data[36]::integer,
+				ctb_cta_id_venta, --str_data[37]::integer,
+				borrado_logico,--false
+				momento_creacion,--now()
+				id_usuario_creacion,--usuario_id
+				empresa_id,--emp_id
+				sucursal_id,--suc_id
+				descripcion_corta,--str_data[40]
+				descripcion_larga,--str_data[41]
+				archivo_img,--str_data[38]
+				archivo_pdf,--str_data[39]
+				inv_prod_presentacion_id,--str_data[42]::integer
+				flete,--str_data[43]::boolean,
+				no_clie,--str_data[44]
+				gral_mon_id,--str_data[45]::integer
+				gral_imptos_ret_id, --str_data[46]::integer
+                cfdi_prodserv_id --str_data[47]::integer
+			) values(
+				nuevo_folio,
+				str_data[5],
+				str_data[6],
+				str_data[7]::integer,
+				str_data[8]::integer,
+				str_data[9]::integer,
+				str_data[10]::boolean,
+				str_data[11]::integer,
+				str_data[12]::integer,
+				str_data[13]::integer,
+				str_data[14]::integer,
+				--meta_imp,
+				str_data[15]::integer,
+				str_data[16]::integer,
+				str_data[17]::integer,
+				str_data[18]::integer,
+				str_data[19]::integer,
+				str_data[20]::integer,
+				str_data[21]::boolean,
+				str_data[22]::boolean,
+				str_data[23]::boolean,
+				str_data[24]::boolean,
+				str_data[25]::boolean,
+				str_data[26]::boolean,
+				str_data[27]::boolean,
+				str_data[29]::integer,
+				str_data[30]::double precision,
+				str_data[32]::double precision,
+				str_data[33]::double precision,
+				str_data[34]::double precision,
+				str_data[35]::integer,
+				str_data[36]::integer,
+				str_data[37]::integer,
+				false,
+				now(),
+				usuario_id,
+				emp_id,
+				suc_id,
+				str_data[40],
+				str_data[41],
+				str_data[38],
+				str_data[39],
+				str_data[42]::integer,
+				str_data[43]::boolean,
+				str_data[44],
+				str_data[45]::integer,
+				str_data[46]::integer,
+                get_id_cfdi_claveprodserv(str_data[47])::integer
+			)RETURNING id INTO id_producto;
+			
+			--convertir en arreglo los id de presentaciones de producto
+			SELECT INTO str_pres string_to_array(str_data[28],',');
+			
+			--obtiene numero de elementos del arreglo str_pres
+			tot_filas:= array_length(str_pres,1);
+			
+			
+			--Si el tiopo de producto es diferente de 3 y 4, hay que guardar presentaciones
+			--tipo=3 Kit
+			--tipo=4 Servicios
+			--IF str_data[18]::integer!=3 AND str_data[18]::integer!=4 THEN
+				
+				FOR cont_fila_pres IN 1 .. tot_filas LOOP
+					--Crea registros de presentaciones  en tabla inv_prod_pres_x_prod
+					INSERT INTO inv_prod_pres_x_prod(producto_id,presentacion_id) VALUES (id_producto,str_pres[cont_fila_pres]::integer);
+					
+					--Crea registro por cada presentacion en la tabla de precios 
+					INSERT INTO inv_pre (gral_emp_id, inv_prod_id, inv_prod_presentacion_id, momento_creacion,borrado_logico,precio_1, precio_2, precio_3, precio_4, precio_5, precio_6, precio_7, precio_8, precio_9, precio_10, gral_mon_id_pre1, gral_mon_id_pre2, gral_mon_id_pre3, gral_mon_id_pre4, gral_mon_id_pre5, gral_mon_id_pre6, gral_mon_id_pre7, gral_mon_id_pre8, gral_mon_id_pre9, gral_mon_id_pre10, descuento_1,descuento_2,descuento_3,descuento_4,descuento_5,descuento_6,descuento_7,descuento_8,descuento_9,descuento_10,default_precio_1,default_precio_2,default_precio_3,default_precio_4,default_precio_5,default_precio_6,default_precio_7,default_precio_8,default_precio_9,default_precio_10,operacion_precio_1,operacion_precio_2,operacion_precio_3,operacion_precio_4,operacion_precio_5,operacion_precio_6,operacion_precio_7,operacion_precio_8,operacion_precio_9,operacion_precio_10,calculo_precio_1,calculo_precio_2,calculo_precio_3,calculo_precio_4,calculo_precio_5,calculo_precio_6,calculo_precio_7,calculo_precio_8,calculo_precio_9,calculo_precio_10,redondeo_precio_1,redondeo_precio_2,redondeo_precio_3,redondeo_precio_4,redondeo_precio_5,redondeo_precio_6,redondeo_precio_7,redondeo_precio_8,redondeo_precio_9,redondeo_precio_10) 
+					VALUES(emp_id, id_producto,str_pres[cont_fila_pres]::integer, now(), false, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,0,0,0,0,0,0,0,0,0 ,0,0,0,0,0,0,0,0,0,0,  1,1,1,1,1,1,1,1,1,1 ,1,1,1,1,1,1,1,1,1,1,  0,0,0,0,0,0,0,0,0,0);
+				END LOOP;
+			--END IF;
+			
+			IF incluye_modulo_produccion=TRUE THEN 
+				--para Producto 3=Kit
+				IF tipo_producto=3 THEN
+					total_filas:= array_length(extra_data,1);
+					cont_fila:=1;
+					IF extra_data[1]<>'sin datos' THEN
+						FOR cont_fila IN 1 .. total_filas LOOP
+							SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+							--str_filas[1] eliminado
+							IF str_filas[1]::integer != 0 THEN--1: no esta eliminado, 0:eliminado
+								--ya no se valida nada
+								--str_filas[1]	producto_ingrediente_id
+								--str_filas[2] 	porcentaje
+								--INSERT INTO inv_prod_formulaciones(producto_formulacion_id,producto_ingrediente_id,porcentaje) VALUES (id_producto,str_filas[1]::integer,str_filas[2]::double precision);
+								INSERT INTO inv_kit(producto_kit_id,producto_elemento_id,cantidad) 
+								VALUES (id_producto,str_filas[1]::integer,str_filas[2]::double precision);
+							END IF;
+						END LOOP;
+					END IF;
+				END IF;	
+			ELSE
+				--para Producto 1=TERMINADO, 2=INTERMEDIO, 3=KIT, 8=DESARROLLO
+				IF tipo_producto=1 OR tipo_producto=2 OR tipo_producto=3 OR tipo_producto=8 THEN 
+					total_filas:= array_length(extra_data,1);
+					cont_fila:=1;
+					IF extra_data[1]<>'sin datos' THEN
+						FOR cont_fila IN 1 .. total_filas LOOP
+							SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+							--str_filas[1] eliminado
+							IF str_filas[1]::integer != 0 THEN--1: no esta eliminado, 0:eliminado
+								--ya no se valida nada
+								--str_filas[1]	producto_ingrediente_id
+								--str_filas[2] 	porcentaje
+								--INSERT INTO inv_prod_formulaciones(producto_formulacion_id,producto_ingrediente_id,porcentaje) VALUES (id_producto,str_filas[1]::integer,str_filas[2]::double precision);
+								INSERT INTO inv_kit(producto_kit_id,producto_elemento_id,cantidad) VALUES(id_producto,str_filas[1]::integer,str_filas[2]::double precision);
+							END IF;
+						END LOOP;
+					END IF;
+				END IF;
+			END IF;
+			
+			
+			--Si el tipo de producto es DIFERENTE DE 3=Kit Y 4=Servicios
+			IF str_data[18]::integer<>3 AND str_data[18]::integer<>4 THEN
+				--Genera registro en la tabla inv_exi
+				FOR fila2 IN EXECUTE('SELECT distinct inv_suc_alm.almacen_id FROM gral_suc JOIN inv_suc_alm ON inv_suc_alm.sucursal_id=gral_suc.id WHERE gral_suc.empresa_id='||emp_id||' ORDER BY inv_suc_alm.almacen_id') LOOP
+					INSERT INTO inv_exi(inv_prod_id, inv_alm_id, ano, exi_inicial, transito) VALUES(id_producto, fila2.almacen_id, ano_actual, 0, 0);
+				END LOOP;
+				
+				if str_data[45]::integer=1 then 
+					--Si es MN, el tipo de cambio es 1
+					valor1:=1;
+				else
+					--Buscar el tipo de cambio del día
+					SELECT valor AS tipo_cambio FROM erp_monedavers WHERE momento_creacion<=now() AND moneda_id=str_data[45]::integer ORDER BY momento_creacion DESC LIMIT 1 into valor1;
+					if valor1 is null then valor1:=1; end if;
+				end if;
+				
+				--Genera registro en la tabla 
+				INSERT INTO inv_prod_cost_prom(inv_prod_id, ano,gral_mon_id_1,gral_mon_id_2,gral_mon_id_3,gral_mon_id_4,gral_mon_id_5,gral_mon_id_6,gral_mon_id_7,gral_mon_id_8,gral_mon_id_9,gral_mon_id_10,gral_mon_id_11,gral_mon_id_12,tipo_cambio_1,tipo_cambio_2,tipo_cambio_3,tipo_cambio_4,tipo_cambio_5,tipo_cambio_6,tipo_cambio_7,tipo_cambio_8,tipo_cambio_9,tipo_cambio_10,tipo_cambio_11,tipo_cambio_12) 
+				VALUES(id_producto, ano_actual,str_data[45]::integer,str_data[45]::integer,str_data[45]::integer,str_data[45]::integer,str_data[45]::integer,str_data[45]::integer,str_data[45]::integer,str_data[45]::integer,str_data[45]::integer,str_data[45]::integer,str_data[45]::integer,str_data[45]::integer,valor1,valor1,valor1,valor1,valor1,valor1,valor1,valor1,valor1,valor1,valor1,valor1);
+			END IF;
+
+			-- Guardar aliases (creacion de producto)
+			cont_alias := 1;
+			FOR cont_alias_idx IN 48 .. 57 LOOP
+				IF str_data[cont_alias_idx] <> '' THEN
+					INSERT INTO inv_prod_alias (producto_id, alias_id, descripcion) VALUES (id_producto, cont_alias, str_data[cont_alias_idx]);
+				END IF;
+				cont_alias := cont_alias + 1;
+			END LOOP;
+
+			valor_retorno := '1';
+		END IF;--termina nuevo producto
+		
+		
+		IF command_selected = 'edit' THEN
+			nuevo_folio := str_data[31];
+			tipo_producto:=str_data[18]::integer;
+			UPDATE inv_prod SET 
+				sku=nuevo_folio,--nuevo_folio, 
+				descripcion=str_data[5],
+				codigo_barras=str_data[6],
+				tentrega=str_data[7]::integer,
+				inv_clas_id=str_data[8]::integer,
+				inv_stock_clasif_id=str_data[9]::integer,
+				estatus=str_data[10]::boolean,
+				inv_prod_familia_id=str_data[11]::integer,
+				subfamilia_id=str_data[12]::integer,
+				inv_prod_grupo_id=str_data[13]::integer,
+				ieps=str_data[14]::integer,
+				--meta_impuesto=meta_imp,
+				gral_impto_id=str_data[15]::integer,
+				inv_prod_linea_id=str_data[16]::integer,
+				inv_mar_id=str_data[17]::integer,
+				tipo_de_producto_id=str_data[18]::integer,
+				inv_seccion_id=str_data[19]::integer,
+				unidad_id=str_data[20]::integer,
+				requiere_numero_lote=str_data[21]::boolean,
+				requiere_nom=str_data[22]::boolean,
+				requiere_numero_serie=str_data[23]::boolean,
+				requiere_pedimento=str_data[24]::boolean,
+				permitir_stock=str_data[25]::boolean,
+				venta_moneda_extranjera=str_data[26]::boolean,
+				compra_moneda_extranjera=str_data[27]::boolean,
+				cxp_prov_id=str_data[29]::integer,
+				densidad=str_data[30]::double precision,
+				valor_maximo=str_data[32]::double precision,
+				valor_minimo=str_data[33]::double precision,
+				punto_reorden=str_data[34]::double precision,
+				ctb_cta_id_gasto=str_data[35]::integer,
+				ctb_cta_id_costo_venta=str_data[36]::integer,
+				ctb_cta_id_venta=str_data[37]::integer,
+				momento_actualizacion=now(),
+				id_usuario_actualizacion=usuario_id,
+				descripcion_corta=str_data[40],
+				descripcion_larga=str_data[41],
+				archivo_img=str_data[38],
+				archivo_pdf=str_data[39],
+				inv_prod_presentacion_id=str_data[42]::integer,
+				flete=str_data[43]::boolean,
+				no_clie=str_data[44],
+				gral_mon_id=str_data[45]::integer,
+				gral_imptos_ret_id=str_data[46]::integer,
+                cfdi_prodserv_id=get_id_cfdi_claveprodserv(str_data[47])::integer
+			WHERE id=str_data[4]::integer;
+			
+			--convertir en arreglo los id de presentaciones de producto
+			SELECT INTO str_pres string_to_array(str_data[28],',');
+			
+			--obtiene numero de elementos del arreglo str_pres
+			tot_filas:= array_length(str_pres,1);
+			
+			--elimina los registros de las presentaciones del producto
+			DELETE FROM inv_prod_pres_x_prod WHERE producto_id=str_data[4]::integer;
+			
+			--Si el tiopo de producto es diferente de 3 y 4, hay que guardar presentaciones
+			--tipo=3 Kit
+			--tipo=4 Servicios
+			--IF str_data[18]::integer!=3 AND str_data[18]::integer!=4 THEN
+				--aqui se vuelven a crear los registros de las presentaciones del producto
+				FOR cont_fila_pres IN 1 .. tot_filas LOOP
+					INSERT INTO inv_prod_pres_x_prod(producto_id,presentacion_id) VALUES (str_data[4]::integer,str_pres[cont_fila_pres]::integer);
+				END LOOP;
+			--END IF;
+			
+			FOR fila IN EXECUTE('SELECT id, inv_prod_id, inv_prod_presentacion_id FROM inv_prod_costos WHERE inv_prod_id='||str_data[4]::integer||' AND ano=EXTRACT(YEAR FROM now())') LOOP
+				exis:=0;
+				SELECT count(id) FROM inv_prod_pres_x_prod WHERE producto_id=fila.inv_prod_id AND presentacion_id=fila.inv_prod_presentacion_id INTO exis;
+				IF exis<=0 THEN 
+					DELETE FROM inv_prod_costos WHERE id=fila.id;
+				END IF;
+			END LOOP;
+			
+			FOR fila IN EXECUTE('SELECT id, inv_prod_id, inv_prod_presentacion_id FROM inv_pre WHERE inv_prod_id='||str_data[4]::integer||' AND gral_emp_id='||emp_id) LOOP
+				exis:=0;
+				SELECT count(id) FROM inv_prod_pres_x_prod WHERE producto_id=fila.inv_prod_id AND presentacion_id=fila.inv_prod_presentacion_id INTO exis;
+				IF exis<=0 THEN 
+					DELETE FROM inv_pre WHERE id=fila.id;
+				END IF;
+			END LOOP;
+			
+			IF controlExisPres THEN 
+				FOR fila IN EXECUTE('SELECT id, inv_prod_id, inv_prod_presentacion_id FROM inv_exi_pres WHERE inv_prod_id='||str_data[4]::integer) LOOP
+					exis:=0;
+					SELECT count(id) FROM inv_prod_pres_x_prod WHERE producto_id=fila.inv_prod_id AND presentacion_id=fila.inv_prod_presentacion_id INTO exis;
+					IF exis<=0 THEN 
+						DELETE FROM inv_exi_pres WHERE id=fila.id;
+					END IF;
+				END LOOP;
+
+				FOR fila IN EXECUTE('select id, inv_prod_id, inv_prod_presentacion_id from env_conf where inv_prod_id='||str_data[4]::integer) LOOP
+					exis:=0;
+					SELECT count(id) FROM inv_prod_pres_x_prod WHERE producto_id=fila.inv_prod_id AND presentacion_id=fila.inv_prod_presentacion_id INTO exis;
+					IF exis<=0 THEN 
+						DELETE FROM env_conf WHERE id=fila.id;
+						DELETE FROM env_conf_det WHERE env_conf_id=fila.id;
+					END IF;
+				END LOOP;
+			END IF;
+			
+				
+			IF incluye_modulo_produccion=TRUE THEN 
+				--para Producto 3=Kit
+				IF tipo_producto=3 THEN
+					--elimina los prod ingredientes de la tabla inv_kit
+					DELETE FROM inv_kit  WHERE producto_kit_id = str_data[4]::integer;
+					
+					total_filas:= array_length(extra_data,1);
+					cont_fila:=1;
+					IF extra_data[1] != 'sin datos' THEN
+						FOR cont_fila IN 1 .. total_filas LOOP
+							SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+							--str_filas[1] eliminado
+							IF str_filas[1]::integer != 0 THEN--1: no esta eliminado, 0:eliminado
+								--ya no se valida nada
+								--str_filas[1]	producto_elemento_id
+								--str_filas[2] 	cantidad
+								INSERT INTO inv_kit(producto_kit_id,producto_elemento_id,cantidad) VALUES (str_data[4]::integer,str_filas[1]::integer,str_filas[2]::double precision);
+							END IF;
+						END LOOP;
+					END IF;
+				END IF;	
+			ELSE
+				
+				--Para Producto 1=TERMINADO, 2=INTERMEDIO, 3=KIT, 8=DESARROLLO
+				IF tipo_producto=1 OR tipo_producto=2 OR tipo_producto=3 OR tipo_producto=8 THEN 
+					--elimina los prod ingredientes de la tabla inv_kit
+					DELETE FROM inv_kit  WHERE producto_kit_id=str_data[4]::integer;
+
+					--RAISE EXCEPTION '%','extra_data: '||extra_data;
+					
+					total_filas:= array_length(extra_data,1);
+					cont_fila:=1;
+					IF extra_data[1] != 'sin datos' THEN
+						FOR cont_fila IN 1 .. total_filas LOOP
+							SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+							--str_filas[1] eliminado
+							IF str_filas[1]::integer<>0 THEN--1: no esta eliminado, 0:eliminado
+								--str_filas[1]	producto_elemento_id
+								--str_filas[2] 	cantidad
+								INSERT INTO inv_kit(producto_kit_id,producto_elemento_id,cantidad) VALUES (str_data[4]::integer,str_filas[1]::integer,str_filas[2]::double precision);
+							END IF;
+						END LOOP;
+					END IF;
+				END IF;	
+			END IF;
+
+			-- Guardar aliases (edicion de producto)
+			DELETE FROM inv_prod_alias WHERE producto_id = str_data[4]::integer;
+
+			cont_alias := 1;
+			FOR cont_alias_idx IN 48 .. 57 LOOP
+				IF str_data[cont_alias_idx] <> '' THEN
+					INSERT INTO inv_prod_alias (producto_id, alias_id, descripcion) VALUES (str_data[4]::integer, cont_alias, str_data[cont_alias_idx]);
+				END IF;
+				cont_alias := cont_alias + 1;
+			END LOOP;
+
+			valor_retorno := '1';
+		END IF;--termina edit producto
+		
+		
+		
+		IF command_selected = 'delete' THEN
+			valor_retorno := '1';
+			
+			IF incluye_modulo_produccion=TRUE THEN
+				--aqui buscamos si el producto es formulado
+				SELECT count(inv_prod_id) FROM pro_estruc  WHERE inv_prod_id=str_data[4]::integer AND borrado_logico=FALSE INTO exis;
+				IF exis > 0 THEN
+					valor_retorno := '01';
+				ELSE
+					exis:=0; --inicializar variable
+					--aqui buscamos si el producto forma parte de una formula
+					SELECT count(pro_estruc_det.inv_prod_id) FROM pro_estruc_det JOIN pro_estruc ON pro_estruc.id=pro_estruc_det.pro_estruc_id WHERE pro_estruc_det.inv_prod_id=str_data[4]::integer  AND pro_estruc.borrado_logico=FALSE 
+					INTO exis;
+					
+					IF exis > 0 THEN
+						valor_retorno := '02';
+					END IF;
+				END IF;
+				
+				IF valor_retorno='1' THEN 
+					--si el valor retorno sigue igual a 1, entonces tambien buscamos en la tabla de kits
+					SELECT count(producto_elemento_id) FROM inv_kit WHERE producto_elemento_id=str_data[4]::integer INTO exis;
+					IF exis > 0 THEN
+						valor_retorno := '03';
+					END IF;
+				END IF;
+			ELSE
+				SELECT count(producto_elemento_id) FROM inv_kit WHERE producto_elemento_id=str_data[4]::integer INTO exis;
+				IF exis > 0 THEN
+					valor_retorno := '04';
+				END IF;
+			END IF;
+			
+			
+			IF incluye_modulo_envasado=TRUE THEN 
+				--verificamos que el producto no forme parte de una configuracion de envase
+				exis:=0;
+				SELECT count(env_conf_det.inv_prod_id) FROM env_conf JOIN  env_conf_det ON env_conf_det.env_conf_id=env_conf.id WHERE env_conf_det.inv_prod_id=str_data[4]::integer AND env_conf.borrado_logico=FALSE 
+				INTO exis;
+				IF exis > 0 THEN
+					valor_retorno := '05';
+				END IF;
+			END IF;
+
+			IF (select sum((inv_exi.exi_inicial - inv_exi.transito - inv_exi.reservado  + inv_exi.entradas_1 - inv_exi.salidas_1 + inv_exi.entradas_2 - inv_exi.salidas_2 + inv_exi.entradas_3 - inv_exi.salidas_3 + inv_exi.entradas_4 - inv_exi.salidas_4 + inv_exi.entradas_5 - inv_exi.salidas_5 + inv_exi.entradas_6 - inv_exi.salidas_6 + inv_exi.entradas_7 - inv_exi.salidas_7 + inv_exi.entradas_8 - inv_exi.salidas_8 + inv_exi.entradas_9 - inv_exi.salidas_9 + inv_exi.entradas_10 - inv_exi.salidas_10 + inv_exi.entradas_11 - inv_exi.salidas_11 + inv_exi.entradas_12 - inv_exi.salidas_12)) AS existencia FROM inv_exi WHERE inv_prod_id=str_data[4]::integer)>0.0001 THEN 
+				--No se puede eliminar porque hay existencia en uno o mas almacenes
+				valor_retorno := '06';
+			END IF;
+			
+			
+			--Si valor retorno es igual a 1, entonces procedemos a eliminar el producto
+			IF valor_retorno='1' THEN 
+				UPDATE inv_prod SET borrado_logico=true, momento_baja=now(), id_usuario_baja = usuario_id
+				WHERE id = str_data[4]::integer;
+				
+				--elimina los registros de las formulacion del producto
+				DELETE FROM inv_kit  WHERE producto_kit_id = str_data[4]::integer;
+				
+				--elimina los registros de las presentaciones del producto
+				DELETE FROM inv_prod_pres_x_prod WHERE producto_id=str_data[4]::integer;
+				
+				DELETE FROM inv_prod_costos WHERE inv_prod_id=str_data[4]::integer AND ano=EXTRACT(YEAR FROM now());
+
+				DELETE FROM inv_pre WHERE inv_prod_id=str_data[4]::integer AND gral_emp_id=emp_id;
+
+				DELETE FROM inv_exi_pres WHERE inv_prod_id=str_data[4]::integer;
+			END IF;
+			
+			--valor_retorno := '1';
+		END IF;
+	END IF;
+	--termina catalogo de productos
+	
+	
+	
+	
+	-- prefacturas
+	IF app_selected = 13 THEN
+		IF command_selected = 'new' THEN
+			
+			--str_data[3]	id_usuario
+			--str_data[4]	id_prefactura
+			--str_data[5] 	id_cliente
+			--str_data[6]	moneda
+			--str_data[7]	observaciones
+			--str_data[8]	subtotal
+			--str_data[9]	impuesto
+			--str_data[10]	total
+			--str_data[11]	tipo_cambio
+			--str_data[12]	id_vendedor
+			--str_data[13]	id_condiciones
+			--str_data[14]	orden_compra
+			--str_data[15]	refacturar
+			--str_data[16]	id_metodo_pago
+			--str_data[17]	no_cuenta
+			--str_data[19]	tipo_documento
+			
+			
+			--crea registro en tabla erp_proceso y retorna el id del registro creado
+			INSERT INTO  erp_proceso(proceso_flujo_id,empresa_id,sucursal_id)VALUES(2, emp_id, suc_id) RETURNING id into ultimo_id_proceso;
+			
+			--crear registro en la tabla cotizacions y retorna el id del registro creado
+			 INSERT INTO  erp_prefacturas(
+				  cliente_id,
+				  moneda_id,
+				  observaciones,
+				  subtotal,
+				  impuesto,
+				  total,
+				  proceso_id,
+				  tipo_cambio,
+				  empleado_id,
+				  terminos_id,
+				  orden_compra,
+				  refacturar,
+				  fac_metodos_pago_id,
+				  no_tarjeta,
+				  id_usuario_creacion,
+				  momento_creacion
+			)
+			VALUES(
+				  str_data[5]::integer,
+				  str_data[6]::integer,
+				  str_data[7],
+				  str_data[8]::double precision,
+				  str_data[9]::double precision,
+				  str_data[10]::double precision,
+				  ultimo_id_proceso,
+				  str_data[11]::double precision,
+				  str_data[12]::integer,
+				  str_data[13]::integer,
+				  str_data[14],
+				  str_data[15]::boolean,
+				  str_data[16]::integer,
+				  str_data[17],
+				  str_data[3]::integer,
+				  now()
+			) RETURNING id into ultimo_id;
+			
+			
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+			FOR cont_fila IN 1 .. total_filas LOOP
+				SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+				
+				--str_filas[1] eliminado
+				IF str_filas[1]::integer != 0 THEN--1: no esta eliminado, 0:eliminado
+					--str_filas[2]	iddetalle
+					--str_filas[3]	idproducto
+					--str_filas[4]	id_presentacion
+					--str_filas[5]	id_impuesto
+					--str_filas[6]	cantidad
+					--str_filas[7]	costo
+					
+					--crea registros para tabla invfisico-detalles
+					INSERT INTO erp_prefacturas_detalles(
+						  producto_id,
+						  presentacion_id,
+						  tipo_impuesto_id,
+						  cantidad,
+						  precio_unitario,
+						  prefacturas_id,
+						  momento_creacion
+					)VALUES(
+						  str_filas[3]::integer,
+						  str_filas[4]::integer,
+						  str_filas[5]::integer,
+						  str_filas[6]::double precision,
+						  str_filas[7]::double precision,
+						  ultimo_id,
+						  now()
+					);
+					
+					IF str_data[16]='true' THEN
+						
+						
+					END IF;
+					
+				END IF;
+			END LOOP;
+			valor_retorno := '1';
+		END IF;--termina nueva prefactura
+		
+		
+		
+		IF command_selected = 'edit' THEN
+			--str_data[3]	id_usuario
+			--str_data[4]	id_prefactura
+			--str_data[5] 	id_cliente
+			--str_data[6]	moneda
+			--str_data[7]	observaciones
+			--str_data[8]	subtotal
+			--str_data[9]	impuesto
+			--str_data[10]	total
+			--str_data[11]	tipo_cambio
+			--str_data[12]	id_vendedor
+			--str_data[13]	id_condiciones
+			--str_data[14]	orden_compra
+			--str_data[15]	refacturar
+			--str_data[16]	id_metodo_pago
+			--str_data[17]	no_cuenta
+			--str_data[19]	tipo_documento
+			UPDATE erp_prefacturas SET 
+				cliente_id = str_data[5]::integer, 
+				moneda_id = str_data[6]::integer, 
+				observaciones = str_data[7], 
+				subtotal = str_data[8]::double precision, 
+				impuesto = str_data[9]::double precision, 
+				total = str_data[10]::double precision, 
+				tipo_cambio = str_data[11]::double precision,
+				empleado_id=str_data[12]::integer,
+				terminos_id=str_data[13]::integer,
+				orden_compra=str_data[14],
+				refacturar=str_data[15]::boolean, 
+				fac_metodos_pago_id=str_data[16]::integer,
+				no_tarjeta=str_data[17],
+				id_usuario_actualizacion = str_data[3]::integer,
+				momento_actualizacion = now()
+			WHERE id = str_data[4]::integer;
+			
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+			FOR cont_fila IN 1 .. total_filas LOOP
+				SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+				
+				--str_filas[1] 0:eliminado, 1:no eliminado
+				IF str_filas[1]::integer != 0 THEN--1: no esta eliminado, 0:eliminado
+					--str_filas[2]	iddetalle
+					--str_filas[3]	idproducto
+					--str_filas[4]	id_presentacion
+					--str_filas[5]	id_impuesto
+					--str_filas[6]	cantidad
+					--str_filas[7]	costo
+					
+					--verifica si trae un id. Este id es el id del registro en la tabla cotizacions_detalles
+					IF str_filas[2] !='0' THEN
+						--RAISE EXCEPTION '%','No es nuevo';
+						--actualiza registros en la tabla invfisico-detalles
+						UPDATE erp_prefacturas_detalles SET cantidad = str_filas[6]::double precision,precio_unitario = str_filas[7]::double precision,tipo_impuesto_id = str_filas[5]::integer
+						WHERE  id = str_filas[2]::integer  AND prefacturas_id = str_data[4]::integer;
+					ELSE
+						--RAISE EXCEPTION '%','Este si es nuevo es nuevo: '||str_filas[2];
+						--crea nuevos registros
+						INSERT INTO erp_prefacturas_detalles(prefacturas_id,producto_id,presentacion_id,tipo_impuesto_id,cantidad,precio_unitario,momento_creacion)
+						VALUES(str_data[4]::integer,str_filas[3]::integer,str_filas[4]::integer,str_filas[5]::integer,str_filas[6]::double precision,str_filas[7]::double precision,now());
+					END IF;
+				ELSE
+					--elimina registro que se elimino en el grid
+					DELETE FROM erp_prefacturas_detalles where id = str_filas[2]::integer  AND prefacturas_id = str_data[4]::integer;
+				END IF;
+			END LOOP;
+			valor_retorno := '1';
+		END IF;--termina edit prefactura
+		
+		IF command_selected = 'delete' THEN
+			UPDATE erp_prefacturas SET borrado_logico = true, momento_baja = now(),id_usuario_baja = str_data[3]::integer
+			where id = str_data[4]::integer;
+			
+			valor_retorno := '1';
+		END IF;
+		
+	END IF;--termina prefacturas
+	
+	
+	-- pagos
+	IF app_selected = 14 THEN
+
+		id_tipo_consecutivo:=11;--Numero de transaccion pago CXC
+		
+		--aqui entra para tomar el consecutivo del folio  la sucursal actual
+		UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+		WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+		
+		--concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+		--nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+
+		
+		--nuevo folio transaccion
+		folio_transaccion := nuevo_consecutivo::bigint;
+		
+		
+		IF command_selected = 'pago' THEN
+			--obtiene id de la forma de pago
+			SELECT id FROM erp_pagos_formas WHERE titulo ILIKE str_data[11] LIMIT 1 into id_forma_pago;
+			
+			id_anticipo := 0;
+			monto_anticipo_actual:=0;
+			--obtener id del anticipo
+			SELECT COUNT(id) FROM cxc_ant WHERE numero_transaccion = str_data[23]::bigint AND cliente_id=str_data[4]::integer and borrado_logico=false INTO rowCount;
+			IF rowCount > 0 THEN
+				SELECT id, anticipo_actual FROM cxc_ant WHERE numero_transaccion = str_data[23]::bigint AND cliente_id = str_data[4]::integer   LIMIT 1 
+				INTO id_anticipo, monto_anticipo_actual;
+			END IF;
+			
+			INSERT INTO erp_pagos (
+					numero_transaccion,
+					momento_creacion,
+					forma_pago_id,
+					numero_cheque,
+					referencia,
+					numero_tarjeta,
+					observaciones,
+					id_usuario_pago,
+					banco_id,
+					moneda_id,
+					monto_pago,
+					cliente_id,
+					fecha_deposito,
+					numerocuenta_id,
+					movimiento,
+					bancokemikal_id,
+					tipo_cambio,
+					anticipo_id,
+					empresa_id,
+					sucursal_id
+				)
+			VALUES (folio_transaccion,
+					now(),
+					id_forma_pago,
+					str_data[12],
+					str_data[13],
+					str_data[14],
+					str_data[10],
+					str_data[3]::integer,
+					str_data[9]::integer,
+					str_data[7]::integer,
+					str_data[16]::double precision,
+					str_data[4]::integer,
+					str_data[17]::timestamp with time zone,
+					str_data[19]::integer,
+					str_data[18],
+					str_data[20]::integer,
+					str_data[21]::double precision,
+					id_anticipo,
+					emp_id, 
+					suc_id
+				) RETURNING id into ultimo_id;
+				
+			--str_data[3]	id_usuario
+			--str_data[4]	cliente_id
+			--str_data[5]	deuda_pesos
+			--str_data[6]	deuda_usd
+			--str_data[7]	moneda
+			--str_data[8]	fecha+" "+hora+":"+minutos+":"+segundos
+			--str_data[9]	banco
+			--str_data[10]	observaciones
+			--str_data[11]	forma_pago
+			--str_data[12]	cheque
+			--str_data[13]	referencia
+			--str_data[14]	tarjeta
+			--str_data[15]	antipo
+			--str_data[16]	monto_pago
+			--str_data[17]	fecha_deposito
+			--str_data[18]	ficha_movimiento_deposito
+			--str_data[19]	ficha_cuenta_deposito
+			--str_data[20]	ficha_banco_kemikal
+			--str_data[21]	tipo_cambio
+			--str_data[22]	anticipo_gastado
+			--str_data[23]	no_transaccion_anticipo
+			--str_data[24]	saldo_a_favor
+			
+			--RAISE EXCEPTION '%','Si llega aqui: id_pago: '||ultimo_id_pago;
+			--------------------saldando facturas--------------------------------
+			--SELECT INTO item string_to_array(''||valores||'','&');
+			
+			SELECT INTO veces array_upper(extra_data,1);
+			WHILE incrementa <= veces LOOP
+				SELECT INTO iterar string_to_array(extra_data[incrementa],'___');
+				--RAISE EXCEPTION '%', iterar[1];
+				--iterar[1]	factura_vista
+				--iterar[2]	saldado
+				--iterar[3]	saldo
+				--iterar[4]	tipocambio(este tipo de cambio no se utiliza, el tipo de cambio esta en pagos)
+				
+				SELECT moneda_id FROM fac_docs WHERE serie_folio=iterar[1] INTO id_moneda_factura;
+				
+				INSERT INTO erp_pagos_detalles (pago_id,serie_folio,cantidad,momento_pago,fac_moneda_id) 
+				VALUES (ultimo_id,iterar[1],iterar[3]::double precision,str_data[8]::timestamp with time zone, id_moneda_factura);
+				
+				IF iterar[2]::boolean = true THEN
+					UPDATE erp_h_facturas SET pagado=true WHERE serie_folio = iterar[1]::character varying;
+					UPDATE fac_cfds SET pagado=true WHERE serie_folio ilike iterar[1]::character varying;
+					--UPDATE erp_notacargos SET pagado=true WHERE serie_folio ilike iterar[1]::character varying;
+				END IF;
+				incrementa:= 1 + incrementa;
+			END LOOP;
+
+			sql_pagos:='SELECT serie_folio,cantidad FROM erp_pagos_detalles WHERE pago_id = '||ultimo_id;
+			--RAISE EXCEPTION '%','Si llega aqui: sql-pagos: '||string_pagos;
+			
+			FOR fila IN EXECUTE(sql_pagos) LOOP
+				EXECUTE 'SELECT monto_total,total_pagos	from  erp_h_facturas where serie_folio ilike '''||fila.serie_folio||'''' 
+				INTO total_factura,monto_pagos;
+
+				--sacar suma total de pagos para esta factura
+				SELECT CASE WHEN sum IS NULL THEN 0 ELSE sum END  from(	SELECT sum(cantidad) FROM erp_pagos_detalles WHERE serie_folio=fila.serie_folio AND cancelacion=FALSE) AS sbt  INTO suma_pagos;
+
+				--sacar suma total de notas de credito para esta factura
+				--SELECT CASE WHEN sum IS NULL THEN 0 ELSE sum END FROM (SELECT sum(total) FROM fac_nota_credito WHERE serie_folio_factura=fila.serie_folio AND cancelado=FALSE) AS subtabla INTO suma_notas_credito;
+				SELECT total_notas_creditos FROM erp_h_facturas WHERE serie_folio=fila.serie_folio INTO suma_notas_credito;
+				
+				nuevacantidad_monto_pago:=round((suma_pagos)::numeric,4)::double precision;
+				nuevo_saldo_factura:=round((total_factura-suma_pagos-suma_notas_credito)::numeric,4)::double precision;
+				
+				--actualiza cantidades cada vez que se realice un pago
+				UPDATE erp_h_facturas SET 
+					total_pagos=nuevacantidad_monto_pago, 
+					total_notas_creditos=suma_notas_credito,
+					saldo_factura=nuevo_saldo_factura, 
+					momento_actualizacion=now(),
+					fecha_ultimo_pago=str_data[17]::date
+				WHERE serie_folio=fila.serie_folio;
+			END LOOP;
+			
+			--Inicia guardar saldos a favor y actualizar anticipos
+			IF id_anticipo !=0 THEN
+				--aqui entra porque el pago es de un anticipo y actualiza cantidades del anticipo
+				IF monto_anticipo_actual >= str_data[22]::double precision THEN
+					saldo_anticipo := monto_anticipo_actual - str_data[22]::double precision;
+					IF saldo_anticipo <=0 THEN
+					    UPDATE cxc_ant SET anticipo_actual=0, borrado_logico = true, id_usuario_actualizacion = str_data[3]::integer, momento_baja = now()
+					    WHERE cliente_id = str_data[4]::integer AND id = id_anticipo;
+					ELSE
+					    UPDATE cxc_ant SET anticipo_actual = saldo_anticipo, id_usuario_baja = str_data[3]::integer, momento_actualizacion = now()
+					    WHERE cliente_id = str_data[4]::integer AND id = id_anticipo;
+					END IF;
+				END IF;
+			ELSE
+				--Aqui entra porque el pago no es de un anticipo
+				IF str_data[24]::double precision > 0 THEN
+					/*
+					INSERT INTO erp_pagosxaplicar( 
+						cliente_id,
+						moneda_id,
+						monto_inicial,
+						monto_actual,
+						momento_creacion,
+						id_usuario_creacion,
+						empresa_id,
+						sucursal_id)
+					VALUES(
+						str_data[4]::integer,
+						str_data[7]::integer,
+						str_data[24]::double precision,
+						str_data[24]::double precision,
+						now(),str_data[3]::integer,
+						emp_id,
+						suc_id	
+					);
+					*/
+					--Aquí se genera una nuevo numero de transaccion para el anticipo des saldo a favor
+					--aqui entra para tomar el consecutivo del folio  la sucursal actual
+					UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+					WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+										--nuevo folio transaccion
+					folio_transaccion := nuevo_consecutivo::bigint;
+
+					INSERT INTO cxc_ant(
+						numero_transaccion,--folio_transaccion,
+						cliente_id,--str_data[4]::integer,
+						moneda_id,--str_data[7]::integer,
+						anticipo_inicial,--str_data[24]::double precision,
+						anticipo_actual,--str_data[24]::double precision,
+						fecha_anticipo_usuario,--now(),
+						observaciones,--'ANTICIPO GENERADO DESDE UN PAGO COMO SALDO A FAVOR DEL CLIENTE'
+						momento_creacion,--now(),
+						id_usuario_creacion,--str_data[3]::integer,
+						empresa_id,--emp_id,
+						sucursal_id--suc_id
+					)
+					VALUES(
+						folio_transaccion,
+						str_data[4]::integer,
+						str_data[7]::integer,
+						str_data[24]::double precision,
+						str_data[24]::double precision,
+						now(),
+						'ANTICIPO GENERADO DESDE UN PAGO COMO SALDO A FAVOR DEL CLIENTE',
+						now(),
+						str_data[3]::integer,
+						emp_id,
+						suc_id					
+					);
+				END IF;
+			
+			END IF;
+			
+			valor_retorno = folio_transaccion::character varying||'___'||ultimo_id::character varying;
+		END IF;--termina registro de pago
+		
+		
+		
+		--registro de anticipo
+		IF command_selected = 'anticipo' THEN
+			
+			SELECT INTO str_data string_to_array(''||campos_data||'','___');	
+			--str_data[3] 	id_usuario
+			--str_data[4] 	fecha_anticipo
+			--str_data[5] 	monto_anticipo
+			--str_data[6] 	id_moneda
+                        --str_data[7]   id_cliente
+                        --str_data[8]   observaciones
+                                
+			INSERT INTO cxc_ant(
+				numero_transaccion,
+				cliente_id,
+				moneda_id,
+				anticipo_inicial,
+				anticipo_actual,
+				fecha_anticipo_usuario,
+				observaciones,
+				momento_creacion,
+				id_usuario_creacion,
+				empresa_id,
+				sucursal_id
+			)
+			VALUES(
+				folio_transaccion,
+				str_data[7]::integer,
+				str_data[6]::integer,
+				str_data[5]::double precision,
+				str_data[5]::double precision,
+				str_data[4]::timestamp with time zone,
+				str_data[8],
+				now(),
+				str_data[3]::integer,
+				emp_id,
+				suc_id
+			);
+			valor_retorno := folio_transaccion::character varying;			
+		END IF;--termina registro de anticipo
+		
+		
+		
+		--cancelacion de pagos
+		IF command_selected = 'cancelacion' THEN
+			--str_data[3]	id_usuario
+			--str_data[4]	cancelar_por
+			--str_data[5]	observaciones_canc
+			--str_data[6]	numero_trans
+			--str_data[7]	fecha_cancelacion
+
+			--folio_transaccion:=str_data[6]::bigint;
+			
+			--TIPO CANCELACION POR FACTURAS
+			IF str_data[4]='1' THEN
+				id_anticipo:=0;
+				--obtiene id del pago y id de anticipo
+				SELECT id,anticipo_id,tipo_cambio FROM erp_pagos WHERE numero_transaccion=str_data[6]::bigint ORDER BY id DESC LIMIT 1 INTO id_pago,id_anticipo, tipo_cambio_pago;
+				--RAISE EXCEPTION '%','monto cancelado: SELECT id,anticipo_id FROM erp_pagos WHERE numero_transaccion ILIKE '||str_data[3];
+				total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+				cont_fila:=1;
+				FOR cont_fila IN 1 .. total_filas LOOP
+					--arreglo[cont_fila] serie_folio
+					--RAISE EXCEPTION '%','SERIE_FOLIO: '||extra_data[cont_fila]||'   id_pago:'||id_pago;
+					
+					--actualiza tabla erp_pagos_detalles
+					UPDATE erp_pagos_detalles SET cancelacion = true, momento_cancelacion = str_data[7]::timestamp with time zone 
+					WHERE pago_id = id_pago AND serie_folio ilike extra_data[cont_fila] RETURNING id,cantidad into id_pagos_detalles,monto_cancelado;
+					
+					--verificar monto_cancelado
+					--RAISE EXCEPTION '%','monto cancelado: '||monto_cancelado;
+					
+					SELECT monto_total,total_pagos_cancelados,moneda_id from  erp_h_facturas where serie_folio=extra_data[cont_fila]
+					INTO total_factura,total_monto_cancelados,id_moneda_factura;
+					
+					SELECT CASE WHEN sum IS NULL THEN 0 ELSE sum END  from(	SELECT sum(cantidad) FROM erp_pagos_detalles WHERE serie_folio=extra_data[cont_fila] AND cancelacion=FALSE ) AS sbt  INTO suma_pagos;
+
+					--sacar total de notas de credito
+					SELECT total_notas_creditos FROM erp_h_facturas WHERE serie_folio=extra_data[cont_fila] INTO suma_notas_credito;
+					
+					nuevacantidad_monto_cancelados:=round((total_monto_cancelados + monto_cancelado)::numeric,4)::double precision;
+					--nuevo_saldo_factura:=round((total_factura - suma_pagos)::numeric,4)::double precision;
+					nuevo_saldo_factura:=round((total_factura-suma_pagos-suma_notas_credito)::numeric,4)::double precision;
+
+					
+					--RAISE EXCEPTION '%','TotFact='||total_factura||' SaldoFact='||saldo_factura||' TotalCan='||total_monto_cancelados||' NuevoTotCan='||nuevacantidad_monto_cancelados;
+					
+					--actualiza cantidades cada vez que se realice una cancelacion
+					UPDATE erp_h_facturas SET 
+						total_pagos = suma_pagos,
+						total_notas_creditos=suma_notas_credito,
+						total_pagos_cancelados = nuevacantidad_monto_cancelados, 
+						saldo_factura=nuevo_saldo_factura,
+						pagado = false
+					where serie_folio ilike extra_data[cont_fila]
+					RETURNING moneda_id into id_moneda_factura;
+					
+					UPDATE fac_cfds SET pagado=false WHERE serie_folio=extra_data[cont_fila];
+					
+					INSERT INTO  erp_pagos_cancelacion_detalles(pagos_detalles_id,numero_transaccion,momento_creacion_usuario,id_usuario_creacion,observaciones,momento_creacion)
+					VALUES( id_pagos_detalles,folio_transaccion, str_data[7]::timestamp with time zone, str_data[3]::integer, str_data[5], now());
+					
+					
+					--actualiza anticipos al cancelar un pago que fue originado de un anticipo
+					IF id_anticipo !=0 THEN
+						SELECT anticipo_actual,moneda_id FROM cxc_ant WHERE id = id_anticipo INTO monto_anticipo_actual, id_moneda_anticipo;
+						
+						IF id_moneda_factura = 1 THEN 
+							IF id_moneda_anticipo = 2 THEN 
+								saldo_anticipo:=monto_anticipo_actual + (monto_cancelado / tipo_cambio_pago);
+							END IF;
+							IF id_moneda_anticipo = 1 THEN 
+								saldo_anticipo:=monto_anticipo_actual + monto_cancelado;
+							END IF;
+						END IF;
+						IF id_moneda_factura = 2 THEN 
+							IF id_moneda_anticipo = 2 THEN 
+								saldo_anticipo:=monto_anticipo_actual + monto_cancelado;
+							END IF;
+							IF id_moneda_anticipo = 1 THEN 
+								saldo_anticipo:=monto_anticipo_actual + (monto_cancelado * tipo_cambio_pago);
+							END IF;
+						END IF;
+						
+						--RAISE EXCEPTION '%','saldo_anticipo: '||saldo_anticipo;
+						UPDATE cxc_ant SET anticipo_actual = saldo_anticipo,
+									id_usuario_actualizacion = str_data[3]::integer, 
+									momento_actualizacion = now(),
+									borrado_logico = false,
+									momento_baja = null
+						WHERE id = id_anticipo;
+					END IF;
+					
+				END LOOP;
+				valor_retorno:=folio_transaccion::character varying;
+				--RAISE EXCEPTION '%','valor_retorno: '||valor_retorno;
+			END IF;--TERMINA TIPO CANCELACION POR FACTURAS
+			
+			
+			
+			
+			--TIPO CANCELACION POR NUMERO DE TRANSACCION
+			IF str_data[4]='2' THEN
+				--obtiene id del pago
+				
+				total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+				cont_fila:=1;
+				FOR cont_fila IN 1 .. total_filas LOOP
+					id_anticipo:=0;
+					--extra_data[cont_fila] numero de transaccion
+					SELECT id,anticipo_id,tipo_cambio FROM erp_pagos WHERE numero_transaccion = extra_data[cont_fila]::bigint LIMIT 1 INTO id_pago,id_anticipo,tipo_cambio_pago;
+					--RAISE EXCEPTION '%','id_pago: '||id_pago;
+					
+					--cancela todas las facturas pagadas con esta transaccion
+					UPDATE erp_pagos_detalles SET cancelacion = true, momento_cancelacion = str_data[7]::timestamp with time zone 
+					WHERE pago_id = id_pago;
+					
+					
+					sql_pagos:='SELECT id,serie_folio, cantidad FROM erp_pagos_detalles WHERE  erp_pagos_detalles.pago_id = '||id_pago;
+					
+					FOR fila IN EXECUTE (sql_pagos) LOOP
+						SELECT monto_total,total_pagos_cancelados,moneda_id from  erp_h_facturas where serie_folio=fila.serie_folio
+						INTO total_factura,total_monto_cancelados,id_moneda_factura;
+						
+						--RAISE EXCEPTION '%','total_factura '||total_factura;
+						--RAISE EXCEPTION '%','total_monto_cancelados: '||total_monto_cancelados;
+						
+						SELECT CASE WHEN sum IS NULL THEN 0 ELSE sum END  from(	SELECT sum(cantidad) FROM erp_pagos_detalles WHERE serie_folio = fila.serie_folio AND cancelacion=FALSE ) AS sbt  INTO suma_pagos;
+						--RAISE EXCEPTION '%','suma_pagos '||suma_pagos;
+
+						SELECT total_notas_creditos FROM erp_h_facturas WHERE serie_folio=fila.serie_folio INTO suma_notas_credito;
+						
+						nuevacantidad_monto_cancelados:=round((total_monto_cancelados + fila.cantidad)::numeric,4)::double precision;
+						--nuevo_saldo_factura:=round((total_factura - suma_pagos)::numeric,4)::double precision;
+						nuevo_saldo_factura:=round((total_factura-suma_pagos-suma_notas_credito)::numeric,4)::double precision;
+						
+						
+						--actualiza cantidades cada vez que se realice una cancelacion
+						UPDATE erp_h_facturas SET 
+							total_pagos = suma_pagos,
+							total_notas_creditos=suma_notas_credito,
+							total_pagos_cancelados = nuevacantidad_monto_cancelados, 
+							saldo_factura=nuevo_saldo_factura,
+							pagado = false
+						where serie_folio ilike fila.serie_folio
+						RETURNING moneda_id into id_moneda_factura;
+						
+						UPDATE fac_cfds SET pagado=false WHERE serie_folio ilike fila.serie_folio;
+						
+						
+						INSERT INTO  erp_pagos_cancelacion_detalles(pagos_detalles_id,numero_transaccion,momento_creacion_usuario,id_usuario_creacion,observaciones,momento_creacion)
+						VALUES( fila.id, folio_transaccion, str_data[7]::timestamp with time zone, str_data[3]::integer, str_data[5], now());
+						
+						--actualiza anticipos al cancelar un pago que fue originado de un anticipo
+						IF id_anticipo !=0 THEN
+							--SELECT anticipo_actual FROM cxc_ant WHERE id = id_anticipo INTO monto_anticipo_actual;
+							SELECT anticipo_actual,moneda_id FROM cxc_ant WHERE id = id_anticipo INTO monto_anticipo_actual, id_moneda_anticipo;
+							
+							IF id_moneda_factura = 1 THEN 
+								IF id_moneda_anticipo = 2 THEN 
+									saldo_anticipo:=monto_anticipo_actual + (fila.cantidad / tipo_cambio_pago);
+								END IF;
+								IF id_moneda_anticipo = 1 THEN 
+									saldo_anticipo:=monto_anticipo_actual + fila.cantidad;
+								END IF;
+							END IF;
+							IF id_moneda_factura = 2 THEN 
+								IF id_moneda_anticipo = 2 THEN 
+									saldo_anticipo:=monto_anticipo_actual + fila.cantidad;
+								END IF;
+								IF id_moneda_anticipo = 1 THEN 
+									saldo_anticipo:=monto_anticipo_actual + (fila.cantidad * tipo_cambio_pago);
+								END IF;
+							END IF;
+							
+							--RAISE EXCEPTION '%','moneda_factura:'||id_moneda_factura||'  moneda_anticipo:'||id_moneda_anticipo||'  monto_anticipo_actual:'||monto_anticipo_actual||'  monto_cancelado:'||fila.cantidad||'  saldo_anticipo:'||saldo_anticipo; 
+							
+							UPDATE cxc_ant SET anticipo_actual = saldo_anticipo,
+										id_usuario_actualizacion = str_data[3]::integer, 
+										momento_actualizacion = now(),
+										borrado_logico = false,
+										momento_baja = null
+							WHERE id = id_anticipo;
+						END IF;
+						
+					END LOOP;
+					--RAISE EXCEPTION '%','TotFact='||total_factura||' SaldoFact='||saldo_factura||' TotalCan='||total_monto_cancelados||' NuevoTotCan='||nuevacantidad_monto_cancelados;
+					
+					--valor_retorno:= valor_retorno||extra_data[cont_fila]||',';
+					
+					--RAISE EXCEPTION '%','valor_retorno: '||valor_retorno;
+					
+				END LOOP;
+				valor_retorno:= folio_transaccion::character varying;
+				
+			END IF;--TERMINA TIPO CANCELACION POR NUMERO DE TRANSACCION
+			
+		END IF;--termina termina cancelacion de pagos
+		
+	END IF;--termina pagos
+	
+	
+	
+	
+	-- Catalogo de centros de costo
+	IF app_selected = 15 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4] 	id
+			--str_data[5] 	titulo
+			--str_data[6] 	descripcion
+			INSERT INTO ctb_cc (titulo,descripcion, momento_creacion, id_usuario_creacion,empresa_id,borrado_logico)
+			VALUES (str_data[5],str_data[6], now(),usuario_id, emp_id,false);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE ctb_cc SET titulo=str_data[5],descripcion=str_data[6],id_usuario_actualizacion=usuario_id,momento_actualizacion=now(),borrado_logico=false
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE ctb_cc SET borrado_logico=true, momento_baja=now(), id_usuario_baja=usuario_id WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina catalogo de centros de costo
+	
+	
+	-- Catalogo de centros de Tipos de Poliza
+	IF app_selected = 16 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4] 	id
+			--str_data[5] 	tipo
+			--str_data[6] 	descripcion
+			--str_data[7] 	grupo
+			INSERT INTO ctb_tpol (titulo, ctb_tpol_grupo_id, tipo, empresa_id, borrado_logico, momento_creacion, id_usuario_creacion)
+			VALUES (str_data[6], str_data[7]::integer, str_data[5]::integer, emp_id, false,now(),usuario_id);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE ctb_tpol SET titulo=str_data[6],ctb_tpol_grupo_id=str_data[7]::integer, tipo=str_data[5]::integer,id_usuario_actualizacion=usuario_id,momento_actualizacion=now()
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE ctb_tpol SET borrado_logico=true, momento_baja=now(), id_usuario_baja=usuario_id WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina catalogo de Tipos de poliza
+	
+	
+	
+	-- Catalogo de conceptos contables
+	IF app_selected = 17 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4] 	id
+			--str_data[5] 	titulo
+			--str_data[6] 	descripcion
+			INSERT INTO ctb_con (titulo,descripcion, momento_creacion, id_usuario_creacion,empresa_id,borrado_logico)
+			VALUES (str_data[5],str_data[6], now(),usuario_id, emp_id,false);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE ctb_con SET titulo=str_data[5],descripcion=str_data[6],id_usuario_actualizacion=usuario_id,momento_actualizacion=now(),borrado_logico=false
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE ctb_con SET borrado_logico=true, momento_baja=now(), id_usuario_baja=usuario_id WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina catalogo de conceptos contables
+	
+	
+	-- Catalogo de Clasificacion de Cuentas(Cuentas de Mayor)
+	IF app_selected = 18 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	ctamayor
+			--str_data[6]	clasificacion
+			--str_data[7]	des_espanol
+			--str_data[8]	des_ingles
+			--str_data[9]	des_otro
+			INSERT INTO ctb_may (ctb_may_clase_id,clasificacion,descripcion,descripcion_ing,descripcion_otr,borrado_logico,	empresa_id,momento_creacion,id_usuario_creacion)
+			VALUES (str_data[5]::integer,str_data[6]::smallint, str_data[7], str_data[8], str_data[9], false,emp_id,now(),usuario_id);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE ctb_may SET ctb_may_clase_id=str_data[5]::integer,clasificacion=str_data[6]::smallint, descripcion=str_data[7],descripcion_ing=str_data[8],descripcion_otr=str_data[9],id_usuario_actualizacion=usuario_id,momento_actualizacion=now(),borrado_logico=false
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE ctb_may SET borrado_logico=true, momento_baja=now(), id_usuario_baja=usuario_id WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina catalogo de Clasificacion de Cuentas(Cuentas de Mayor)
+	
+	
+	
+	-- Catalogo de Catalogo de Agentes
+	IF app_selected = 19 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	nombre_agente
+			--str_data[6]	usuario_agente
+			--str_data[7]	comision
+			--str_data[8]	region
+
+			INSERT INTO cxc_agen(nombre, comision, gral_reg_id,gral_usr_id,borrado_logico,momento_creacion,gral_usr_id_creacion)
+			VALUES(str_data[5],str_data[7]::double precision,str_data[8]::integer,str_data[6]::integer,false,now(),usuario_id);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE cxc_agen SET nombre=str_data[5],
+						comision=str_data[7]::double precision,
+						gral_reg_id=str_data[8]::integer,
+						gral_usr_id=str_data[6]::integer,
+						gral_usr_id_actualizacion=usuario_id,
+						momento_actualizacion=now()
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE cxc_agen SET borrado_logico=true, momento_baja=now(), gral_usr_id_baja=usuario_id WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de Agentes
+	
+	
+	-- Catalogo de Catalogo Clientes Clasificacion 1
+	IF app_selected = 20 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4] 	id
+			--str_data[5] 	titulo
+			INSERT INTO cxc_clie_clas1 (titulo) VALUES (str_data[5]);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE cxc_clie_clas1 SET titulo=str_data[5] WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			DELETE FROM cxc_clie_clas1 WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo Clientes Clasificacion 1
+	
+
+	-- Catalogo de Catalogo Clientes Clasificacion 2
+	IF app_selected = 21 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4] 	id
+			--str_data[5] 	titulo
+			INSERT INTO cxc_clie_clas2 (titulo) VALUES (str_data[5]);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE cxc_clie_clas2 SET titulo=str_data[5] WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			DELETE FROM cxc_clie_clas2 WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo Clientes Clasificacion 2
+	
+	
+	-- Catalogo de Catalogo Clientes Clasificacion 3
+	IF app_selected = 22 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4] 	id
+			--str_data[5] 	titulo
+			INSERT INTO cxc_clie_clas3 (titulo) VALUES (str_data[5]);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE cxc_clie_clas3 SET titulo=str_data[5] WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			DELETE FROM cxc_clie_clas3 WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo Clientes Clasificacion 3
+
+	
+	
+	-- Catalogo de Zonas de  Clientes
+        IF app_selected = 23 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         titulo
+                        INSERT INTO cxc_clie_zonas (titulo,borrado_logico) VALUES (str_data[5],false);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxc_clie_zonas SET titulo=str_data[5] WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                        --DELETE FROM cxc_clie_zonas WHERE id=str_data[4]::integer;
+                        UPDATE cxc_clie_zonas
+                        SET borrado_logico = true
+                        WHERE id=str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo zonas de  Clientes
+        
+
+        -- Catalogo de  Grupos de  Clientes
+        IF app_selected = 24 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         titulo
+                        INSERT INTO cxc_clie_grupos (titulo,borrado_logico) VALUES (str_data[5],false);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxc_clie_grupos SET titulo=str_data[5] WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                        --DELETE FROM cxc_clie_grupos WHERE id=str_data[4]::integer;
+                        UPDATE cxc_clie_grupos
+                        SET borrado_logico = true
+                        WHERE id=str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo Grupos de  Clientes
+
+	
+	
+	-- Catalogo de Catalogo Proveedores Clasificacion 1
+        IF app_selected = 25 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         titulo
+                        INSERT INTO cxp_prov_clas1 (titulo, borrado_logico, momento_creacion, gral_usr_id_creacion, gral_emp_id, gral_suc_id) 
+                        VALUES (str_data[5], false, now(),usuario_id, emp_id, suc_id );
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxp_prov_clas1 SET titulo=str_data[5], momento_actualizacion=now(),gral_usr_id_actualizacion=usuario_id 
+                        WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+			UPDATE cxp_prov_clas1 SET borrado_logico=true, momento_baja=now(),gral_usr_id_baja=usuario_id 
+			WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo Proveedores Clasificacion 1
+	
+	
+        -- Catalogo de Catalogo Proveedores Clasificacion 2
+        IF app_selected = 26 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         titulo
+                        INSERT INTO cxp_prov_clas2 (titulo, borrado_logico, momento_creacion, gral_usr_id_creacion, gral_emp_id, gral_suc_id) 
+                        VALUES (str_data[5], false, now(),usuario_id, emp_id, suc_id);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxp_prov_clas1 SET titulo=str_data[5], momento_actualizacion=now(),gral_usr_id_actualizacion=usuario_id 
+                        WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+			UPDATE cxp_prov_clas1 SET borrado_logico=true, momento_baja=now(),gral_usr_id_baja=usuario_id 
+			WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo Proveedores Clasificacion 2
+	
+	
+	
+        -- Catalogo de Catalogo Proveedores Clasificacion 3
+        IF app_selected = 27 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         titulo
+                        INSERT INTO cxp_prov_clas3 (titulo, borrado_logico, momento_creacion, gral_usr_id_creacion, gral_emp_id, gral_suc_id) 
+                        VALUES (str_data[5], false, now(), usuario_id, emp_id, suc_id);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxp_prov_clas1 SET titulo=str_data[5], momento_actualizacion=now(),gral_usr_id_actualizacion=usuario_id 
+                        WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+			UPDATE cxp_prov_clas1 SET borrado_logico=true, momento_baja=now(),gral_usr_id_baja=usuario_id 
+			WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo Proveedores Clasificacion 3
+
+	-- Catalogo de Zonas de  Proveedores
+        IF app_selected = 28 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         titulo
+                        INSERT INTO cxp_prov_zonas (titulo) VALUES (str_data[5]);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxp_prov_zonas SET titulo=str_data[5] WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                        DELETE FROM cxp_prov_zonas WHERE id=str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo zonas de  proveedores
+        
+	
+	
+        -- Catalogo de  Grupos de  Proveedores
+        IF app_selected = 29 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         titulo
+                        INSERT INTO cxp_prov_grupos (titulo) VALUES (str_data[5]);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxp_prov_grupos SET titulo=str_data[5] WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                        DELETE FROM cxp_prov_grupos WHERE id=str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo Grupos de  proveedores
+	
+	
+	
+	
+	
+	-- Catalogo de tipos de movimientos  de  Proveedores
+        IF app_selected = 31 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         titulo
+                        --str_data[6]         descripcion
+                        --str_data[7]         moneda_id
+                        INSERT INTO cxp_mov_tipos (titulo,moneda_id,descripcion) VALUES (str_data[5],str_data[7]::integer,str_data[6]);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxp_mov_tipos SET titulo=str_data[5],descripcion=str_data[6],moneda_id=str_data[7]::integer
+                        WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                        DELETE FROM cxp_mov_tipos WHERE id=str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo tipos de  movimientos de proveedores
+        
+        -- Catalogo de tipos de movimientos  de  clientes
+	IF app_selected = 32 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         titulo
+                        --str_data[6]         descripcion
+                        --str_data[7]         moneda_id
+                        INSERT INTO cxc_mov_tipos (titulo,moneda_id,descripcion) VALUES (str_data[5],str_data[7]::integer,str_data[6]);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxc_mov_tipos SET titulo=str_data[5],descripcion=str_data[6],moneda_id=str_data[7]::integer 
+                        WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                        DELETE FROM cxc_mov_tipos WHERE id=str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo tipos de movimientos  de  clientes
+	
+	
+        -- Catalogo de tipos de mensajes  de  clientes
+        IF app_selected = 33 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         titulo
+                        --str_data[6]         descripcion
+                        --str_data[7]         moneda_id
+                        INSERT INTO cxc_clie_mensajes (cxc_mov_tipo_id,cxc_clie_id,msg_1) VALUES (str_data[4]::integer,str_data[5]::integer,str_data[6]);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxc_clie_mensajes SET cxc_mov_tipo_id=str_data[4],cxc_clie_id=str_data[5] ,msg_1=str_data[6] 
+                        WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                        DELETE FROM cxc_mov_tipos WHERE id=str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo tipos de  mensajes de clientes
+	
+	
+	
+	
+	
+	-- Catalogo de Catalogo de tipos de movimientos de inventarios
+	IF app_selected = 35 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	tipo
+			--str_data[6]	descripcion
+			--str_data[7]	mov_de_ajuste
+
+			INSERT INTO inv_mov_tipos(titulo, descripcion, ajuste,momento_creacion, borrado_logico, grupo, afecta_compras, 
+			afecta_ventas, considera_consumo, tipo_costo)
+			VALUES(str_data[5],str_data[6],str_data[7]::boolean,now(), false, str_data[8]::smallint,str_data[9]::boolean,
+			str_data[10]::boolean,str_data[11]::boolean,str_data[12]::smallint);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE inv_mov_tipos SET titulo=str_data[5],
+						descripcion=str_data[6],
+						ajuste=str_data[7]::boolean,
+						momento_actualizacion=now(), 
+						grupo=str_data[8]::smallint, 
+						afecta_compras=str_data[9]::boolean, 
+						afecta_ventas=str_data[10]::boolean, 
+						considera_consumo=str_data[11]::boolean, 
+						tipo_costo=str_data[12]::smallint
+						
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE inv_mov_tipos SET borrado_logico=true, momento_baja=now() WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de tipos de movimientos de inventarios
+
+	-- Catalogo de Catalogo de invsecciones
+	IF app_selected = 37 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[6]	descripcion
+			--str_data[7]	estatus
+
+			INSERT INTO inv_secciones(titulo, descripcion, activa,momento_creacion, borrado_logico,gral_usr_id_creacion,gral_emp_id,gral_suc_id)
+			VALUES(str_data[5],str_data[6],str_data[7]::boolean,now(), false, usuario_id, emp_id, suc_id);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE inv_secciones SET titulo=str_data[5],
+						descripcion=str_data[6],
+						activa=str_data[7]::boolean,
+						momento_actualizacion=now(),
+						gral_usr_id_actualizacion=usuario_id
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE inv_secciones SET borrado_logico=true, momento_baja=now(),gral_usr_id_baja=usuario_id
+			WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de invsecciones
+
+	-- Catalogo de inventario de  Marcas
+	IF app_selected = 38 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]         id
+			--str_data[5]         titulo
+			--str_data[6]     estatus
+			--strd_data[7]    url
+			INSERT INTO inv_mar (titulo,borrado_logico,url,momento_creacion,estatus, gral_usr_id_creacion, gral_emp_id, gral_suc_id) 
+			VALUES (str_data[5],false,str_data[7],now(),str_data[6]::boolean,  usuario_id, emp_id, suc_id);
+			valor_retorno := '1';
+		END IF;
+			
+		IF command_selected = 'edit' THEN
+			UPDATE inv_mar SET titulo=str_data[5],
+					    estatus=str_data[6]::boolean,
+					    momento_actualizacion=now(),
+					    gral_usr_id_actualizacion=usuario_id
+			WHERE inv_mar.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE inv_mar SET momento_baja=now(),
+					    borrado_logico=true,
+					    gral_usr_id_baja=usuario_id
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo Marcas
+
+	-- Catalogo de inv_prod_lineas
+	IF app_selected = 39 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[6]	descripcion
+			--str_data[7]	seccion
+			--str_data[8]	marcas
+			
+			INSERT INTO inv_prod_lineas(titulo, descripcion, inv_seccion_id,momento_creacion, borrado_logico,gral_usr_id_creacion, gral_emp_id, gral_suc_id)
+			VALUES(str_data[5],str_data[6],str_data[7]::integer,now(), false, usuario_id, emp_id, suc_id) 
+			RETURNING id INTO ultimo_id;
+			
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+			
+			IF extra_data[1] != 'sin datos' THEN
+				--RAISE EXCEPTION '%' ,extra_data[cont_fila]::integer;
+				FOR cont_fila IN 1 .. total_filas LOOP
+					insert into inv_lm(inv_prod_linea_id,inv_mar_id) 
+					values(ultimo_id, extra_data[cont_fila]::integer);
+				END LOOP;
+			END IF;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			
+			UPDATE inv_prod_lineas SET titulo=str_data[5],
+						descripcion=str_data[6],
+						inv_seccion_id=str_data[7]::integer,
+						momento_actualizacion=now(),
+						gral_usr_id_actualizacion=usuario_id
+			WHERE id = str_data[4]::integer;
+
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+			IF extra_data[1] != 'sin datos' THEN
+				delete from inv_lm where inv_prod_linea_id=str_data[4]::integer;
+				FOR cont_fila IN 1 .. total_filas LOOP
+					insert into inv_lm(inv_prod_linea_id,inv_mar_id) values(str_data[4]::integer, extra_data[cont_fila]::integer);
+				END LOOP;
+			END IF;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE inv_prod_lineas SET borrado_logico=true, momento_baja=now(), gral_usr_id_baja=usuario_id  WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;----termina Catalogo de inv_prod_lineas
+
+	-- Catalogo de  Zonas de invetarios
+	IF app_selected = 40 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]         id
+			--str_data[5]         descripcion
+			--str_data[6]     estatus
+			--strd_data[7]    zona
+			INSERT INTO inv_zonas (titulo,descripcion,borrado_logico,momento_creacion,estatus) VALUES (str_data[7],str_data[5],false,now(),str_data[6]::boolean);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+		
+			UPDATE inv_zonas SET titulo=str_data[7],						
+						estatus=str_data[6]::boolean,
+						descripcion=str_data[5],
+						momento_actualizacion=now()
+						WHERE inv_zonas.id = str_data[4]::integer;
+						valor_retorno := '1';
+		END IF;
+			
+		IF command_selected = 'delete' THEN
+			 UPDATE inv_zonas SET momento_baja=now(),
+					    borrado_logico=true
+					    WHERE id = str_data[4]::integer;
+					    valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo Zonas de invetarios
+	
+	
+	
+	
+	
+	-- Catalogo de tes_mov_tipos
+	IF app_selected = 41 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[6]	descripcion
+			--str_data[7]	grupo--int
+			--str_data[8]	tipo
+			--str_data[9]	conconsecutivo
+			--str_data[10]	conciliacionautomatica
+			
+			INSERT INTO tes_mov_tipos(titulo, descripcion, tipo,consecutivo,grupo,conciliacion, borrado_logico, momento_creacion, gral_emp_id, gral_suc_id, gral_usr_id_creacion) 
+			VALUES(str_data[5],str_data[6],str_data[8]::boolean,str_data[9]::boolean, str_data[7]::integer, str_data[10]::boolean, false, now(), emp_id, suc_id, usuario_id ) RETURNING id INTO ultimo_id;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			
+			UPDATE tes_mov_tipos SET titulo=str_data[5],
+						descripcion=str_data[6],
+						tipo=str_data[8]::boolean,
+						consecutivo=str_data[9]::boolean,
+						grupo=str_data[7]::integer,
+						conciliacion=str_data[10]::boolean, 
+						borrado_logico=false,
+						momento_actualizacion=now(),
+						gral_usr_id_actualizacion=usuario_id
+			WHERE id = str_data[4]::integer;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE tes_mov_tipos SET borrado_logico=true, momento_baja=now(), gral_usr_id_baja=usuario_id WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de tes_mov_tipos
+	
+	
+	
+	
+	-- Catalogo de tes_ban
+	IF app_selected = 42 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[6]	descripcion
+			--str_data[7]	clave
+			
+			INSERT INTO tes_ban(titulo, descripcion, borrado_logico, momento_creacion,gral_usr_id_creacion,gral_emp_id, gral_suc_id, clave) 
+			VALUES(str_data[5],str_data[6],false, now(), usuario_id, emp_id, suc_id, str_data[7]) RETURNING id INTO ultimo_id;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN			
+			UPDATE tes_ban SET titulo=str_data[5],descripcion=str_data[6],clave=str_data[7],borrado_logico=false,momento_actualizacion=now(),gral_usr_id_actualizacion=usuario_id 
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE tes_ban SET borrado_logico=true, momento_baja=now(), gral_usr_id_baja=usuario_id  WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de tes_ban
+
+	
+	-- Catalogo de Familias
+        IF app_selected = 43 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         familia
+                        --str_data[6]         descripcion
+                        INSERT INTO inv_prod_familias (titulo,descripcion,momento_creacion, borrado_logico, gral_usr_id_creacion, gral_emp_id, gral_suc_id, inv_prod_tipo_id)
+                        VALUES (str_data[5],str_data[6],now(),false,  usuario_id, emp_id, suc_id, str_data[7]::integer)
+                        RETURNING id INTO ultimo_id;
+                        
+                        UPDATE inv_prod_familias SET identificador_familia_padre=ultimo_id WHERE id=ultimo_id;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE inv_prod_familias SET titulo=str_data[5],descripcion=str_data[6],momento_actualizacion=now(), gral_usr_id_actualizacion=usuario_id, inv_prod_tipo_id=str_data[7]::integer 
+                        WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                        UPDATE inv_prod_familias SET borrado_logico=true, momento_baja=now(), gral_usr_id_baja=usuario_id  WHERE id=str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina catalogo de Familias
+
+	-- Catalogo de Conceptos Bancarios(tes_con)
+	IF app_selected = 44 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[6]	descripcion
+			
+			INSERT INTO tes_con(titulo, descripcion, tipo, borrado_logico,gral_usr_id_creacion,gral_emp_id,gral_suc_id, momento_creacion) 
+			VALUES(str_data[5],str_data[6],str_data[7]::boolean,false,usuario_id, emp_id, suc_id, now()) RETURNING id INTO ultimo_id;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE tes_con SET 
+				titulo=str_data[5],
+				descripcion=str_data[6],
+				tipo=str_data[7]::boolean,
+				borrado_logico=false,
+				gral_usr_id_actualizacion=usuario_id,
+				momento_actualizacion=now() 
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE tes_con SET borrado_logico=true,gral_usr_id_baja=usuario_id, momento_baja=now() WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de tes_con
+	
+	
+	
+	-- Catalogo de  producto grupos
+        IF app_selected = 45 THEN
+                IF command_selected = 'new' THEN
+                       --id [4]                 id
+                        --str_data[5]         grupo
+                        --str_data[6]     descripcion
+                        
+                        INSERT INTO inv_prod_grupos (titulo,descripcion,borrado_logico, gral_usr_id_creacion, gral_emp_id, gral_suc_id, momento_creacion) 
+                        VALUES (str_data[5],str_data[6],false, usuario_id, emp_id, suc_id, now());
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+			UPDATE inv_prod_grupos SET 
+				titulo=str_data[5],						
+				descripcion=str_data[6],
+				momento_actualizacion=now(),
+				gral_usr_id_actualizacion=usuario_id
+			WHERE inv_prod_grupos.id = str_data[4]::integer;
+			valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                         UPDATE inv_prod_grupos SET borrado_logico=true, momento_baja=now(), gral_usr_id_baja=usuario_id
+                         WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo producto grupos	
+	
+	
+	
+	-- Catalogo de  Plazas
+        IF app_selected = 46 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         plaza
+                        --str_data[6]     nombre
+                        --str_data[7]     id_zona
+                        INSERT INTO gral_plazas (titulo,descripcion,momento_creacion,borrado_logico,empresa_id,estatus,inv_zonas_id) VALUES (str_data[5],str_data[6],now(),false,emp_id,str_data[8]::boolean,str_data[7]::integer);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE gral_plazas SET titulo=str_data[5], descripcion=str_data[6], inv_zonas_id =str_data[7]::integer, momento_actualizacion=now(), estatus=str_data[8]::boolean 
+                        WHERE gral_plazas.id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                         UPDATE gral_plazas SET momento_baja=now(), borrado_logico=true WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo Plazas
+
+	-- Catalogo de inv_pre
+	IF app_selected = 47 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[76]	select_presentacion
+			
+			INSERT INTO inv_pre(
+				inv_prod_id, 
+				precio_1,
+				precio_2,
+				precio_3,
+				precio_4,
+				precio_5,
+				precio_6,
+				precio_7,
+				precio_8,
+				precio_9,
+				precio_10,
+				descuento_1,
+				descuento_2,
+				descuento_3,
+				descuento_4,
+				descuento_5,
+				descuento_6,
+				descuento_7,
+				descuento_8,
+				descuento_9,
+				descuento_10, 
+				default_precio_1, --str_data[26]::double precision
+				default_precio_2, --str_data[27]::double precision
+				default_precio_3, --str_data[28]::double precision
+				default_precio_4, --str_data[29]::double precision
+				default_precio_5, --str_data[30]::double precision
+				default_precio_6, --str_data[31]::double precision
+				default_precio_7, --str_data[32]::double precision
+				default_precio_8, --str_data[33]::double precision
+				default_precio_9, --str_data[34]::double precision
+				default_precio_10, --str_data[35]::double precision
+				base_precio_1, --str_data[36]::integer
+				base_precio_2, --str_data[37]::integer
+				base_precio_3, --str_data[38]::integer
+				base_precio_4, --str_data[39]::integer
+				base_precio_5, --str_data[40]::integer
+				base_precio_6, --str_data[41]::integer
+				base_precio_7, --str_data[42]::integer
+				base_precio_8, --str_data[43]::integer
+				base_precio_9, --str_data[44]::integer
+				base_precio_10, --str_data[45]::integer
+				calculo_precio_1, --str_data[46]::integer
+				calculo_precio_2, --str_data[47]::integer
+				calculo_precio_3, --str_data[48]::integer
+				calculo_precio_4, --str_data[49]::integer
+				calculo_precio_5, --str_data[50]::integer
+				calculo_precio_6, --str_data[51]::integer
+				calculo_precio_7, --str_data[52]::integer
+				calculo_precio_8, --str_data[53]::integer
+				calculo_precio_9, --str_data[54]::integer
+				calculo_precio_10, --str_data[55]::integer
+				operacion_precio_1, --str_data[56]::integer
+				operacion_precio_2, --str_data[57]::integer
+				operacion_precio_3, --str_data[58]::integer
+				operacion_precio_4, --str_data[59]::integer
+				operacion_precio_5, --str_data[60]::integer
+				operacion_precio_6, --str_data[61]::integer
+				operacion_precio_7, --str_data[62]::integer
+				operacion_precio_8, --str_data[63]::integer
+				operacion_precio_9, --str_data[64]::integer
+				operacion_precio_10, --str_data[65]::integer
+				redondeo_precio_1, --str_data[66]::integer
+				redondeo_precio_2, --str_data[67]::integer
+				redondeo_precio_3, --str_data[68]::integer
+				redondeo_precio_4, --str_data[69]::integer
+				redondeo_precio_5, --str_data[70]::integer
+				redondeo_precio_6, --str_data[71]::integer
+				redondeo_precio_7, --str_data[72]::integer
+				redondeo_precio_8, --str_data[73]::integer
+				redondeo_precio_9, --str_data[74]::integer
+				redondeo_precio_10, --str_data[75]::integer
+				inv_prod_presentacion_id, --str_data[76]::integer
+				gral_mon_id_pre1, --str_data[77]::integer
+				gral_mon_id_pre2, --str_data[78]::integer
+				gral_mon_id_pre3, --str_data[79]::integer
+				gral_mon_id_pre4, --str_data[80]::integer
+				gral_mon_id_pre5, --str_data[81]::integer
+				gral_mon_id_pre6, --str_data[82]::integer
+				gral_mon_id_pre7, --str_data[83]::integer
+				gral_mon_id_pre8, --str_data[84]::integer
+				gral_mon_id_pre9, --str_data[85]::integer
+				gral_mon_id_pre10, --str_data[86]::integer
+				gral_emp_id, --emp_id
+				gral_usr_id_creacion, --usuario_id, 
+				borrado_logico,--FALSE
+				momento_creacion --now()
+			) 
+			VALUES(str_data[5]::integer,
+				str_data[6]::double precision,str_data[7]::double precision,str_data[8]::double precision,str_data[9]::double precision,str_data[10]::double precision,str_data[11]::double precision,str_data[12]::double precision,str_data[13]::double precision,str_data[14]::double precision,str_data[15]::double precision,
+				str_data[16]::double precision,str_data[17]::double precision,str_data[18]::double precision,str_data[19]::double precision,str_data[20]::double precision,str_data[21]::double precision,str_data[22]::double precision,str_data[23]::double precision,str_data[24]::double precision,str_data[25]::double precision,
+				str_data[26]::double precision,str_data[27]::double precision,str_data[28]::double precision,str_data[29]::double precision,str_data[30]::double precision,str_data[31]::double precision,str_data[32]::double precision,str_data[33]::double precision,str_data[34]::double precision,str_data[35]::double precision,
+				str_data[36]::integer,str_data[37]::integer,str_data[38]::integer,str_data[39]::integer,str_data[40]::integer,str_data[41]::integer,str_data[42]::integer,str_data[43]::integer,str_data[44]::integer,str_data[45]::integer,
+				str_data[46]::integer,str_data[47]::integer,str_data[48]::integer,str_data[49]::integer,str_data[50]::integer,str_data[51]::integer,str_data[52]::integer,str_data[53]::integer,str_data[54]::integer,str_data[55]::integer,
+				str_data[56]::integer,str_data[57]::integer,str_data[58]::integer,str_data[59]::integer,str_data[60]::integer,str_data[61]::integer,str_data[62]::integer,str_data[63]::integer,str_data[64]::integer,str_data[65]::integer,
+				str_data[66]::integer,str_data[67]::integer,str_data[68]::integer,str_data[69]::integer,str_data[70]::integer,str_data[71]::integer,str_data[72]::integer,str_data[73]::integer,str_data[74]::integer,str_data[75]::integer,
+				str_data[76]::integer, str_data[77]::integer, str_data[78]::integer, str_data[79]::integer, str_data[80]::integer, str_data[81]::integer, str_data[82]::integer, str_data[83]::integer, str_data[84]::integer, str_data[85]::integer, str_data[86]::integer,
+				emp_id,usuario_id,false,now()
+			) RETURNING id INTO ultimo_id;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			
+			UPDATE inv_pre SET precio_1=str_data[6]::double precision,
+				precio_2=str_data[7]::double precision,
+				precio_3=str_data[8]::double precision,
+				precio_4=str_data[9]::double precision,
+				precio_5=str_data[10]::double precision,
+				precio_6=str_data[11]::double precision,
+				precio_7=str_data[12]::double precision,
+				precio_8=str_data[13]::double precision,
+				precio_9=str_data[14]::double precision,
+				precio_10=str_data[15]::double precision,
+				descuento_1=str_data[16]::double precision,
+				descuento_2=str_data[17]::double precision,
+				descuento_3=str_data[18]::double precision,
+				descuento_4=str_data[19]::double precision,
+				descuento_5=str_data[20]::double precision,
+				descuento_6=str_data[21]::double precision,
+				descuento_7=str_data[22]::double precision,
+				descuento_8=str_data[23]::double precision,
+				descuento_9=str_data[24]::double precision,
+				descuento_10=str_data[25]::double precision,
+				default_precio_1 = str_data[26]::double precision,
+				default_precio_2 = str_data[27]::double precision,
+				default_precio_3 = str_data[28]::double precision,
+				default_precio_4 = str_data[29]::double precision,
+				default_precio_5 = str_data[30]::double precision,
+				default_precio_6 = str_data[31]::double precision,
+				default_precio_7 = str_data[32]::double precision,
+				default_precio_8 = str_data[33]::double precision,
+				default_precio_9 = str_data[34]::double precision,
+				default_precio_10 = str_data[35]::double precision,
+				base_precio_1 = str_data[36]::integer,
+				base_precio_2 = str_data[37]::integer,
+				base_precio_3 = str_data[38]::integer,
+				base_precio_4 = str_data[39]::integer,
+				base_precio_5 = str_data[40]::integer,
+				base_precio_6 = str_data[41]::integer,
+				base_precio_7 = str_data[42]::integer,
+				base_precio_8 = str_data[43]::integer,
+				base_precio_9 = str_data[44]::integer,
+				base_precio_10 = str_data[45]::integer,
+				calculo_precio_1 = str_data[46]::integer,
+				calculo_precio_2 = str_data[47]::integer,
+				calculo_precio_3 = str_data[48]::integer,
+				calculo_precio_4 = str_data[49]::integer,
+				calculo_precio_5 = str_data[50]::integer,
+				calculo_precio_6 = str_data[51]::integer,
+				calculo_precio_7 = str_data[52]::integer,
+				calculo_precio_8 = str_data[53]::integer,
+				calculo_precio_9 = str_data[54]::integer,
+				calculo_precio_10 = str_data[55]::integer,
+				operacion_precio_1 = str_data[56]::integer,
+				operacion_precio_2 = str_data[57]::integer,
+				operacion_precio_3 = str_data[58]::integer,
+				operacion_precio_4 = str_data[59]::integer,
+				operacion_precio_5 = str_data[60]::integer,
+				operacion_precio_6 = str_data[61]::integer,
+				operacion_precio_7 = str_data[62]::integer,
+				operacion_precio_8 = str_data[63]::integer,
+				operacion_precio_9 = str_data[64]::integer,
+				operacion_precio_10 = str_data[65]::integer,
+				redondeo_precio_1 = str_data[66]::integer,
+				redondeo_precio_2 = str_data[67]::integer,
+				redondeo_precio_3 = str_data[68]::integer,
+				redondeo_precio_4 = str_data[69]::integer,
+				redondeo_precio_5 = str_data[70]::integer,
+				redondeo_precio_6 = str_data[71]::integer,
+				redondeo_precio_7 = str_data[72]::integer,
+				redondeo_precio_8 = str_data[73]::integer,
+				redondeo_precio_9 = str_data[74]::integer,
+				redondeo_precio_10 = str_data[75]::integer,
+				inv_prod_presentacion_id=str_data[76]::integer,
+				gral_mon_id_pre1 = str_data[77]::integer,
+				gral_mon_id_pre2 = str_data[78]::integer,
+				gral_mon_id_pre3 = str_data[79]::integer,
+				gral_mon_id_pre4 = str_data[80]::integer,
+				gral_mon_id_pre5 = str_data[81]::integer,
+				gral_mon_id_pre6 = str_data[82]::integer,
+				gral_mon_id_pre7 = str_data[83]::integer,
+				gral_mon_id_pre8 = str_data[84]::integer,
+				gral_mon_id_pre9 = str_data[85]::integer,
+				gral_mon_id_pre10 = str_data[86]::integer,
+				gral_usr_id_actualizacion = usuario_id,
+				borrado_logico=false,
+				momento_actualizacion=now() 
+			WHERE id = str_data[4]::integer;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE inv_pre SET borrado_logico=true, momento_baja=now(), gral_usr_id_baja=usuario_id  WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de inv_pre
+	
+
+	-- Catalogo de SubFamilias
+        IF app_selected = 48 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         familia
+                        --str_data[6]         descripcion
+                        --str_data[7]         select_familia
+                        INSERT INTO inv_prod_familias (titulo,descripcion,identificador_familia_padre,momento_creacion, borrado_logico, gral_usr_id_creacion, gral_emp_id, gral_suc_id,inv_prod_tipo_id)
+                        VALUES (str_data[5],str_data[6],str_data[7]::integer,now(),false, usuario_id, emp_id, suc_id, str_data[8]::integer);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE inv_prod_familias SET titulo=str_data[5],descripcion=str_data[6],identificador_familia_padre=str_data[7]::integer,momento_actualizacion=now(), gral_usr_id_actualizacion=usuario_id, inv_prod_tipo_id=str_data[8]::integer 
+                        WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                        UPDATE inv_prod_familias SET borrado_logico=true, momento_baja=now(), gral_usr_id_baja=usuario_id  WHERE id=str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina catalogo de SubFamilias
+
+        	
+
+	-- Catalogo de unidades
+	IF app_selected = 49 THEN
+		IF command_selected = 'new' THEN
+			INSERT INTO inv_prod_unidades (titulo,borrado_logico,titulo_abr,decimales)
+				VALUES (str_data[6],false, str_data[5],str_data[7]::integer);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE inv_prod_unidades SET titulo=str_data[6],
+						     titulo_abr=str_data[5],
+						     decimales=str_data[7]::integer
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			eliminar_registro=true;
+
+			IF eliminar_registro=TRUE THEN
+				exis:=0;
+				SELECT count(id) FROM inv_prod WHERE empresa_id=emp_id AND borrado_logico=false AND unidad_id=str_data[4]::integer 
+				INTO exis;
+				IF exis>0 THEN 
+					valor_retorno := 'La Unidad de Medida no pudo ser eliminada porque est&aacute; asignado uno o m&aacute;s productos.';
+					eliminar_registro=FALSE;
+				END IF;
+			END IF;
+
+			IF eliminar_registro=TRUE THEN
+				UPDATE inv_prod_unidades SET borrado_logico=true  WHERE inv_prod_unidades.id=str_data[4]::integer;
+				valor_retorno := 'La Unidadde Medida fue eliminada con exito.';
+			END IF;
+		END IF;
+	END IF;--termina catalogo de unidades
+	
+	
+	
+	-- Catalogo de  inventario de Clasicacion de   stock
+        IF app_selected = 50 THEN
+                IF command_selected = 'new' THEN
+			--str_data[4]         id
+                        --str_data[5]        titulo
+                        --str_data[6]     descripcion
+                        INSERT INTO inv_stock_clasificaciones (titulo,descripcion,borrado_logico,momento_creacion,gral_emp_id,gral_suc_id,gral_usr_id_creacion) 
+                        VALUES (str_data[5],str_data[6],false,now(),emp_id,suc_id,usuario_id);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE inv_stock_clasificaciones SET  
+				titulo=str_data[5],   						
+				      descripcion=str_data[6],
+				      momento_actualizacion= now(),
+				      gral_usr_id_actualizacion=usuario_id
+				WHERE inv_stock_clasificaciones.id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                         UPDATE inv_stock_clasificaciones SET borrado_logico=true,
+                                                 gral_usr_id_baja= usuario_id
+			 WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo inventario Clasificacion stock
+	
+	
+
+	-- Catalogo de Comisiones
+	IF app_selected = 51 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[6]	descripcion
+			
+			INSERT INTO inv_com(  inv_prod_id,
+			  limite_inferior,--smallint
+			  limite_superior,
+			  comision,
+			  comision_valor,
+			  nivel,
+			  escala ,
+			 borrado_logico, momento_creacion ) 
+			VALUES(str_data[5]::integer,
+			str_data[8]::double precision,
+			str_data[9]::double precision,
+			str_data[10]::double precision,
+			str_data[11]::double precision,
+			str_data[7]::smallint,
+			str_data[6]::smallint,
+			false, now()) RETURNING id INTO ultimo_id;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			
+			UPDATE inv_com SET 
+			  limite_inferior=str_data[8]::double precision,
+			  limite_superior=str_data[9]::double precision,
+			  comision=str_data[10]::double precision,
+			  comision_valor=str_data[11]::double precision,
+			  nivel=str_data[7]::smallint,
+			  escala=str_data[6]::smallint ,
+			borrado_logico=false,
+			momento_actualizacion=now() 
+			WHERE id = str_data[4]::integer;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE inv_com SET borrado_logico=true, momento_baja=now() WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de Comisiones
+
+	
+	
+	
+	-- Catalogo de  inventario de Clasicaciones
+        IF app_selected = 52 THEN
+                IF command_selected = 'new' THEN
+			--str_data[4]         id
+                        --str_data[5]         titulo
+                        --str_data[6]         descripcion
+                        --str_data[7]         factorseguridad
+                        --str_data[8]         stockseguridad
+                        INSERT INTO inv_clas (titulo,descripcion,borrado_logico,stock_seguridad,factor_maximo,momento_creacion,gral_emp_id,gral_suc_id,gral_usr_id_creacion) 
+                        VALUES (str_data[5],str_data[6],false,str_data[7]::double precision,str_data[8]::double precision,now(),emp_id,suc_id,usuario_id);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                
+                        UPDATE inv_clas SET  titulo=str_data[5],   						
+					      descripcion=str_data[6],
+					      momento_actualizacion= now(),
+					      stock_seguridad=str_data[7]::double precision,
+					      factor_maximo=str_data[8]::double precision,
+					      gral_usr_id_actualizacion=usuario_id
+			WHERE inv_clas.id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                         UPDATE inv_clas SET borrado_logico=true,
+				             momento_baja=now(),
+                                             gral_usr_id_baja= usuario_id
+			 WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo inventario Clasificaciones
+
+	-- Catalogo de inv_pre_ofe
+	IF app_selected = 53 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[6]	descripcion
+			
+			INSERT INTO inv_pre_ofe(  inv_prod_id,
+			  precio_oferta,
+			  descto_max,
+			  criterio_oferta,
+			  precio_lista_1,precio_lista_2,
+			  precio_lista_3,precio_lista_4,
+			  precio_lista_5,precio_lista_6,
+			  precio_lista_7,precio_lista_8,
+			  precio_lista_9,precio_lista_10,
+			  fecha_inicial,fecha_final,
+			  tipo_descto_precio,
+			 borrado_logico, momento_creacion ) 
+			VALUES(str_data[5]::integer,
+			str_data[8]::double precision,
+			0,
+			str_data[10]::boolean,
+			str_data[11]::boolean,
+			str_data[12]::boolean,
+			str_data[13]::boolean,
+			str_data[14]::boolean,
+			str_data[15]::boolean,
+			str_data[16]::boolean,
+			str_data[17]::boolean,
+			str_data[18]::boolean,
+			str_data[19]::boolean,
+			str_data[20]::boolean,
+			str_data[6]::date,
+			str_data[7]::date,
+			str_data[21]::boolean,
+			false, now()) RETURNING id INTO ultimo_id;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			
+			UPDATE inv_pre_ofe SET 
+			  precio_oferta=str_data[8]::double precision,
+			  descto_max=0,
+			  criterio_oferta=str_data[10]::boolean,
+			  precio_lista_1=str_data[11]::boolean,precio_lista_2=str_data[12]::boolean,
+			  precio_lista_3=str_data[13]::boolean,precio_lista_4=str_data[14]::boolean,
+			  precio_lista_5=str_data[15]::boolean,precio_lista_6=str_data[16]::boolean,
+			  precio_lista_7=str_data[17]::boolean,precio_lista_8=str_data[18]::boolean,
+			  precio_lista_9=str_data[19]::boolean,precio_lista_10=str_data[20]::boolean,
+			  fecha_inicial=str_data[6]::date,fecha_final=str_data[7]::date,
+			  tipo_descto_precio=str_data[21]::boolean,
+			borrado_logico=false,
+			momento_actualizacion=now() 
+			WHERE id = str_data[4]::integer;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE inv_pre_ofe SET borrado_logico=true, momento_baja=now() WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de inv_pre_ofe
+
+	-- Catalogo de  inventario plazas-sucursales
+	IF app_selected = 54 THEN
+		--str_data[1]         app_selected
+		--str_data[2]         command_selected
+		--str_data[3]         id_sucursal
+		--str_data[4]         plazasAgregadas
+			
+		IF str_data[4] = '' THEN
+			 DELETE FROM gral_suc_pza WHERE sucursal_id=str_data[3]::integer; 
+			valor_retorno := '1';
+		END IF;
+		
+		--RAISE EXCEPTION '%','total  de filas???'||str_data[4];
+		
+		IF str_data[4] != '' THEN
+			DELETE FROM gral_suc_pza WHERE sucursal_id=str_data[3]::integer;  
+			
+			--convertir en arreglo las plazasAgregadas
+			SELECT INTO str_filas string_to_array(str_data[4],',');
+			
+			--obtiene numero de elementos del arreglo str_fila
+			tot_filas:= array_length(str_fila,1);
+			
+			--crea registros gral_suc_pza
+			FOR cont_fila_pres IN 1 .. tot_filas LOOP
+				INSERT INTO gral_suc_pza(plaza_id,sucursal_id) VALUES (str_fila[cont_fila_pres]::integer,str_data[3]::integer);
+			END LOOP;
+			
+			valor_retorno := '1';
+		END IF;
+                
+        END IF;--termina Catalogo inventario plazas-sucursales
+	
+	
+	
+	-- Catalogo Direcciones de proveedores
+       IF app_selected = 56 THEN
+             IF command_selected = 'new' THEN
+		--str_data[4]        id                --str_data[5]        calle
+                --str_data[6]	     codigoPostal      --str_data[7]        colonia
+                --str_data[8]        entreCalles       --str_data[9]	     extDos
+                --str_data[10]       extUno            --str_data[11]       numExterior
+                --str_data[12]	     numInterior       --str_data[13]       proveedor
+                --str_data[14]       id_estado         --str_data[15]	     id_municipio
+                --str_data[16]       id_pais           --str_data[17]       telDos
+                --str_data[18]	     telUno
+                
+		INSERT INTO cxp_prov_dir(proveedor_id,calle,entre_calles,numero_interior,numero_exterior,colonia,cp,pais_id,estado_id,municipio_id,telefono1,extension1,telefono2,borrado_logico,momento_creacion,id_usuario_creacion,gral_emp_id,gral_suc_id ) 
+		VALUES (str_data[13]::integer,str_data[5],str_data[8],str_data[12],str_data[11],str_data[7]::character varying,str_data[6]::integer,str_data[16]::integer,str_data[14]::integer,str_data[15]::integer,str_data[18],str_data[10],str_data[17],false,now(),usuario_id,emp_id,suc_id );
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxp_prov_dir SET 
+				proveedor_id=str_data[13]::INTEGER,
+				calle        	=str_data[5],  --calle
+				entre_calles 	=str_data[8], --entre calles
+				numero_interior =str_data[12], --numero interior
+				numero_exterior =str_data[11], --numeroexterior
+				colonia 	=str_data[7], --colonia
+				cp 		=str_data[6], --cp
+				pais_id 	=str_data[16]::INTEGER,--pais
+				estado_id 	=str_data[14]::INTEGER, --edo
+				municipio_id 	=str_data[15]::INTEGER, --mpio
+				telefono1 	=str_data[18],--567
+				extension1 	=str_data[10],--5678
+				telefono2 	=str_data[17],--56789	
+				extension2 	=str_data[9],--567890				
+				momento_actualizacion =now(),
+				id_usuario_actualizacion= usuario_id						
+                        WHERE cxp_prov_dir.id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                         UPDATE cxp_prov_dir SET momento_baja=now(),
+                                            borrado_logico=true,
+                                            id_usuario_baja=usuario_id
+                         WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo Direcciones de proveedores
+	
+	
+	
+
+	--Catalogo de Chequera
+	IF app_selected = 59 THEN
+		--str_data[1]  app_selected                     str_data[11]  id_estado                         
+		--str_data[2]  command_selected			str_data[12]  id_moneda				str_data[21]  telefono1
+		--str_data[3]  id_usuario			str_data[13]  id_banco			        str_data[22]  extencion1
+		--str_data[4]  id				str_data[14]  chk_imprimir_chequeningles	str_data[23]  telefono2	
+		--str_data[5]  chequera				str_data[15]  calle				str_data[24]  extencion2		
+		--str_data[6]  chk_modificar_consecutivo 	str_data[16]  numero				str_data[25]  fax
+		--str_data[7]  chk_modificar_fecha		str_data[17]  colonia				str_data[26]  gerente
+		--str_data[8]  chk_modificar_cheque		str_data[18]  cp				str_data[27]  ejecutivo
+		--str_data[9]  id_pais				str_data[19]  numero_sucursal		        str_data[28]  email;
+		--str_data[10]  id_municipio			str_data[20]  nombre_sucursal        		str_data[29]  id_cta_activo
+		
+		
+		--RAISE EXCEPTION '%','total  de filas???'||str_data[4];
+		-- Catalogo de  inventario de Clasicaciones
+                IF command_selected = 'new' THEN
+			INSERT INTO tes_che (titulo ,aut_modif_consecutivo,   aut_modif_fecha ,    aut_modif_cheque ,       gral_pais_id ,  gral_mun_id ,                gral_edo_id ,            moneda_id ,          tes_ban_id ,  imp_cheque_ingles,  calle  ,  numero  ,  colonia ,  codigo_postal ,num_sucursal ,  nombre_sucursal  ,  telefono1  ,  extencion1  ,  telefono2  ,  extencion2  ,  fax  ,  gerente  ,  ejecutivo  ,  email  ,  momento_creacion , borrado_logico ,  gral_usr_id_creacion ,    gral_emp_id ,  gral_suc_id, ctb_cta_id_activo) 
+			VALUES (str_data[5],str_data[6]::boolean, str_data[7]::boolean,str_data[8]::boolean,str_data[9]::integer,str_data[10]::integer, str_data[11]::integer, str_data[12]::integer,str_data[13]::integer,str_data[14]::boolean, str_data[15], str_data[16], str_data[17], str_data[18]::integer, str_data[19]::integer,str_data[20],str_data[21],str_data[22],str_data[23],str_data[24],str_data[25],str_data[26],str_data[27], str_data[28], now(), false,usuario_id, emp_id, suc_id, str_data[29]::integer);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE tes_che SET  titulo=str_data[5],
+                        aut_modif_consecutivo =  str_data[6]::boolean,
+                        aut_modif_fecha =str_data[7]::boolean,
+                        aut_modif_cheque=str_data[8]::boolean,
+                        gral_pais_id=str_data[9]::integer,
+                        gral_mun_id =str_data[10]::integer, 
+                        gral_edo_id = str_data[11]::integer,
+                        moneda_id= str_data[12]::integer,
+                        tes_ban_id =str_data[13]::integer,
+                        imp_cheque_ingles=str_data[14]::boolean  ,
+                        calle   =str_data[15],
+                        numero = str_data[16] ,
+                        colonia= str_data[17],
+                        codigo_postal =str_data[18]::integer,
+                        num_sucursal =str_data[19]::integer , 
+                        nombre_sucursal =str_data[20],
+                        telefono1 =str_data[21],
+                        extencion1  =str_data[22],
+                        telefono2 =str_data[23],
+                        extencion2  =str_data[24],
+                        fax  =str_data[25],
+                        gerente =str_data[26] ,
+                        ejecutivo =str_data[27],
+                        email =str_data[28],
+                        ctb_cta_id_activo=str_data[29]::integer,
+			momento_actualizacion=now(),
+			gral_usr_id_actualizacion=usuario_id
+			WHERE tes_che.id = str_data[4]::integer;
+			
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                         UPDATE tes_che SET borrado_logico=true,momento_baja=now(),gral_usr_id_baja= usuario_id
+			 WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+	END IF;--termina Catalogo Chequeras
+
+	
+
+	-- Catalogo de inventario de  Presentaciones
+	IF app_selected = 68 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]         id
+			--str_data[5]         titulo
+			--str_data[6]         cantidad-equivalencia
+			INSERT INTO inv_prod_presentaciones (titulo,borrado_logico,momento_creacion, gral_usr_id_creacion, gral_emp_id, gral_suc_id, cantidad) 
+			VALUES (str_data[5],false,now(), usuario_id, emp_id, suc_id,str_data[6]::double precision );
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE inv_prod_presentaciones SET titulo=str_data[5], cantidad = str_data[6]::double precision, momento_actualizacion=now(), gral_usr_id_actualizacion=usuario_id
+			WHERE inv_prod_presentaciones.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			eliminar_registro=true;
+			
+			IF eliminar_registro=TRUE THEN 
+				exis:=0;
+				SELECT count(id) FROM inv_prod_pres_x_prod WHERE presentacion_id=str_data[4]::integer
+				INTO exis;
+				IF exis>0 THEN 
+					valor_retorno := 'La presentaci&oacute;n no pudo ser eliminada porque est&aacute; asignado como presentaci&oacute;n de uno o m&aacute;s productos.';
+					eliminar_registro=FALSE;
+				END IF;
+			END IF;
+			
+			IF eliminar_registro=TRUE THEN
+				exis:=0;
+				SELECT count(id) FROM inv_prod WHERE empresa_id=emp_id AND borrado_logico=FALSE AND inv_prod_presentacion_id=str_data[4]::integer 
+				INTO exis;
+				IF exis>0 THEN 
+					valor_retorno := 'La presentaci&oacute;n no pudo ser eliminada porque est&aacute; asignado como presentaci&oacute;n default de uno o m&aacute;s productos.';
+					eliminar_registro=FALSE;
+				END IF;
+			END IF;
+			
+			--Verificar si hay que validar existencias de Presentaciones
+			IF controlExisPres=true THEN 
+				IF eliminar_registro=TRUE THEN
+					exis:=0;
+					SELECT count(id) FROM env_conf WHERE gral_emp_id=emp_id AND borrado_logico=FALSE AND inv_prod_presentacion_id=str_data[4]::integer 
+					INTO exis;
+					IF exis > 0 THEN 
+						valor_retorno := 'La presentaci&oacute;n no pudo ser eliminada porque est&aacute; asociado a un registro en el cat&aacute;logo de configuraci&oacute;n de envases.';
+						eliminar_registro=FALSE;
+					ELSE
+						--Eliminar registro de existencias por presentaciones si es que existe
+						DELETE FROM inv_exi_pres WHERE inv_prod_presentacion_id=str_data[4]::integer;
+					END IF;
+				END IF;
+			END IF;
+			
+			
+			IF eliminar_registro=TRUE THEN
+				UPDATE inv_prod_presentaciones SET momento_baja=now(), borrado_logico=true, gral_usr_id_baja=usuario_id WHERE id = str_data[4]::integer;
+				
+				--Eliminar de la tabla de costos
+				DELETE FROM inv_prod_costos WHERE ano=EXTRACT(YEAR  FROM now()) AND inv_prod_presentacion_id=str_data[4]::integer;
+				
+				--Eliminar de la Lista de Precios
+				DELETE FROM inv_pre WHERE gral_emp_id=emp_id AND inv_prod_presentacion_id=str_data[4]::integer;
+				
+				valor_retorno := 'La presentacion fue eliminada.';
+			END IF;
+			
+		END IF;
+	END IF;--termina Catalogo Presentaciones
+
+	--Catalogo de formulas
+	IF app_selected = 69 THEN
+		--str_data[1]  app_selected
+		--str_data[2]  command_selected	
+		--str_data[3]  id_usuario
+		--str_data[4]  id
+		--str_data[5]  id_prod_master
+		--str_data[6]  inv_prod_id
+		--str_data[7]  nivel
+		--str_data[8]  producto_elemento_id
+		--str_data[9]  cantidad
+		--RAISE EXCEPTION '%','total  de filas???'||str_data[4];
+		-- Catalogo de  formulas
+
+                IF command_selected = 'new' THEN
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+		
+			IF extra_data[1] != 'sin datos' THEN
+				FOR cont_fila IN 1 .. total_filas LOOP
+				
+					SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+					--aqui se vuelven a crear los registros
+					INSERT INTO inv_formulas ( inv_prod_id_master ,  inv_prod_id ,          producto_elemento_id ,     cantidad ,                         nivel ) 
+					VALUES (                  str_data[5]::integer,  str_data[6]::integer,  str_filas[1]::integer,      str_filas[2]::Double precision,   str_data[7]::integer);
+					valor_retorno := '1';
+					
+				END LOOP;
+			END IF;
+		END IF;
+                
+                IF command_selected = 'edit' THEN
+                        total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+
+			DELETE FROM  inv_formulas WHERE inv_formulas.inv_prod_id_master = str_data[5]::integer AND inv_formulas.inv_prod_id=str_data[6]::integer AND inv_formulas.nivel=str_data[7]::integer;
+			--RAISE EXCEPTION '%','update:'||'DELETE FROM  inv_formulas WHERE inv_formulas.inv_prod_id_master = '||str_data[5]::integer||' AND inv_formulas.inv_prod_id='||str_data[6]::integer||' AND inv_formulas.nivel='||str_data[7]::integer||' ';
+			--IF extra_data[1] != 'sin datos' THEN
+				FOR cont_fila IN 1 .. total_filas LOOP
+					SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+					INSERT INTO inv_formulas ( inv_prod_id_master ,  inv_prod_id ,          producto_elemento_id ,     cantidad ,                         nivel ) 
+					VALUES (                  str_data[5]::integer,  str_data[6]::integer,  str_filas[1]::integer,      str_filas[2]::Double precision,   str_data[7]::integer);
+				END LOOP;
+			--END IF;
+			valor_retorno := '1';
+                END IF;
+
+                IF command_selected = 'delete' THEN
+                         DELETE  FROM inv_formulas 
+			 WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+	END IF;--termina Catalogo de formulas
+	
+	
+	
+	
+	-- Catalogo de inventario de  Vehiculos
+	IF app_selected = 73 THEN
+		IF command_selected = 'new' THEN
+			--str_data[1]	app_selected
+			--str_data[2]	command_selected
+			--str_data[3]	id_usuario
+			--str_data[4]	id
+			--str_data[5]	select_tipo_unidad
+			--str_data[6]	select_clase
+			--str_data[7]	select_marca
+			--str_data[8]	select_anio
+			--str_data[9]	color
+			--str_data[10]	no_economico
+			--str_data[11]	select_tipo_placa
+			--str_data[12]	placas
+			--str_data[13]	no_serie
+			--str_data[14]	select_tipo_rodada
+			--str_data[15]	select_tipo_caja
+			--str_data[16]	cap_volumen
+			--str_data[17]	cap_peso
+			--str_data[18]	select_clasif2
+			--str_data[19]	id_prov
+			--str_data[20]	id_operador
+			--str_data[21]	comentarios
+			
+
+			--Folio Catalogo de Unidades(LOG)
+			id_tipo_consecutivo:=53;
+			
+			--Aqui entra para tomar el consecutivo del folio  la sucursal actual
+			UPDATE gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+			WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+			
+			--Concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+			nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+
+			
+			INSERT INTO log_vehiculos (
+				folio, --nuevo_folio,
+				log_vehiculo_tipo_id, --str_data[5]::integer,
+				log_vehiculo_clase_id, --str_data[6]::integer,
+				log_vehiculo_marca_id, --str_data[7]::integer,
+				anio, --str_data[8]::integer,
+				color, --str_data[9],
+				numero_economico, --str_data[10],
+				log_vehiculo_tipo_placa_id, --str_data[11]::integer,
+				placa, --str_data[12],
+				numero_serie, --str_data[13],
+				log_vehiculo_tipo_rodada_id, --str_data[14]::integer,
+				log_vehiculo_tipo_caja_id, --str_data[15]::integer,
+				cap_volumen, --str_data[16]::double precision,
+				cap_peso, --str_data[17]::double precision,
+				clasificacion2, --str_data[18]::integer,
+				cxp_prov_id, --str_data[19]::integer,
+				log_chofer_id, --str_data[20]::integer,
+				comentarios, --str_data[21],
+				gral_emp_id, --emp_id,
+				gral_suc_id, --suc_id,
+				borrado_logico, --false,
+				momento_crea, --espacio_tiempo_ejecucion,
+				gral_usr_id_crea --usuario_id
+			) 
+			VALUES (nuevo_folio, str_data[5]::integer, str_data[6]::integer, str_data[7]::integer, str_data[8]::integer, str_data[9], str_data[10], str_data[11]::integer, str_data[12], str_data[13], str_data[14]::integer, str_data[15]::integer, str_data[16]::double precision, str_data[17]::double precision, str_data[18]::integer, str_data[19]::integer, str_data[20]::integer, str_data[21], emp_id, suc_id, false, espacio_tiempo_ejecucion, usuario_id);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE log_vehiculos SET log_vehiculo_tipo_id=str_data[5]::integer, log_vehiculo_clase_id=str_data[6]::integer, log_vehiculo_marca_id=str_data[7]::integer, anio=str_data[8]::integer, color=str_data[9], numero_economico=str_data[10], log_vehiculo_tipo_placa_id=str_data[11]::integer, placa=str_data[12], numero_serie=str_data[13], log_vehiculo_tipo_rodada_id=str_data[14]::integer, log_vehiculo_tipo_caja_id=str_data[15]::integer, cap_volumen=str_data[16]::double precision, cap_peso=str_data[17]::double precision, clasificacion2=str_data[18]::integer, cxp_prov_id=str_data[19]::integer, log_chofer_id=str_data[20]::integer, comentarios=str_data[21], momento_actualiza=espacio_tiempo_ejecucion, gral_usr_id_actualiza=usuario_id 
+			WHERE log_vehiculos.id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE log_vehiculos SET momento_baja=espacio_tiempo_ejecucion, gral_usr_id_baja=usuario_id, borrado_logico=true 
+			WHERE log_vehiculos.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo Vehiculo
+	
+	
+	
+	
+	-- Catalogo de inventario de  Puestos
+	IF app_selected = 75 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			INSERT INTO gral_puestos (titulo,borrado_logico,momento_creacion,gral_usr_id_creacion,gral_emp_id,gral_suc_id) 
+			VALUES (str_data[5],false,now(),usuario_id,emp_id,suc_id);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE gral_puestos SET titulo=str_data[5],
+					    momento_actualizacion=now(),
+					    gral_usr_id_actualizacion=usuario_id
+			WHERE gral_puestos.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE gral_puestos SET momento_baja=now(),borrado_logico=true 
+			WHERE gral_puestos.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo Puestos
+	
+	
+	-- Catalogo de inventario de  escolaridades
+	IF app_selected = 77 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]         id
+			--str_data[5]         titulo
+			INSERT INTO gral_escolaridads (titulo,borrado_logico,momento_creacion,gral_usr_id_creacion,gral_emp_id,gral_suc_id) 
+			VALUES (str_data[5],false,now(),usuario_id,emp_id,suc_id);
+			valor_retorno := '1';
+		END IF;
+			
+		IF command_selected = 'edit' THEN
+			UPDATE gral_escolaridads SET titulo=str_data[5],momento_actualizacion=now(),gral_usr_id_actualizacion=usuario_id
+			WHERE gral_escolaridads.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			--RAISE EXCEPTION '%','id de la tabla'||str_data[4];
+			UPDATE gral_escolaridads SET momento_baja=now(),borrado_logico=true 
+			WHERE gral_escolaridads.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo Escolaridades
+
+	-- Catalogo de inventario de  Religiones
+	IF app_selected = 78 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]         id
+			--str_data[5]         titulo
+			INSERT INTO gral_religions (titulo,borrado_logico,momento_creacion,gral_usr_id_creacion,gral_emp_id,gral_suc_id) 
+			VALUES (str_data[5],false,now(),usuario_id,emp_id,suc_id);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE gral_religions SET titulo=str_data[5],momento_actualizacion=now(),gral_usr_id_actualizacion=usuario_id
+			WHERE gral_religions.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			--RAISE EXCEPTION '%','id de la tabla'||str_data[4];
+			UPDATE gral_religions SET momento_baja=now(),borrado_logico=true 
+			WHERE gral_religions.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo Religiones
+	
+	
+	
+	-- Catalogo de inventario de  tipos de sangre
+	IF app_selected = 79 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]         id
+			--str_data[5]         titulo
+			INSERT INTO gral_sangretipos (titulo,borrado_logico,momento_creacion,gral_usr_id_creacion,gral_emp_id,gral_suc_id) 
+			VALUES (str_data[5],false,now(),usuario_id,emp_id,suc_id);
+			valor_retorno := '1';
+		END IF;
+			
+		IF command_selected = 'edit' THEN
+			UPDATE gral_sangretipos SET titulo=str_data[5],momento_actualizacion=now(),gral_usr_id_actualizacion=usuario_id
+			WHERE gral_sangretipos.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			--RAISE EXCEPTION '%','id de la tabla'||str_data[4];
+			UPDATE gral_sangretipos SET momento_baja=now(),borrado_logico=true 
+			WHERE gral_sangretipos.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo Tipo de sangre
+
+	
+	-- Catalogo de inventario de  departamentos
+	IF app_selected = 82 THEN
+		IF command_selected = 'new' THEN
+		--RAISE EXCEPTION '%','titulo'||str_data[5];
+			--str_data[4]         id select * from gral_deptos
+			--str_data[5]         titulo
+			INSERT INTO gral_deptos (titulo,costo_prorrateo,vigente, borrado_logico, momento_creacion, gral_usr_id_creacion, gral_emp_id,    gral_suc_id) 
+			VALUES (str_data[5], str_data[6]::double precision, true,false,now(),usuario_id,emp_id,suc_id);
+			valor_retorno := '1';
+			
+		END IF;
+			
+		IF command_selected = 'edit' THEN
+			UPDATE gral_deptos SET titulo=str_data[5],
+					      costo_prorrateo=str_data[6]::double precision,
+					      momento_actualizacion=now(),
+					      gral_usr_id_actualizacion=usuario_id
+		        WHERE gral_deptos.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			--RAISE EXCEPTION '%','id de la tabla'||str_data[4];
+			update gral_deptos SET momento_baja=now(),
+					      borrado_logico=true 
+			WHERE gral_deptos.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de  departamentos
+	
+	
+	-- Catalogo de inventario de  tipo de equipos
+	IF app_selected = 83 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]         id
+			--str_data[5]         titulo
+			INSERT INTO pro_tipo_equipo (titulo,borrado_logico,momento_creacion,gral_usr_id_creacion,gral_emp_id,gral_suc_id) 
+			VALUES (str_data[5],false,now(),usuario_id,emp_id,suc_id);
+			valor_retorno := '1';
+		END IF;
+			
+		IF command_selected = 'edit' THEN
+			UPDATE pro_tipo_equipo SET titulo=str_data[5],momento_actualizacion=now(),gral_usr_id_actualizacion=usuario_id
+		        WHERE pro_tipo_equipo.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			--RAISE EXCEPTION '%','id de la tabla'||str_data[4];
+			update pro_tipo_equipo SET momento_baja=now(),borrado_logico=true 
+			WHERE pro_tipo_equipo.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de  tipo de equipos
+
+	-- Catalogo de inventario de  dias no laborables
+	IF app_selected = 84 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]        id
+			--str_data[5]        fecha_no_laborable
+			--str_data[6]        descripcion
+			INSERT INTO gral_dias_no_laborables (fecha_no_laborable, descripcion, borrado_logico, momento_creacion, gral_usr_id_creacion, gral_emp_id, gral_suc_id) 
+			VALUES (str_data[5]::date,str_data[6],false,now(),usuario_id,emp_id,suc_id);
+			valor_retorno := '1';
+		END IF;
+			
+		IF command_selected = 'edit' THEN		
+			UPDATE gral_dias_no_laborables SET fecha_no_laborable=str_data[5]::date,
+					      descripcion = str_data[6],
+					      momento_actualizacion=now(),
+					      gral_usr_id_actualizacion=usuario_id
+		        WHERE gral_dias_no_laborables.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			--RAISE EXCEPTION '%','id de la tabla'||str_data[4];
+			update gral_dias_no_laborables SET momento_baja=now(),
+					      borrado_logico=true 
+			WHERE gral_dias_no_laborables.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de  dias no laborables
+
+	-- Catalogo de inventario de  categorias
+	IF app_selected = 85 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]        id
+			--str_data[5]        titulo(categ)
+			--str_data[6]        sueldo_por_hora 	
+			--str_data[7]        sueldo_por_horas_ext 
+			--str_data[8]        gral_puesto_id (puesto)select * from gral_categ
+			INSERT INTO gral_categ (titulo,      sueldo_por_hora,               sueldo_por_horas_ext,          gral_puesto_id,          borrado_logico, momento_creacion, gral_usr_id_creacion, gral_emp_id, gral_suc_id) 
+			VALUES (                str_data[5], str_data[6]::double precision, str_data[7]::double precision, str_data[8]::integer,    false,          now(),            usuario_id,           emp_id,      suc_id);
+			valor_retorno := '1';
+		END IF;
+			
+		IF command_selected = 'edit' THEN
+			UPDATE gral_categ SET titulo=str_data[5],
+			                      sueldo_por_hora=str_data[6]::double precision,
+			                      sueldo_por_horas_ext=str_data[7]::double precision,
+			                      gral_puesto_id=str_data[8]::integer,
+					      momento_actualizacion=now(),
+					      gral_usr_id_actualizacion=usuario_id
+		        WHERE gral_categ.id = str_data[4]::integer;
+			valor_retorno := '0';
+
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			--RAISE EXCEPTION '%','id de la tabla'||str_data[4];
+			update gral_categ SET momento_baja=now(),
+					      borrado_logico=true 
+			WHERE gral_categ.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de  tipo de categorias
+
+	
+	-- Catalogo de inventario de  turnos
+	IF app_selected = 92 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]        id
+			--str_data[5]        turno
+			--str_data[6]        hora_ini 	
+			--str_data[7]        hora_fin 
+			--str_data[8]        gral_deptos_id (depto) select * from gral_deptos_turnos
+			INSERT INTO gral_deptos_turnos (turno,       hora_ini,                         hora_fin,                         gral_deptos_id,          borrado_logico, momento_creacion, gral_usr_id_creacion, gral_emp_id, gral_suc_id) 
+			VALUES (                        str_data[5]::integer, str_data[6]::time with time zone, str_data[7]::time with time zone, str_data[8]::integer,    false,          now(),            usuario_id,           emp_id,      suc_id);
+			valor_retorno := '1';
+		END IF;
+			
+		IF command_selected = 'edit' THEN
+			UPDATE gral_deptos_turnos SET turno=str_data[5]::integer,
+			                      hora_ini=str_data[6]::time with time zone,
+			                      hora_fin=str_data[7]::time with time zone,
+			                      gral_deptos_id=str_data[8]::integer,
+					      momento_actualizacion=now(),
+					      gral_usr_id_actualizacion=usuario_id
+		        WHERE gral_deptos_turnos.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+
+		IF command_selected = 'delete' THEN
+			--RAISE EXCEPTION '%','id de la tabla'||str_data[4];
+			update gral_deptos_turnos SET momento_baja=now(),
+					      borrado_logico=true 
+			WHERE gral_deptos_turnos.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de  tipo de turnos
+	
+
+	--Catalogo de productos equivalentes 
+	IF app_selected = 96 THEN 
+		--str_data[1]  app_selected 
+		--str_data[2]  command_selected     
+		--str_data[3]  id_usuario 
+		--str_data[4]  id 
+		--str_data[5]  inv_prod_id 
+		--str_data[6]  inv_prod_id_equiv
+		--RAISE EXCEPTION '%','total  de filas???'||str_data[4];
+
+		IF command_selected = 'new' THEN 
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo 
+			cont_fila:=1; 
+
+			IF extra_data[1] != 'sin datos' THEN 
+				FOR cont_fila IN 1 .. total_filas LOOP 
+					SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___'); 
+					--aqui se vuelven a crear los registros 
+					INSERT INTO inv_prod_equiv ( inv_prod_id ,          inv_prod_id_equiv ,    observaciones )  
+					VALUES (                     str_data[5]::integer,  str_filas[2]::integer,  str_filas[3]); 
+					valor_retorno := '1'; 
+				END LOOP; 
+			END IF; 
+		END IF; 
+
+		IF command_selected = 'edit' THEN 
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo 
+			cont_fila:=1; 
+			--DELETE FROM  inv_prod_equiv WHERE inv_prod_equiv.id = '||str_data[4]::integer||' AND inv_formulas.inv_prod_id='||str_data[6]::integer||' AND inv_formulas.nivel='||str_data[7]::integer||' ';
+			DELETE  FROM inv_prod_equiv WHERE inv_prod_id = str_data[5]::integer;
+			--IF extra_data[1] = 'sin datos' THEN 
+				FOR cont_fila IN 1 .. total_filas LOOP 
+					SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___'); 
+					--aqui se vuelven a crear los registros 
+					INSERT INTO inv_prod_equiv ( inv_prod_id ,          inv_prod_id_equiv ,    observaciones )  
+					VALUES (                     str_data[5]::integer,  str_filas[2]::integer,  str_filas[3]); 
+				END LOOP; 
+				valor_retorno := '1';
+			--END IF;
+		END IF; 
+
+		IF command_selected = 'delete' THEN 
+			DELETE  FROM inv_prod_equiv  
+			WHERE inv_prod_id = str_data[4]::integer; 
+			valor_retorno := '1'; 
+		END IF; 
+
+	END IF;--termina Catalogo de productos equivalentes 
+
+	
+	
+	-- Aplicativo de edicion de codigo ISO
+	IF app_selected = 99 THEN
+		IF command_selected = 'edit' THEN
+			UPDATE gral_docs_conf SET valor=str_data[5] WHERE gral_docs_conf.gral_doc_id = str_data[4]::integer and campo='CODIGO1';
+			
+			UPDATE gral_docs_conf SET valor=str_data[6] WHERE gral_docs_conf.gral_doc_id = str_data[4]::integer and campo='CODIGO2';
+
+			UPDATE gral_docs SET momento_actualizacion=now(), gral_usr_id_actualizacion=usuario_id
+			WHERE gral_docs.id = str_data[4]::integer;
+			
+			valor_retorno := '0';
+		END IF;
+	END IF;--termina Catalogo Puestos
+
+	
+	
+	-- Catalogo de Motivos de Visitas
+	IF app_selected = 109 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]        id
+			--str_data[5]        descripcion
+			
+			id_tipo_consecutivo:=33;--Folio de motivo de visita
+			
+			--aqui entra para tomar el consecutivo del folio  la sucursal actual
+			UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+			WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+			
+			--concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+			nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+			
+			INSERT INTO crm_motivos_visita (folio_mv,
+						descripcion,
+						borrado_logico, 
+						momento_creacion, 
+						gral_usr_id_creacion, 
+						gral_emp_id, 
+						gral_suc_id) 
+						
+					VALUES ( nuevo_folio,
+						str_data[5],
+						false,          
+						now(),            
+						usuario_id,           
+						emp_id,      
+						suc_id);
+			valor_retorno := '1';
+		END IF;	
+		IF command_selected = 'edit' THEN
+			UPDATE crm_motivos_visita SET descripcion=str_data[5],
+						      momento_actualizacion=now(),
+						      gral_usr_id_actualizacion=usuario_id	      
+		        WHERE crm_motivos_visita.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		IF command_selected = 'delete' THEN
+			--RAISE EXCEPTION '%','id de la tabla'||str_data[4];
+			update crm_motivos_visita SET momento_baja=now(),borrado_logico=true 
+			WHERE crm_motivos_visita.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo de Motivos de Visita
+
+	
+	-- Catalogo de Formas de Contacto
+	IF app_selected = 110 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]        id
+			--str_data[5]        descripcion
+			
+			id_tipo_consecutivo:=34;--Folio de forma de contacto
+			
+			--aqui entra para tomar el consecutivo del folio  la sucursal actual
+			UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+			WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+			
+			--concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+			nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+			
+			INSERT INTO crm_formas_contacto (folio_fc,
+						descripcion,
+						borrado_logico, 
+						momento_creacion, 
+						gral_usr_id_creacion, 
+						gral_emp_id, 
+						gral_suc_id) 
+						
+					VALUES ( nuevo_folio,
+						str_data[5],
+						false,          
+						now(),            
+						usuario_id,           
+						emp_id,      
+						suc_id);
+			valor_retorno := '1';
+		END IF;	
+		IF command_selected = 'edit' THEN
+			UPDATE crm_formas_contacto SET descripcion=str_data[5],
+						      momento_actualizacion=now(),
+						      gral_usr_id_actualizacion=usuario_id	      
+		        WHERE crm_formas_contacto.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		IF command_selected = 'delete' THEN
+			--RAISE EXCEPTION '%','id de la tabla'||str_data[4];
+			update crm_formas_contacto SET momento_baja=now(),borrado_logico=true 
+			WHERE crm_formas_contacto.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Formas de Contacto
+	
+	-- Catalogo de Motivos de Llamada
+	IF app_selected = 111 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]        id
+			--str_data[5]        descripcion
+			
+			id_tipo_consecutivo:=35;--Folio de motivo de llamada
+			
+			--aqui entra para tomar el consecutivo del folio  la sucursal actual
+			UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+			WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+			
+			--concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+			nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+			
+			INSERT INTO crm_motivos_llamada (folio_mll,
+						descripcion,
+						borrado_logico, 
+						momento_creacion, 
+						gral_usr_id_creacion, 
+						gral_emp_id, 
+						gral_suc_id) 
+						
+					VALUES ( nuevo_folio,
+						str_data[5],
+						false,          
+						now(),            
+						usuario_id,           
+						emp_id,      
+						suc_id);
+			valor_retorno := '1';
+		END IF;	
+		IF command_selected = 'edit' THEN
+			UPDATE crm_motivos_llamada SET descripcion=str_data[5],
+						      momento_actualizacion=now(),
+						      gral_usr_id_actualizacion=usuario_id	      
+		        WHERE crm_motivos_llamada.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		IF command_selected = 'delete' THEN
+			--RAISE EXCEPTION '%','id de la tabla'||str_data[4];
+			update crm_motivos_llamada SET momento_baja=now(),borrado_logico=true 
+			WHERE crm_motivos_llamada.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Motivos de Llamada
+	
+
+	--Catalogo de Prospectos(CRM)
+	IF app_selected = 113 THEN
+		IF command_selected = 'new' THEN
+			id_tipo_consecutivo:=38;--Folio Catalogo de Prospectos
+			
+			--aqui entra para tomar el consecutivo del folio  la sucursal actual
+			UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+			WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+			
+			--concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+			nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+			
+			--RAISE EXCEPTION '%','emp_id: '||emp_id;
+			--RAISE EXCEPTION '%','nombre_consecutivo: '||nombre_consecutivo;
+			--RAISE EXCEPTION '%','cadena_extra: '||cadena_extra;
+			--RAISE EXCEPTION '%','numero_control_client: '||numero_control_client;
+			
+			INSERT INTO crm_prospectos(
+					numero_control,--nuevo_folio
+					
+					estatus ,--str_data[5]
+					crm_etapas_prospecto_id ,--str_data[6]
+					tipo_prospecto_id,--str_data[7]
+
+					rfc,--str_data[8]
+					razon_social,--str_data[9]
+					calle,--str_data[10]
+					numero,--str_data[11]
+					entre_calles,--str_data[12]
+					numero_exterior,--str_data[13]
+					colonia,--str_data[14]
+					cp,--str_data[15]
+					pais_id,--str_data[16]::integer
+					estado_id,--str_data[17]::integer
+					municipio_id,--str_data[18]::integer
+					localidad_alternativa,--str_data[19]
+					telefono1,--str_data[20]
+					extension1,--str_data[21]
+					fax,--str_data[22]
+					telefono2,--str_data[23]
+					extension2,--str_data[24]
+					email,--str_data[25]
+					contacto,--str_data[26]
+					clasificacion_id, --str_data[27] ,
+					tipo_industria_id,--str_data[28],
+					observaciones,--str_data[29]
+					
+					momento_creacion,--now()
+					gral_usr_id_creacion,--usuario_id
+					gral_emp_id,--emp_id
+					gral_suc_id--suc_id
+				)VALUES (
+					nuevo_folio,
+					str_data[5]::integer,
+					str_data[6]::integer,
+					str_data[7]::integer,
+
+					str_data[8],
+					str_data[9],
+					str_data[10],
+					str_data[11],
+					str_data[12],
+					str_data[13],
+					str_data[14],
+					str_data[15],
+					str_data[16]::integer,
+					str_data[17]::integer,
+					str_data[18]::integer,
+					str_data[19],
+					str_data[20],
+					str_data[21],
+					str_data[22],
+					str_data[23],
+					str_data[24],
+					str_data[25],
+					str_data[26],
+					str_data[27]::integer,
+					str_data[28]::integer,
+					str_data[29],
+				
+					now(),
+					usuario_id,
+					emp_id,
+					suc_id
+				)RETURNING id INTO ultimo_id;
+			
+				
+			
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			--SELECT INTO str_data string_to_array(''||campos_data||'','___');
+			--RAISE EXCEPTION '%',str_data[1];
+			--RAISE EXCEPTION '%',identificador;
+			--RAISE EXCEPTION '%','total  de filas???'||str_data[5]||'___'||str_data[6]||'___'||str_data[7]||'___'||str_data[8]||'___'||str_data[9]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10]||'___'||str_data[10];
+			UPDATE crm_prospectos SET 
+					--numero_control,--nuevo_folio
+					estatus=str_data[5]::integer,
+					crm_etapas_prospecto_id=str_data[6]::integer,
+					tipo_prospecto_id=str_data[7]::integer,
+
+					rfc=str_data[8],
+					razon_social=str_data[9],
+					calle=str_data[10],
+					numero=str_data[11],
+					entre_calles=str_data[12],
+					numero_exterior=str_data[13],
+					colonia=str_data[14],
+					cp=str_data[15],
+					pais_id=str_data[16]::integer,
+					estado_id=str_data[17]::integer,
+					municipio_id=str_data[18]::integer,
+					localidad_alternativa=str_data[19],
+					telefono1=str_data[20],
+					extension1=str_data[21],
+					fax=str_data[22],
+					telefono2=str_data[23],
+					extension2=str_data[24],
+					email=str_data[25],
+					contacto=str_data[26],
+					clasificacion_id=str_data[27]::integer ,
+					tipo_industria_id=str_data[28]::integer,
+					observaciones=str_data[29],
+					borrado_logico=false,
+					momento_creacion=now(),
+					gral_usr_id_actualizacion=usuario_id
+					--gral_emp_id,--emp_id
+					--gral_suc_id--suc_id
+			WHERE id=str_data[4]::integer;
+			
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE crm_prospectos SET borrado_logico=true, momento_baja=now(),gral_usr_id_baja = str_data[3]::integer WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina catalogo de Prospectos(CRM)
+
+	
+	
+	-- Catalogo de Direcciones Fiscales de Clientes
+	IF app_selected = 118 THEN
+		IF command_selected = 'new' THEN
+			--str_data[1] app_selected
+			--str_data[2] command_selected
+			--str_data[3] id_usuario
+			--str_data[4] identificador
+			--str_data[5] id_cliente
+			--str_data[6] calle
+			--str_data[7] numero_int
+			--str_data[8] numero_ext
+			--str_data[9] colonia
+			--str_data[10] cp
+			--str_data[11] select_pais
+			--str_data[12] select_estado
+			--str_data[13] select_municipio
+			--str_data[14] entrecalles
+			--str_data[15] tel1
+			--str_data[16] ext1
+			--str_data[17] fax
+			--str_data[18] tel2
+			--str_data[19] ext2
+			--str_data[20] email
+			--str_data[21] contacto
+			
+			INSERT INTO cxc_clie_df
+			(
+				cxc_clie_id,--str_data[5]::integer,
+				calle,--str_data[6],
+				numero_interior,--str_data[7],
+				numero_exterior,--str_data[8],
+				colonia,--str_data[9],
+				cp,--str_data[10],
+				gral_pais_id,--str_data[11]::integer,
+				gral_edo_id,--str_data[12]::integer,
+				gral_mun_id,--str_data[13]::integer,
+				entre_calles,--str_data[14],
+				telefono1,--str_data[15],
+				extension1,--str_data[16],
+				telefono2,--str_data[18],
+				extension2,--str_data[19],
+				fax,--str_data[17],
+				email,--str_data[20],
+				contacto,--str_data[21],
+				momento_creacion,--now(),
+				gra_usr_id_creacion--usuario_id
+			)
+			VALUES(str_data[5]::integer, str_data[6], str_data[7], str_data[8], str_data[9], str_data[10], str_data[11]::integer, str_data[12]::integer, str_data[13]::integer, str_data[14], str_data[15], str_data[16], str_data[18], str_data[19], str_data[17], str_data[20], str_data[21], now(), usuario_id);
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE cxc_clie_df SET cxc_clie_id=str_data[5]::integer, calle=str_data[6], numero_interior=str_data[7], numero_exterior=str_data[8], colonia=str_data[9], cp=str_data[10], gral_pais_id=str_data[11]::integer, gral_edo_id=str_data[12]::integer, gral_mun_id=str_data[13]::integer, entre_calles=str_data[14], telefono1=str_data[15], extension1=str_data[16], telefono2=str_data[18], extension2=str_data[19], fax=str_data[17], email=str_data[20], contacto=str_data[21], momento_actualizacion=now(), gra_usr_id_actualizacion=usuario_id
+			WHERE id=str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE cxc_clie_df SET momento_baja=now(),borrado_logico=true, gra_usr_id_baja=usuario_id
+			WHERE id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina catalogo de Direcciones Fiscales de Clientes
+
+	
+	-- Actualizador de Tipos de Cambio
+	IF app_selected = 119 THEN
+		IF command_selected = 'new'  or command_selected = 'edit' THEN
+		--119___edit____1___4____3___2013-01-18___555
+		--app_selected+"___"+command_selected+"___"+id_usuario+"___"+id+"___"+moneda_id+"___"+fecha+"___"+tipo_cambio;
+		--RAISE EXCEPTION '%','DataString::'||str_data[1]||'___'||str_data[2]||'____'||str_data[3]||'___'||str_data[4]||'____'||str_data[5]||'___'||str_data[6]||'___'||str_data[7]||'___'||str_data[8];
+			----str_data[1]    app_selected       119
+			----str_data[2]    command_selected   edit
+			----str_data[3]    id_usuario         1
+		        ----str_data[4]         id            4
+			----str_data[5]         moneda_id     3
+			----str_data[6]     fecha             2013-01-18
+			----strd_data[7]    tipo_cambio       555
+			----strd_data[8]     fecha_de_hoy   
+/*		         RAISE EXCEPTION '%','id Encontrado::'||'select count(erp_monedavers.id ) as cantidad_registros
+			from  erp_monedavers 
+			WHERE erp_monedavers.moneda_id='||str_data[5]::integer ||' and to_char(erp_monedavers.momento_creacion,''yyyy-mm-dd'') = '''||str_data[8]||'''';
+*/
+			
+			select count(erp_monedavers.id ) as cantidad_registros
+			from  erp_monedavers 
+			WHERE erp_monedavers.moneda_id=str_data[5]::integer  and to_char(erp_monedavers.momento_creacion,'yyyy-mm-dd') = str_data[8]
+			INTO exis;
+			
+			--INSERT INTO erp_monedavers (valor ,  momento_creacion )
+			--VALUES                (str_data[7],   now())
+			--app_selected+"___"+command_selected+"___"+id_usuario+"___"+id+"___"+moneda_id+"___"+fecha+"___"+tipo_cambio;
+			IF exis = 0 THEN
+				INSERT INTO erp_monedavers (valor ,  momento_creacion,moneda_id ,version) VALUES (str_data[7]::double precision,   now(), str_data[5]::integer,'ERP');  
+			ELSE --select * from erp_monedavers where moneda_id=3
+				UPDATE erp_monedavers SET momento_creacion=now(),valor=str_data[7]::double precision, version ='ERP'
+				WHERE erp_monedavers.moneda_id=str_data[5]::integer and to_char(erp_monedavers.momento_creacion,'yyyy-mm-dd') = str_data[8];
+			END IF;
+			
+			 
+			valor_retorno := '1';
+			
+		END IF;
+	END IF;--termina Actualizador de Tipos de cambio
+	
+	
+	
+	
+	
+	--Empieza Job Actualiza Moneda
+	IF app_selected = 121 THEN
+	/*GAS-SEP
+		IF command_selected = 'new' THEN
+			--str_data[4]        id
+			--str_data[5]        valor
+			--str_data[5]        tc
+			--str_data[6]        moneda_desc
+			
+			total_filas:= array_length(extra_data,1);--obtiene total de elementos del arreglo
+			cont_fila:=1;
+			
+			IF extra_data[1]<>'sin datos' THEN
+				FOR cont_fila IN 1 .. total_filas LOOP
+					SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+
+					--RAISE EXCEPTION '%','extra_data[cont_fila]::'||extra_data[cont_fila];
+					
+					if str_filas[2]::double precision>0 then 
+						select id from gral_mon where descripcion ilike '%'||str_filas[1]||'%' and borrado_logico=false limit 1 INTO ultimo_id;
+
+						IF ultimo_id is not null THEN 
+							select count(id) as cantidad from erp_monedavers where moneda_id=ultimo_id and momento_creacion > (select (select now())::date) INTO rowCount;
+							
+							IF rowCount <= 0 THEN 
+								INSERT INTO erp_monedavers (moneda_id, valor, momento_creacion, version) 
+								VALUES (ultimo_id, str_filas[2]::double precision, now(), str_filas[3]);
+							end if;
+						end if;
+					end if;
+				END LOOP;
+			END IF;
+			valor_retorno := '1';
+		END IF;	
+		*/
+	END IF;--termina Job Actualiza Moneda
+	
+	
+	
+	
+	--Aplicativo Actualizador de Contraseña del usuario
+	IF app_selected = 155 THEN
+		IF command_selected = 'edit' THEN
+			UPDATE gral_usr SET password=str_data[5] WHERE id=str_data[3]::integer;
+			
+			valor_retorno := '1';
+		END IF;	
+		
+	END IF;--termina Aplicativo Actualizador de Contraseña del usuario
+	
+	
+	
+	-- Catalogo de inventario de  IEPS
+	IF app_selected = 167 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[6]	descripcion
+			--str_data[7]	tasa
+			INSERT INTO gral_ieps (titulo,descripcion,tasa,borrado_logico,momento_creacion,gral_usr_id_crea,gral_emp_id,gral_suc_id) 
+			VALUES (str_data[5],str_data[6],str_data[7]::double precision,false,now(),usuario_id,emp_id,suc_id);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE gral_ieps SET titulo=str_data[5],descripcion=str_data[6],tasa=str_data[7]::double precision,momento_actualizacion=now(),gral_usr_id_actualiza=usuario_id
+			WHERE gral_ieps.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE gral_ieps SET momento_baja=now(),borrado_logico=true 
+			WHERE gral_ieps.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;
+	--Termina Catalogo IEPS
+
+	-- Catalogo de inventario de  Percepciones
+	IF app_selected = 170 THEN
+		IF command_selected = 'new' THEN
+			id_tipo_consecutivo:=48;--Folio Catalogo de Percepciones
+			
+			--aqui entra para tomar el consecutivo del folio de la Percepcionesactual
+			UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+			WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+			
+			--concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+			nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+			
+			nuevo_folio:= lpad(nuevo_folio, 3, '0');
+			
+			--str_data[4]	id
+			--str_data clave nuevo_folio
+			--str_data[5]	titulo
+			--str_data[6]	activo
+			--str_data[7]	tipopercepciones
+			INSERT INTO nom_percep (clave,titulo,activo,nom_percep_tipo_id,borrado_logico,momento_creacion,gral_usr_id_crea,gral_emp_id,gral_suc_id) 
+			VALUES (nuevo_folio,str_data[5],str_data[6]::boolean,str_data[7]::integer,false,now(),usuario_id,emp_id,suc_id);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE nom_percep SET titulo=str_data[5],activo=str_data[6]::boolean,nom_percep_tipo_id=str_data[7]::integer,momento_actualiza=now(),gral_usr_id_actualiza=usuario_id
+			WHERE nom_percep.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE nom_percep SET momento_baja=now(),borrado_logico=true WHERE nom_percep.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;--termina Catalogo Percepciones
+	
+	
+	
+	-- Catalogo de inventario de  Deducciones
+	IF app_selected = 171 THEN
+		IF command_selected = 'new' THEN
+			id_tipo_consecutivo:=49;--Folio Catalogo de Deducciones
+			
+			--aqui entra para tomar el consecutivo del folio  de Deducciones actual
+			UPDATE 	gral_cons SET consecutivo=( SELECT sbt.consecutivo + 1  FROM gral_cons AS sbt WHERE sbt.id=gral_cons.id )
+			WHERE gral_emp_id=emp_id AND gral_suc_id=suc_id AND gral_cons_tipo_id=id_tipo_consecutivo  RETURNING prefijo,consecutivo INTO prefijo_consecutivo,nuevo_consecutivo;
+			
+			--concatenamos el prefijo y el nuevo consecutivo para obtener el nuevo folio 
+			nuevo_folio := prefijo_consecutivo || nuevo_consecutivo::character varying;
+			nuevo_folio:= lpad(nuevo_folio, 3, '0');
+			
+			--str_data[4]	id
+			--str_data clave nuevo_folio
+			--str_data[5]	titulo
+			--str_data[6]	activo
+			--str_data[7]	tipopercepciones
+			INSERT INTO nom_deduc (clave,titulo,activo,nom_deduc_tipo_id,borrado_logico,momento_creacion,gral_usr_id_crea,gral_emp_id,gral_suc_id) 
+			VALUES (nuevo_folio,str_data[5],str_data[6]::boolean,str_data[7]::integer,false,now(),usuario_id,emp_id,suc_id);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE nom_deduc SET titulo=str_data[5],activo=str_data[6]::boolean,nom_deduc_tipo_id=str_data[7]::integer, momento_actualiza=now(), gral_usr_id_actualiza=usuario_id 
+			WHERE nom_deduc.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE nom_deduc SET momento_baja=now(),borrado_logico=true WHERE nom_deduc.id = str_data[4]::integer; 
+			valor_retorno := '1';
+		END IF;
+	END IF;
+	--Termina Catalogo Deducciones
+
+	
+	-- Catalogo de inventario de  Periodicidad de Pago
+	IF app_selected = 172 THEN
+		IF command_selected = 'new' THEN
+
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[6]	no_periodos
+			--str_data[7]	activo
+			INSERT INTO nom_periodicidad_pago (titulo,no_periodos,activo,borrado_logico,momento_creacion,gral_usr_id_crea,gral_emp_id,gral_suc_id) 
+			VALUES (str_data[5],str_data[6]::integer,str_data[7]::boolean,false,now(),usuario_id,emp_id,suc_id);
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE nom_periodicidad_pago SET titulo=str_data[5],no_periodos=str_data[6]::integer,activo=str_data[7]::boolean,momento_actualiza=now(), gral_usr_id_actualiza=usuario_id 
+			WHERE nom_periodicidad_pago.id = str_data[4]::integer;
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE nom_periodicidad_pago SET momento_baja=now(),borrado_logico=true, gral_usr_id_baja=usuario_id  WHERE nom_periodicidad_pago.id = str_data[4]::integer; 
+			valor_retorno := '1';
+		END IF;
+	END IF;
+	--Termina Catalogo Periodicidad de Pago
+
+-- Catalogo de Configuración Periodicidad de Pago
+	IF app_selected = 174 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data clave nuevo_folio
+			--str_data[5]	año
+			--str_data[6]	tipoperiodicidad
+			--str_data[7]	descripcion
+			
+			INSERT INTO nom_periodos_conf (ano,nom_periodicidad_pago_id,prefijo,borrado_logico,momento_creacion,gral_usr_id_crea,gral_emp_id,gral_suc_id) 
+			VALUES (str_data[5]::integer,str_data[6]::integer,str_data[7],false,now(),usuario_id,emp_id,suc_id)
+			RETURNING id INTO ultimo_id;
+			valor_retorno := '1';
+			
+			total_filas:= array_length(extra_data,1);
+			cont_fila:=1;
+			
+			IF extra_data[1]<>'sin datos' THEN
+				FOR cont_fila IN 1 .. total_filas LOOP
+					SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+					--str_filas[1]	id_reg 
+					--str_filas[2]	id_periodo 
+					--str_filas[3]	folio 
+					--str_filas[4]	tituloperiodo
+					--str_filas[5]	fecha_inicio 
+					--str_filas[6]	fecha_final
+					
+					--crea registro en nom_periodos_conf_det
+					INSERT INTO nom_periodos_conf_det(
+						nom_periodos_conf_id,--str_data[4]::integer,
+						folio,--str_filas[3]	folio 
+						titulo,--str_filas[4]	tituloperiodo 
+						fecha_ini,--str_filas[5]	fecha_inicio
+						fecha_fin--str_filas[6]	fecha_final
+						
+					 ) VALUES(ultimo_id, str_filas[3]::integer, str_filas[4], str_filas[5]::date,str_filas[6]::date);
+					 --RETURNING id INTO ultimo_id;
+					 valor_retorno := '1';
+				END LOOP;
+			END IF;
+			
+		END IF;
+		
+		IF command_selected = 'edit' THEN
+			UPDATE nom_periodos_conf SET ano=str_data[5]::integer,nom_periodicidad_pago_id=str_data[6]::integer,prefijo=str_data[7],momento_actualiza=now(),gral_usr_id_actualiza=usuario_id 
+			WHERE nom_periodos_conf.id = str_data[4]::integer;
+			valor_retorno := '0';
+			
+			total_filas:= array_length(extra_data,1);
+			cont_fila:=1;
+			
+			IF extra_data[1]<>'sin datos' THEN
+				FOR cont_fila IN 1 .. total_filas LOOP 
+					SELECT INTO str_filas string_to_array(extra_data[cont_fila],'___');
+					--str_filas[1]	id_reg 
+					--str_filas[2]	id_periodo 
+					--str_filas[3]	folio 
+					--str_filas[4]	tituloperiodo
+					--str_filas[5]	fecha_inicio 
+					--str_filas[6]	fecha_final
+					
+					UPDATE nom_periodos_conf_det SET folio=str_filas[3]::integer,titulo=str_filas[4],fecha_ini=str_filas[5]::date,fecha_fin=str_filas[6]::date
+					WHERE nom_periodos_conf_det.id = str_filas[1]::integer;
+					valor_retorno := '0';
+				END LOOP;
+			END IF;
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE nom_periodos_conf SET momento_baja=now(),borrado_logico=true 
+			WHERE nom_periodos_conf.id = str_data[4]::integer;
+			valor_retorno := '1';
+		END IF;
+	END IF;-- Catalogo de Configuración Periodicidad de Pago
+
+	
+	-- Catalogo de descuentos  de  clientes
+	IF app_selected = 176 THEN
+                IF command_selected = 'new' THEN
+                        --str_data[4]         id
+                        --str_data[5]         cliente
+                        --str_data[6]         valor
+                        INSERT INTO cxc_clie_descto (cxc_clie_id,tipo,valor) VALUES (str_data[5]::integer,1,str_data[6]::double precision);
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'edit' THEN
+                        UPDATE cxc_clie_descto SET cxc_clie_id=str_data[5]::integer,valor=str_data[6]::double precision 
+                        WHERE id = str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+                
+                IF command_selected = 'delete' THEN
+                        DELETE FROM cxc_clie_descto WHERE id=str_data[4]::integer;
+                        valor_retorno := '1';
+                END IF;
+        END IF;--termina Catalogo descuentos  de  clientes
+
+        
+	--Catalogo de IVA Trasladado
+	IF app_selected = 204 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[6]	tasa
+			--str_data[7]	cta_id
+			
+			if str_data[6]::double precision>0 then 
+				str_data[6] := str_data[6]::double precision/100;
+			end if;
+			
+			INSERT INTO gral_imptos (descripcion,iva_1,momento_creacion,gral_usr_id_crea,borrado_logico) VALUES (str_data[5],str_data[6]::double precision,espacio_tiempo_ejecucion,usuario_id,false) 
+			RETURNING id INTO ultimo_id;
+
+			if incluye_modulo_contabilidad then 
+				IF EXISTS (SELECT * FROM information_schema.tables WHERE table_name='gral_impto_cta') THEN
+					insert into gral_impto_cta(gral_impto_id,ctb_cta_id,momento_actualiza,gral_usr_id_actualiza,gral_suc_id) 
+					values(ultimo_id,str_data[7]::integer,espacio_tiempo_ejecucion,usuario_id,suc_id);
+				END IF;
+			end if;
+						
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN 
+			if str_data[6]::double precision>0 then 
+				str_data[6] := str_data[6]::double precision/100;
+			end if;
+			
+			UPDATE gral_imptos SET descripcion=str_data[5],iva_1=str_data[6]::double precision,momento_actualizacion=espacio_tiempo_ejecucion,gral_usr_id_actualiza=usuario_id 
+			WHERE id=str_data[4]::integer;
+
+			if incluye_modulo_contabilidad then 
+				IF EXISTS (SELECT * FROM information_schema.tables WHERE table_name='gral_impto_cta') THEN 
+					if (select count(id) from gral_impto_cta where gral_impto_id=str_data[4]::integer)>0 then 
+						update gral_impto_cta set ctb_cta_id=str_data[7]::integer, momento_actualiza=espacio_tiempo_ejecucion, gral_usr_id_actualiza=usuario_id 
+						where gral_impto_id=str_data[4]::integer;
+					else 
+						insert into gral_impto_cta(gral_impto_id,ctb_cta_id,momento_actualiza,gral_usr_id_actualiza,gral_suc_id) 
+						values(str_data[4]::integer,str_data[7]::integer,espacio_tiempo_ejecucion,usuario_id,suc_id);
+					end if;
+				END IF;
+			end if;
+			
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE gral_imptos SET momento_baja=espacio_tiempo_ejecucion,gral_usr_id_cancela=usuario_id,borrado_logico=true 
+			WHERE id=str_data[4]::integer;
+			
+			valor_retorno := '1';
+		END IF;
+	END IF;
+	--Termina Catalogo de IVA Trasladado
+
+	--Catalogo de IVA Retenido
+	IF app_selected = 205 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	titulo
+			--str_data[6]	tasa
+			--str_data[7]	cta_id
+			
+			INSERT INTO gral_imptos_ret(titulo,tasa,momento_creacion,gral_usr_id_crea,borrado_logico) 
+			VALUES (str_data[5],str_data[6]::double precision,espacio_tiempo_ejecucion,usuario_id,false) 
+			RETURNING id INTO ultimo_id;
+			
+			if incluye_modulo_contabilidad then 
+				IF EXISTS (SELECT * FROM information_schema.tables WHERE table_name='gral_impto_ret_cta') THEN
+					insert into gral_impto_ret_cta(gral_impto_ret_id,ctb_cta_id,momento_actualiza,gral_usr_id_actualiza,gral_suc_id) 
+					values(ultimo_id,str_data[7]::integer,espacio_tiempo_ejecucion,usuario_id,suc_id);
+				END IF;
+			end if;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN 
+			UPDATE gral_imptos_ret SET titulo=str_data[5],tasa=str_data[6]::double precision,momento_actualizacion=espacio_tiempo_ejecucion,gral_usr_id_actualiza=usuario_id 
+			WHERE id=str_data[4]::integer;
+			
+			if incluye_modulo_contabilidad then 
+				IF EXISTS (SELECT * FROM information_schema.tables WHERE table_name='gral_impto_ret_cta') THEN 
+					if (select count(id) from gral_impto_ret_cta where gral_impto_ret_id=str_data[4]::integer)>0 then 
+						update gral_impto_ret_cta set ctb_cta_id=str_data[7]::integer, momento_actualiza=espacio_tiempo_ejecucion, gral_usr_id_actualiza=usuario_id 
+						where gral_impto_ret_id=str_data[4]::integer;
+					else 
+						insert into gral_impto_ret_cta(gral_impto_ret_id,ctb_cta_id,momento_actualiza,gral_usr_id_actualiza,gral_suc_id) 
+						values(str_data[4]::integer,str_data[7]::integer,espacio_tiempo_ejecucion,usuario_id,suc_id);
+					end if;
+				END IF;
+			end if;
+			
+			valor_retorno := '0';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE gral_imptos_ret SET momento_baja=espacio_tiempo_ejecucion,gral_usr_id_cancela=usuario_id,borrado_logico=true 
+			WHERE id=str_data[4]::integer;
+			
+			valor_retorno := '1';
+		END IF;
+	END IF;
+	--Termina Catalogo de IVA Retenido
+
+	--Catalogo de Metodos de Pago
+	IF app_selected = 209 THEN
+		IF command_selected = 'new' THEN
+			--str_data[4]	id
+			--str_data[5]	clave
+			--str_data[6]	titulo
+			
+			INSERT INTO fac_metodos_pago(clave_sat,titulo,momento_creacion,gral_usr_id_creacion,borrado_logico) 
+			VALUES (str_data[5],str_data[6],espacio_tiempo_ejecucion,usuario_id,false);
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'edit' THEN 
+			UPDATE fac_metodos_pago SET clave_sat=str_data[5],titulo=str_data[6],momento_actualiza=espacio_tiempo_ejecucion,gral_usr_id_actualizacion=usuario_id 
+			WHERE id=str_data[4]::integer;
+			
+			valor_retorno := '1';
+		END IF;
+		
+		IF command_selected = 'delete' THEN
+			UPDATE fac_metodos_pago SET momento_baja=espacio_tiempo_ejecucion,gral_usr_id_baja=usuario_id,borrado_logico=true 
+			WHERE id=str_data[4]::integer;
+			
+			valor_retorno := '1';
+		END IF;
+	END IF;
+	--Termina Catalogo de Metodos de Pago
+
+	
+	
+	
+	
+	RETURN valor_retorno;
+	
+END;
+$BODY$;
