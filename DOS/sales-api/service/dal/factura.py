@@ -49,7 +49,7 @@ class FactRepr(BuilderGen):
             # Just taking first row of query result
             return {
                 'rfc': row['rfc'],
-                'razon_social': unidecode.unidecode(row['titulo']),
+                'nombre': unidecode.unidecode(row['titulo']),
                 'regimen_fiscal': row['numero_control']
             }
 
@@ -119,7 +119,8 @@ class FactRepr(BuilderGen):
         SQL = """SELECT
             upper(cxc_clie.razon_social) as razon_social,
             upper(cxc_clie.rfc) as rfc,
-            cfdi_usos.numero_control as uso
+            cfdi_usos.numero_control as uso,
+            cxc_clie.cp as cp
             FROM erp_prefacturas
             LEFT JOIN cxc_clie ON cxc_clie.id = erp_prefacturas.cliente_id
             LEFT JOIN cfdi_usos ON cfdi_usos.id = erp_prefacturas.cfdi_usos_id
@@ -128,7 +129,9 @@ class FactRepr(BuilderGen):
             # Just taking first row of query result
             return {
                 'rfc': row['rfc'],
-                'razon_social': unidecode.unidecode(row['razon_social']),
+                'nombre': unidecode.unidecode(row['razon_social']),
+                'domicilio_fiscal_receptor': row['cp'],
+                'regimen_fiscal_receptor': '603',
                 'uso_cfdi': row['uso']
             }
 
@@ -169,7 +172,7 @@ class FactRepr(BuilderGen):
             ) AS importe_ret,
             (erp_prefacturas_detalles.valor_ieps * 100::double precision) AS tasa_ieps,
             (erp_prefacturas_detalles.valor_imp * 100::double precision) AS tasa_impuesto,
-            (erp_prefacturas_detalles.tasa_ret * 100::double precision) AS ret_tasa,
+            (erp_prefacturas_detalles.tasa_ret * 100::double precision) AS tasa_ret,
             erp_prefacturas_detalles.gral_ieps_id as ieps_id,
             erp_prefacturas_detalles.tipo_impuesto_id as impto_id,
             erp_prefacturas_detalles.gral_imptos_ret_id as ret_id,
@@ -190,12 +193,6 @@ class FactRepr(BuilderGen):
         rowset = []
         for row in self.pg_query(conn, "{0}{1}{2}".format(SQL, prefact_id, order_clause)):
 
-            alias = ''
-            if row['inv_prod_alias_id'] > 0:
-                alias_rowset = self.pg_query(conn, alias_sql.format(row['producto_id'], row['inv_prod_alias_id']))
-                if alias_rowset:
-                    alias = alias_rowset[0]['descripcion']
-
             rowset.append({
                 'sku': row['sku'],
                 'descripcion': unidecode.unidecode(row['descripcion']),
@@ -211,11 +208,10 @@ class FactRepr(BuilderGen):
                 'importe_ret' : row['importe_ret'],
                 'tasa_ieps': row['tasa_ieps'],
                 'tasa_impuesto': row['tasa_impuesto'],
-                'tasa_ret': row['ret_tasa'],
+                'tasa_ret': row['tasa_ret'],
                 'ieps_id': row['ieps_id'],
                 'impuesto_id': row['impto_id'],
-                'ret_id': row['ret_id'],
-                'prod_alias': alias
+                'ret_id': row['ret_id']
             })
         return rowset
 
@@ -264,21 +260,21 @@ class FactRepr(BuilderGen):
             # next two variables shall get lastest value of loop
             # It's not me. It is the Noe approach :|
             impto_id = 0
-            tasa = 0
+            base_sum = Decimal(0)
             importe_sum = Decimal(0)
             for item in l_items:
                 if tax['id'] == item['ret_id']:
                     impto_id = item['ret_id']
-                    tasa = item['tasa_ret']
+                    base = self.__abs_importe(item)
                     importe_sum += self.__narf(self.__calc_imp_tax(
-                        self.__abs_importe(item), self.__place_tasa(item['tasa_ret'])
+                        base,
+                        self.__place_tasa(item['tasa_ret'])
                     ))
+                    base_sum += base
             if impto_id > 0:
                 retenciones.append({
-                    'impuesto': 'IVA',
-                    'clave': '002',
-                    'importe': truncate(float(importe_sum), self.__NDECIMALS),
-                    'tasa': tasa
+                    'impuesto': '002',
+                    'importe': truncate(float(importe_sum), self.__NDECIMALS)
                 })
         return retenciones
 
@@ -293,21 +289,25 @@ class FactRepr(BuilderGen):
             # It's not me. It is the Noe approach :|
             impto_id = 0
             tasa = 0
+            base_sum = Decimal(0)
             importe_sum = Decimal(0)
             for item in l_items:
                 if tax['id'] == item['impuesto_id']:
                     impto_id = item['impuesto_id']
-                    tasa = item['tasa_impuesto']  
+                    tasa = item['tasa_impuesto']
+                    base = self.__calc_base(self.__abs_importe(item), self.__place_tasa(item['tasa_ieps']))
                     importe_sum += self.__narf(self.__calc_imp_tax(
-                        self.__calc_base(self.__abs_importe(item), self.__place_tasa(item['tasa_ieps'])),
+                        base,
                         self.__place_tasa(item['tasa_impuesto'])
                     ))
+                    base_sum += base
             if impto_id > 0:
                 traslados.append({
-                    'impuesto': 'IVA',
-                    'clave': '002',
-                    'importe': truncate(float(importe_sum), self.__NDECIMALS),
-                    'tasa': tasa
+                    'base': base_sum,
+                    'impuesto': '002',
+                    'tipo_factor': 'Tasa',
+                    'tasa_o_cuota': tasa / 100.0,
+                    'importe': truncate(float(importe_sum), self.__NDECIMALS)
                 })
 
         for tax in l_ieps:
@@ -315,20 +315,25 @@ class FactRepr(BuilderGen):
             # It's not me. It is the Noe approach :|
             impto_id = 0
             tasa = 0
+            base_sum = Decimal(0)
             importe_sum = Decimal(0)
             for item in l_items:
                 if tax['id'] == item['ieps_id']:
                     impto_id = item['ieps_id']
                     tasa = item['tasa_ieps']
+                    base = self.__abs_importe(item)
                     importe_sum += self.__narf(self.__calc_imp_tax(
-                        self.__abs_importe(item), self.__place_tasa(item['tasa_ieps'])
+                        base,
+                        self.__place_tasa(item['tasa_ieps'])
                     ))
+                    base_sum += base
             if impto_id > 0:
                 traslados.append({
-                    'impuesto': 'IEPS',
-                    'clave': '003',
-                    'importe': truncate(float(importe_sum), self.__NDECIMALS),
-                    'tasa': tasa
+                    'base': base_sum,
+                    'impuesto': '003',
+                    'tipo_factor': 'Tasa',
+                    'tasa_o_cuota': tasa / 100.0,
+                    'importe': truncate(float(importe_sum), self.__NDECIMALS)
                 })
         return traslados
 
@@ -403,26 +408,50 @@ class FactRepr(BuilderGen):
             raise DocBuilderStepError("prefact id not fed")
 
         ed = self.__q_emisor(conn, usr_id)
-
         conceptos = self.__q_conceptos(conn, prefact_id)
         traslados = self.__calc_traslados(conceptos,
             self.__q_ieps(conn, usr_id), self.__q_ivas(conn))
         retenciones = self.__calc_retenciones(conceptos,
             self.__q_rivas(conn))
+        control = self.__q_serie_folio(conn, usr_id)
+        forma_pago = self.__q_forma_pago(conn, prefact_id)
+        totales = self.__calc_totales(conceptos)
+        moneda = self.__q_moneda(conn, prefact_id)
+
+        tot_traslados = 0.0
+        for t in traslados:
+            tot_traslados += t['importe']
+
+        tot_retenciones = 0.0
+        for r in retenciones:
+            tot_retenciones += r['importe']
+
+        impuestos = {
+            'total_impuestos_retenidos': tot_retenciones,
+            'total_impuestos_trasladados': tot_traslados,
+            'retenciones': retenciones,
+            'traslados': traslados
+        }
+
+        shaped_conceptos = self.__shape_conceptos(conceptos)
 
         return {
-            'time_stamp': '{0:%Y-%m-%dT%H:%M:%S}'.format(datetime.datetime.now()),
-            'control': self.__q_serie_folio(conn, usr_id),
+            'serie': control['serie'],
+            'folio': control['folio'],
+            'fecha': '{0:%Y-%m-%dT%H:%M:%S}'.format(datetime.datetime.now()),
+            'forma_pago': forma_pago['clave'],
+            'subtotal': totales['importe_sum'],
+            'descuento': totales['descto_sum'],
+            'moneda': moneda['iso_4217'],
+            'total': totales['monto_total'],
+            'tipo_de_comprobante': 'I',
+            'exportacion': '01',
+            'metodo_pago': self.__q_metodo_pago(conn, prefact_id),
+            'lugar_expedicion': self.__q_lugar_expedicion(conn, usr_id),
             'emisor': ed,
             'receptor': self.__q_receptor(conn, prefact_id),
-            'metodo_pago': self.__q_metodo_pago(conn, prefact_id),
-            'moneda': self.__q_moneda(conn, prefact_id),
-            'forma_pago': self.__q_forma_pago(conn, prefact_id),
-            'lugar_expedicion': self.__q_lugar_expedicion(conn, usr_id),
-            'conceptos': conceptos,
-            'traslados': traslados,
-            'retenciones' : retenciones,
-            'totales': self.__calc_totales(conceptos)
+            'conceptos': shaped_conceptos,
+            'impuestos': impuestos
         }
 
     def __place_tasa(self, x):
@@ -452,3 +481,58 @@ class FactRepr(BuilderGen):
 
     def __abs_importe(self, a):
         return float(Decimal(str(a['importe'])) - Decimal(str(a['descto'])))
+
+    def __shape_conceptos(self, conceptos):
+        shaped_conceptos = []
+
+        for row in conceptos:
+
+            conc_traslados = []
+            if row['impuesto_id'] > 0:
+                conc_traslados.append(
+                    {
+                        'base': row['importe'],
+                        'impuesto': '002',
+                        'tipo_factor': 'Tasa',
+                        'tasa_o_cuota': row['tasa_impuesto'] / 100.0,
+                        'importe' : row['importe_impuesto'],
+                    }
+                )
+            if row['ieps_id'] > 0:
+                conc_traslados.append(
+                    {
+                        'base': row['importe'],
+                        'impuesto': '003',
+                        'tipo_factor': 'Tasa',
+                        'tasa_o_cuota': row['tasa_ieps'] / 100.0,
+                        'importe' : row['importe_ieps'],
+                    }
+                )
+
+            conc_retenciones = []
+            if row['ret_id'] > 0:
+                conc_retenciones.append(
+                    {
+                        'base': row['importe'],
+                        'impuesto': '002',
+                        'tipo_factor': 'Tasa',
+                        'tasa_o_cuota': row['tasa_ret'],
+                        'importe' : row['importe_ret'],
+                    }
+                )
+            
+            shaped_conceptos.append({
+                'clave_prod_serv': row['prodserv'],
+                'cantidad': row['cantidad'],
+                'clave_unidad': row['unidad'],
+                'descripcion': unidecode.unidecode(row['descripcion']),
+                'valor_unitario': self.__narf(row['precio_unitario']),
+                'importe': row['importe'],
+                'descuento': truncate(row['descto'], self.__NDECIMALS),
+                'objeto_imp': '02',
+                # 'no_identificacion': row['sku'],
+                'traslados': conc_traslados,
+                'retenciones': conc_retenciones
+            })
+
+        return shaped_conceptos

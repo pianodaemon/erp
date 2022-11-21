@@ -140,5 +140,9 @@ def __open_dbms_conn():
 
 
 def convert_decimal_type(dat):
-    for i in dat['conceptos']:
-        i['precio_unitario'] = float(i['precio_unitario'])
+
+    for c in dat['conceptos']:
+        c['valor_unitario'] = float(c['valor_unitario'])
+
+    for t in dat['impuestos']['traslados']:
+        t['base'] = float(t['base'])
