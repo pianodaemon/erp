@@ -2,3 +2,4 @@ psycopg2==2.8.6
 grpcio==1.37.0
 grpcio-tools==1.37.0
 Unidecode==0.4.19
+boto3==1.26.14

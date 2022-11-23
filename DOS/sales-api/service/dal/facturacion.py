@@ -4,6 +4,10 @@ from misc.helperpg import run_stored_procedure
 from dal.factura import FactRepr
 from misc.error import FatalError
 from .helperpg import HelperPg
+import boto3
+import os
+from datetime import datetime
+from math import trunc
 
 def edit_prefactura(usuario_id,     prefactura_id,      cliente_id,      moneda_id,
                     observaciones,  tipo_cambio,        vendedor_id,     condiciones_id,
@@ -73,9 +77,27 @@ def edit_prefactura(usuario_id,     prefactura_id,      cliente_id,      moneda_
     json_repr = ''
 
     if rmsg[0] == '1:':
-        dat = __create(__open_dbms_conn(), usr_id=usuario_id, prefact_id=prefactura_id)
-        convert_decimal_type(dat)
-        json_repr = json.dumps(dat)
+
+        aws_profile = os.getenv('AWS_PROFILE')
+        aws_bucket = os.getenv('AWS_BUCKET')
+
+        if aws_profile and aws_bucket:
+            # Generate a json representation of an invoice
+            dat = __create(__open_dbms_conn(), usr_id=usuario_id, prefact_id=prefactura_id)
+            convert_decimal_type(dat)
+            json_repr = json.dumps(dat)
+
+            # Upload the json representation to an AWS bucket
+            ts = trunc(datetime.now().timestamp())
+            obj_name = '{}/{}/{}/{}_{}/{}.json'.format(dat['emisor']['rfc'], 'reqs', 'fac', dat['serie'], dat['folio'], ts)
+            try:
+                upload_to_bucket(aws_profile, aws_bucket, obj_name, json_repr)
+
+            except Exception as ex:
+                rmsg[0] += '--> ' + str(ex)
+
+        else:
+            rmsg[0] += '--> AWS profile and bucket are required in order to complete the alternative cfdi generation process'
 
     return (rmsg[0], json_repr)
 
@@ -146,3 +168,13 @@ def convert_decimal_type(dat):
 
     for t in dat['impuestos']['traslados']:
         t['base'] = float(t['base'])
+
+
+def upload_to_bucket(profile, bucket, s3_obj_name, content):
+    try:
+        boto3.setup_default_session(profile_name=profile)
+        s3 = boto3.resource('s3')
+        s3.Bucket(bucket).put_object(Key=s3_obj_name, Body=content.encode('utf-8'))
+
+    except Exception:
+        raise
