@@ -78,8 +78,8 @@ def edit_prefactura(usuario_id,     prefactura_id,      cliente_id,      moneda_
 
     if rmsg[0] == '1:':
 
-        aws_profile = os.getenv('AWS_PROFILE')
-        aws_bucket = os.getenv('AWS_BUCKET')
+        aws_profile = os.getenv('AWS_FAC_PROFILE')
+        aws_bucket = os.getenv('AWS_FAC_BUCKET')
 
         if aws_profile and aws_bucket:
             # Generate a json representation of an invoice
@@ -87,17 +87,17 @@ def edit_prefactura(usuario_id,     prefactura_id,      cliente_id,      moneda_
             convert_decimal_type(dat)
             json_repr = json.dumps(dat)
 
-            # Upload the json representation to an AWS bucket
-            ts = trunc(datetime.now().timestamp())
-            obj_name = '{}/{}/{}/{}_{}/{}.json'.format(dat['emisor']['rfc'], 'reqs', 'fac', dat['serie'], dat['folio'], ts)
             try:
-                upload_to_bucket(aws_profile, aws_bucket, obj_name, json_repr)
+                # Upload the json representation to an AWS bucket
+                obj_name = upload_to_bucket(aws_profile, aws_bucket, dat['emisor']['rfc'], dat['serie'], dat['folio'], json_repr)
+                # Put the json-reference-event into AWS infrastructure
+                put_event(aws_bucket, obj_name)
 
             except Exception as ex:
-                rmsg[0] += '--> ' + str(ex)
+                print('--> ' + str(ex))
 
         else:
-            rmsg[0] += '--> AWS profile and bucket are required in order to complete the alternative cfdi generation process'
+            print('--> AWS profile and bucket env. vars. are required in order to complete the alternative cfdi generation process')
 
     return (rmsg[0], json_repr)
 
@@ -170,7 +170,10 @@ def convert_decimal_type(dat):
         t['base'] = float(t['base'])
 
 
-def upload_to_bucket(profile, bucket, s3_obj_name, content):
+def upload_to_bucket(profile, bucket, rfc, serie, folio, content):
+
+    ts = trunc(datetime.now().timestamp())
+    s3_obj_name = '{}/{}/{}/{}_{}/{}.json'.format(rfc, 'reqs', 'fac', serie, folio, ts)
     try:
         boto3.setup_default_session(profile_name=profile)
         s3 = boto3.resource('s3')
@@ -178,3 +181,31 @@ def upload_to_bucket(profile, bucket, s3_obj_name, content):
 
     except Exception:
         raise
+
+    return s3_obj_name
+
+
+def put_event(aws_bucket, obj_name):
+
+    subscriptor="medica"
+    client = boto3.client('events')
+    _bus = 'cfdi-eventbus-{}'.format(subscriptor)
+    payload = dict([("kind", "fac"), ("req", "S3://{}/{}".format(aws_bucket, obj_name))])
+    detailJsonString = json.dumps(payload)
+
+    entry = {
+        'Source':'{}'.format(subscriptor),
+        'DetailType':'cfdi-issuer-client',
+        'Detail': '{}'.format(detailJsonString),
+        'EventBusName': '{}'.format(_bus),
+    }
+    print(entry)
+
+    try:
+        response = client.put_events(
+            Entries=[entry]
+        )
+    except Exception as ex:
+        print(ex)
+
+    print(response)
