@@ -2,5 +2,5 @@
 
 DCF="dev-compose.yaml"
 
-docker compose -f ${DCF} build
-docker compose -f ${DCF} up -d
+docker-compose -f ${DCF} build
+docker-compose -f ${DCF} up -d

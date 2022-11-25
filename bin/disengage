@@ -2,4 +2,4 @@
 
 DCF="dev-compose.yaml"
 
-docker compose -f ${DCF} stop
+docker-compose -f ${DCF} stop
