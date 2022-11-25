@@ -9,6 +9,8 @@ x-shared-environment: &commonEnv
     POSTGRES_DB: "erp"
     MYSQL_ROOT_PASSWORD: "mysql"
     MYSQL_DATABASE: "dwh"
+    AWS_FAC_PROFILE: "fac-cloudw"
+    AWS_FAC_BUCKET: "cfdi-datalake-medica"
 
 services:
     cache_erp:
@@ -57,6 +59,8 @@ services:
         ports:
           - '10090:10090'
         environment: *commonEnv
+        volumes:
+          - ~/.aws:/root/.aws
         networks:
           - operational_network
     cfdiengine:
