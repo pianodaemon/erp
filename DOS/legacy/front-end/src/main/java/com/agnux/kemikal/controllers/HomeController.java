@@ -363,12 +363,15 @@ public class HomeController {
             
         } catch (XPatherException ex) {
             Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        catch (ParserConfigurationException ex) {
+
+        } catch (ParserConfigurationException ex) {
             Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
-        }        catch (SAXException ex) {
-            Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
-        }        catch (IOException ex) {
+
+        } catch (SAXException ex) {
+            Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE,
+                    String.format("Error al intentar obtener el tipo de cambio desde %s", urlString));
+
+        } catch (IOException ex) {
             Logger.getLogger(HomeController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
