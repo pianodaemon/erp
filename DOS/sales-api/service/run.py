@@ -132,6 +132,21 @@ class Sales(sales_pb2_grpc.SalesServicer):
         )
 
 
+    def PostCfdiJsonIntoAwsEvent(self, request, context):
+        print("------ post cfdi json request into AWS event:\n", request)
+
+        valor_retorno, json_repr = facturacion.post_cfdi_json_into_aws_event(
+            request.usuarioId,
+            request.prefacturaId,
+            request.serie,
+            request.folio
+        )
+        return sales_pb2.AwsEventResponse(
+            valorRetorno='{}'.format(valor_retorno),
+            jsonRepr='{}'.format(json_repr)
+        )
+
+
 def _engage():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     sales_pb2_grpc.add_SalesServicer_to_server(Sales(), server)

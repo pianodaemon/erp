@@ -76,30 +76,58 @@ def edit_prefactura(usuario_id,     prefactura_id,      cliente_id,      moneda_
     rmsg = run_stored_procedure(sql)
     json_repr = ''
 
-    if rmsg[0] == '1:':
+    # if rmsg[0] == '1:':
 
-        aws_profile = os.getenv('AWS_FAC_PROFILE')
-        aws_bucket = os.getenv('AWS_FAC_BUCKET')
+    #     aws_profile = os.getenv('AWS_FAC_PROFILE')
+    #     aws_bucket = os.getenv('AWS_FAC_BUCKET')
 
-        if aws_profile and aws_bucket:
-            # Generate a json representation of an invoice
-            dat = __create(__open_dbms_conn(), usr_id=usuario_id, prefact_id=prefactura_id)
-            convert_decimal_type(dat)
-            json_repr = json.dumps(dat)
+    #     if aws_profile and aws_bucket:
+    #         # Generate a json representation of an invoice
+    #         dat = __create(__open_dbms_conn(), usr_id=usuario_id, prefact_id=prefactura_id)
+    #         convert_decimal_type(dat)
+    #         json_repr = json.dumps(dat)
 
-            try:
-                # Upload the json representation to an AWS bucket
-                obj_name = upload_to_bucket(aws_profile, aws_bucket, dat['emisor']['rfc'], dat['serie'], dat['folio'], json_repr)
-                # Put the json-reference-event into AWS infrastructure
-                put_event(aws_bucket, obj_name)
+    #         try:
+    #             # Upload the json representation to an AWS bucket
+    #             obj_name = upload_to_bucket(aws_profile, aws_bucket, dat['emisor']['rfc'], dat['serie'], dat['folio'], json_repr)
+    #             # Put the json-reference-event into AWS infrastructure
+    #             put_event(aws_bucket, obj_name)
 
-            except Exception as ex:
-                print('--> ' + str(ex))
+    #         except Exception as ex:
+    #             print('--> ' + str(ex))
 
-        else:
-            print('--> AWS profile and bucket env. vars. are required in order to complete the alternative cfdi generation process')
+    #     else:
+    #         print('--> AWS profile and bucket env. vars. are required in order to complete the alternative cfdi generation process')
 
     return (rmsg[0], json_repr)
+
+
+def post_cfdi_json_into_aws_event(usuario_id, prefactura_id, serie, folio):
+
+    res = '0'
+    json_repr = ''
+    aws_profile = os.getenv('AWS_FAC_PROFILE')
+    aws_bucket = os.getenv('AWS_FAC_BUCKET')
+
+    if aws_profile and aws_bucket:
+        # Generate a json representation of an invoice
+        dat = __create(__open_dbms_conn(), usr_id=usuario_id, prefact_id=prefactura_id, serie_arg=serie, folio_arg=folio)
+        convert_decimal_type(dat)
+        json_repr = json.dumps(dat)
+
+        try:
+            # Upload the json representation to an AWS bucket
+            obj_name = upload_to_bucket(aws_profile, aws_bucket, dat['emisor']['rfc'], serie, folio, json_repr)
+            # Put the json-reference-event into AWS infrastructure
+            put_event(aws_bucket, obj_name)
+
+        except Exception as ex:
+            res = '2:{}'.format(str(ex))
+
+    else:
+        res = '1:{}'.format('AWS profile and bucket env. vars. are required in order to complete the alternative cfdi generation process')
+
+    return (res, json_repr)
 
 
 def convert_to_sql_array_literal(grid_detalle):

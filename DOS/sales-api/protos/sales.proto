@@ -14,6 +14,7 @@ service Sales {
   rpc CancelPedido (PedidoCancelRequest) returns (PedidoCancelResponse) {}
   rpc AuthPedido (PedidoAuthRequest) returns (PedidoAuthResponse) {}
   rpc EditPrefactura (PrefacturaRequest) returns (PrefacturaResponse) {}
+  rpc PostCfdiJsonIntoAwsEvent (AwsEventRequest) returns (AwsEventResponse) {}
 }
 
 
@@ -200,6 +201,21 @@ message PrefacturaRequest {
 
 // The response message containing the Prefactura edition results
 message PrefacturaResponse {
+  string valorRetorno = 1;
+  string jsonRepr     = 2;
+}
+
+// -------------------------------------------------------------------------
+// The request message containing the AwsEvent parameters
+message AwsEventRequest {
+  int32 usuarioId     = 1;
+  int32 prefacturaId  = 2;
+  string serie        = 3;
+  string folio        = 4;
+}
+
+// The response message containing the AwsEvent results
+message AwsEventResponse {
   string valorRetorno = 1;
   string jsonRepr     = 2;
 }

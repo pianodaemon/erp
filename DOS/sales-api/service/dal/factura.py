@@ -401,11 +401,17 @@ class FactRepr(BuilderGen):
 
         usr_id = kwargs.get('usr_id', None)
         prefact_id = kwargs.get('prefact_id', None)
+        serie = kwargs.get('serie_arg', None)
+        folio = kwargs.get('folio_arg', None)
 
         if usr_id is None:
             raise DocBuilderStepError("user id not fed")
         if prefact_id is None:
             raise DocBuilderStepError("prefact id not fed")
+        if serie is None:
+            raise DocBuilderStepError("serie not fed")
+        if folio is None:
+            raise DocBuilderStepError("folio not fed")
 
         ed = self.__q_emisor(conn, usr_id)
         conceptos = self.__q_conceptos(conn, prefact_id)
@@ -413,7 +419,6 @@ class FactRepr(BuilderGen):
             self.__q_ieps(conn, usr_id), self.__q_ivas(conn))
         retenciones = self.__calc_retenciones(conceptos,
             self.__q_rivas(conn))
-        control = self.__q_serie_folio(conn, usr_id)
         forma_pago = self.__q_forma_pago(conn, prefact_id)
         totales = self.__calc_totales(conceptos)
         moneda = self.__q_moneda(conn, prefact_id)
@@ -436,8 +441,8 @@ class FactRepr(BuilderGen):
         shaped_conceptos = self.__shape_conceptos(conceptos)
 
         return {
-            'serie': control['serie'],
-            'folio': control['folio'],
+            'serie': serie,
+            'folio': folio,
             'fecha': '{0:%Y-%m-%dT%H:%M:%S}'.format(datetime.datetime.now()),
             'forma_pago': forma_pago['clave'],
             'subtotal': totales['importe_sum'],
