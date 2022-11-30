@@ -202,7 +202,6 @@ message PrefacturaRequest {
 // The response message containing the Prefactura edition results
 message PrefacturaResponse {
   string valorRetorno = 1;
-  string jsonRepr     = 2;
 }
 
 // -------------------------------------------------------------------------
