@@ -132,7 +132,7 @@ public class FacturasSpringDao implements FacturasInterfaceDao{
             "AND USR_SUC.gral_usr_id=" + usr_id;
         Logger.getLogger(FacturasSpringDao.class.getName()).log(Level.INFO, SQL);
         Map<String, Object> map_iva = this.getJdbcTemplate().queryForMap(SQL);
-        return (map_iva.get("serie").toString() + map_iva.get("folio").toString());
+        return (map_iva.get("serie").toString() + "_" + map_iva.get("folio").toString());
     }
     
     

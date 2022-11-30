@@ -24,6 +24,8 @@ import com.agnux.kemikal.interfacedaos.PrefacturasInterfaceDao;
 import com.agnux.tcp.BbgumProxy;
 import com.agnux.tcp.BbgumProxyError;
 import com.maxima.bbgum.ServerReply;
+import com.maxima.sales.cli.grpc.AwsEventRequest;
+import com.maxima.sales.cli.grpc.AwsEventResponse;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -532,7 +534,7 @@ public class PrefacturasController {
     }
     
     
-    private String[] editarPrefactura(PrefacturaRequest prefacturaRequest) {
+    private String editarPrefactura(PrefacturaRequest prefacturaRequest) {
 
         ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString("SALES"))
             .usePlaintext()
@@ -541,17 +543,51 @@ public class PrefacturasController {
         SalesGrpc.SalesBlockingStub blockingStub = SalesGrpc.newBlockingStub(channel);
 
         PrefacturaResponse prefacturaResponse;
-        String[] retornoArr = {"0:", ""};
+        String retorno = "0:";
 
         try {
             prefacturaResponse = blockingStub.editPrefactura(prefacturaRequest);
-            retornoArr[0] = prefacturaResponse.getValorRetorno();
-            log.log(Level.INFO, "Prefactura edit Response valorRetorno: {0}", retornoArr[0]);
-            retornoArr[1] = prefacturaResponse.getJsonRepr();
+            retorno = prefacturaResponse.getValorRetorno();
+            log.log(Level.INFO, "Prefactura edit Response valorRetorno: {0}", retorno);
+
+        } catch (StatusRuntimeException e) {
+            retorno += "Error en llamada a procedimiento remoto.";
+            log.log(Level.SEVERE, "gRPC failed: {0}", e.getStatus());
+
+        } finally {
+            try {
+                channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+
+            } catch (InterruptedException e) {
+                log.log(Level.SEVERE, "Channel shutdown failed.", e);
+            }
+        }
+
+        return retorno;
+    }
+
+
+    private String[] postAwsEvent(AwsEventRequest awsEventRequest) {
+
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(Helper.getGrpcConnString("SALES"))
+            .usePlaintext()
+            .build();
+
+        SalesGrpc.SalesBlockingStub blockingStub = SalesGrpc.newBlockingStub(channel);
+
+        AwsEventResponse awsEventResponse;
+        String[] retornoArr = {"", ""};
+
+        try {
+            awsEventResponse = blockingStub.postCfdiJsonIntoAwsEvent(awsEventRequest);
+            retornoArr[0] = awsEventResponse.getValorRetorno();
+            log.log(Level.INFO, "Post AWS Event Response valorRetorno: {0}", retornoArr[0]);
+            retornoArr[1] = awsEventResponse.getJsonRepr();
             log.log(Level.INFO, "json Representation: {0}", retornoArr[1]);
 
         } catch (StatusRuntimeException e) {
-            retornoArr[0] += "Error en llamada a procedimiento remoto.";
+            retornoArr[0] += "-1:Error en llamada a procedimiento remoto.";
+            log.log(Level.SEVERE, "{0}", retornoArr[0]);
             log.log(Level.SEVERE, "gRPC failed: {0}", e.getStatus());
 
         } finally {
@@ -565,7 +601,8 @@ public class PrefacturasController {
 
         return retornoArr;
     }
-    
+
+
     //edicion y nuevo
     @RequestMapping(method = RequestMethod.POST, value="/edit.json")
     public @ResponseBody HashMap<String, String> editJson(
@@ -630,7 +667,7 @@ public class PrefacturasController {
         Integer app_selected = 13;
         String command_selected = "";
         String actualizo = "0";
-        String[] retornoArr;
+        String retorno;
         String folio = "";
 
         //Variable para el id  del usuario
@@ -756,14 +793,14 @@ public class PrefacturasController {
 
         if (success.get("success").equals("true")) {
 
-            retornoArr = editarPrefactura(prefacturaRequestBuilder.build());
+            retorno = editarPrefactura(prefacturaRequestBuilder.build());
 
             //retorna un 1, si se  actualizo correctamente
-            actualizo = retornoArr[0].split(":")[0];
+            actualizo = retorno.split(":")[0];
 
             if (select_tipo_documento == 2) {
                 //cuando es remision aqui retorna el folio de la remision
-                folio = retornoArr[0].split(":")[1];
+                folio = retorno.split(":")[1];
                 jsonretorno.put("folio", folio);
             }
 
@@ -786,6 +823,10 @@ public class PrefacturasController {
                         Integer id_empresa = Integer.parseInt(userDat.get("empresa_id"));
                         String no_id = this.getGralDao().getNoIdEmpresa(id_empresa);
                         String serieFolio = this.getFacdao().q_serie_folio(id_usuario);
+                        String[] a = serieFolio.split("_");
+                        String locSerie = a[0];
+                        String locFolio = a[1];
+                        serieFolio = locSerie + locFolio;
 
                         String filename = no_id + "_" + serieFolio + ".xml";
                         BbgumProxy bbgumProxy = new BbgumProxy();
@@ -810,6 +851,14 @@ public class PrefacturasController {
                                 jsonretorno.put("folio", serieFolio);
                                 msjRespuesta = "Se gener&oacute; la Factura: " + serieFolio;
                                 valorRespuesta = "true";
+
+                                AwsEventRequest.Builder awsEventRequestBuilder = AwsEventRequest.newBuilder();
+                                awsEventRequestBuilder.setUsuarioId(id_usuario.intValue());
+                                awsEventRequestBuilder.setPrefacturaId(id_prefactura.intValue());
+                                awsEventRequestBuilder.setSerie(locSerie);
+                                awsEventRequestBuilder.setFolio(locFolio);
+                                postAwsEvent(awsEventRequestBuilder.build());
+
                             } else {
                                 Logger.getLogger(PrefacturasController.class.getName()).log(
                                         Level.WARNING, msg);
