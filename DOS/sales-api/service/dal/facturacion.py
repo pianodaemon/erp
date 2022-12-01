@@ -176,7 +176,7 @@ def convert_decimal_type(dat):
 def upload_to_bucket(profile, bucket, rfc, serie, folio, content):
 
     ts = trunc(datetime.now().timestamp())
-    s3_obj_name = '{}/{}/{}/{}_{}/{}.json'.format(rfc, 'reqs', 'fac', serie, folio, ts)
+    s3_obj_name = '{}/{}/{}_{}/{}.json'.format(rfc, 'reqs', serie, folio, ts)
     try:
         boto3.setup_default_session(profile_name=profile)
         s3 = boto3.resource('s3')
