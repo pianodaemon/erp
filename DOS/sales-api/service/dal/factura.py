@@ -143,31 +143,31 @@ class FactRepr(BuilderGen):
             upper(inv_prod.descripcion) as descripcion,
             cfdi_claveprodserv.clave AS prodserv,
             cfdi_claveunidad.clave AS unidad,
-            erp_prefacturas_detalles.cant_facturar AS cantidad,
+            erp_prefacturas_detalles.cant_facturado AS cantidad,
             erp_prefacturas_detalles.precio_unitario,
             (
-              erp_prefacturas_detalles.cant_facturar * erp_prefacturas_detalles.precio_unitario
+              erp_prefacturas_detalles.cant_facturado * erp_prefacturas_detalles.precio_unitario
             ) AS importe,
             (
-              (erp_prefacturas_detalles.cant_facturar * erp_prefacturas_detalles.precio_unitario) *
+              (erp_prefacturas_detalles.cant_facturado * erp_prefacturas_detalles.precio_unitario) *
               (erp_prefacturas_detalles.descto::double precision/100)
             ) AS descto,
             -- From this point onwards tax related columns
             (
-              (erp_prefacturas_detalles.cant_facturar * erp_prefacturas_detalles.precio_unitario) *
+              (erp_prefacturas_detalles.cant_facturado * erp_prefacturas_detalles.precio_unitario) *
               erp_prefacturas_detalles.valor_ieps
             ) AS importe_ieps,
             (
               (
-                (erp_prefacturas_detalles.cant_facturar * erp_prefacturas_detalles.precio_unitario) +
+                (erp_prefacturas_detalles.cant_facturado * erp_prefacturas_detalles.precio_unitario) +
                 (
-                  (erp_prefacturas_detalles.cant_facturar * erp_prefacturas_detalles.precio_unitario) *
+                  (erp_prefacturas_detalles.cant_facturado * erp_prefacturas_detalles.precio_unitario) *
                   erp_prefacturas_detalles.valor_ieps
                 )
               ) * erp_prefacturas_detalles.valor_imp
             ) AS importe_impuesto,
             (
-                (erp_prefacturas_detalles.cant_facturar * erp_prefacturas_detalles.precio_unitario) *
+                (erp_prefacturas_detalles.cant_facturado * erp_prefacturas_detalles.precio_unitario) *
                 erp_prefacturas_detalles.tasa_ret
             ) AS importe_ret,
             (erp_prefacturas_detalles.valor_ieps * 100::double precision) AS tasa_ieps,
