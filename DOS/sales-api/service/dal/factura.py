@@ -448,6 +448,7 @@ class FactRepr(BuilderGen):
             'subtotal': totales['importe_sum'],
             'descuento': totales['descto_sum'],
             'moneda': moneda['iso_4217'],
+            'tipo_cambio': moneda['tipo_de_cambio'],
             'total': totales['monto_total'],
             'tipo_de_comprobante': 'I',
             'exportacion': '01',
