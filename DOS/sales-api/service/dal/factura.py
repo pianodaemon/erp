@@ -131,6 +131,7 @@ class FactRepr(BuilderGen):
                 'rfc': row['rfc'],
                 'nombre': unidecode.unidecode(row['razon_social']),
                 'domicilio_fiscal_receptor': row['cp'],
+                'residencia_fiscal': 'MEX',
                 'regimen_fiscal_receptor': '603',
                 'uso_cfdi': row['uso']
             }
@@ -529,14 +530,15 @@ class FactRepr(BuilderGen):
             
             shaped_conceptos.append({
                 'clave_prod_serv': row['prodserv'],
+                'no_identificacion': row['sku'],
                 'cantidad': row['cantidad'],
                 'clave_unidad': row['unidad'],
+                'unidad': 'propia',
                 'descripcion': unidecode.unidecode(row['descripcion']),
                 'valor_unitario': self.__narf(row['precio_unitario']),
                 'importe': row['importe'],
                 'descuento': truncate(row['descto'], self.__NDECIMALS),
                 'objeto_imp': '02',
-                # 'no_identificacion': row['sku'],
                 'traslados': conc_traslados,
                 'retenciones': conc_retenciones
             })
