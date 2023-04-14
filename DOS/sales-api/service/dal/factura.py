@@ -120,7 +120,8 @@ class FactRepr(BuilderGen):
             upper(cxc_clie.razon_social) as razon_social,
             upper(cxc_clie.rfc) as rfc,
             cfdi_usos.numero_control as uso,
-            cxc_clie.cp as cp
+            cxc_clie.cp as cp,
+            cxc_clie.cxc_clie_grupo_id as regimen_fiscal_receptor
             FROM erp_prefacturas
             LEFT JOIN cxc_clie ON cxc_clie.id = erp_prefacturas.cliente_id
             LEFT JOIN cfdi_usos ON cfdi_usos.id = erp_prefacturas.cfdi_usos_id
@@ -132,7 +133,7 @@ class FactRepr(BuilderGen):
                 'nombre': unidecode.unidecode(row['razon_social']),
                 'domicilio_fiscal_receptor': row['cp'],
                 'residencia_fiscal': 'MEX',
-                'regimen_fiscal_receptor': '603',
+                'regimen_fiscal_receptor': row['regimen_fiscal_receptor'],
                 'uso_cfdi': row['uso']
             }
 
