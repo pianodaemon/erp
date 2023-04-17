@@ -121,7 +121,8 @@ class FactRepr(BuilderGen):
             upper(cxc_clie.rfc) as rfc,
             cfdi_usos.numero_control as uso,
             cxc_clie.cp as cp,
-            cxc_clie.cxc_clie_grupo_id as regimen_fiscal_receptor
+            cxc_clie.cxc_clie_grupo_id as regimen_fiscal_receptor,
+            (select abreviacion from gral_pais where id=cxc_clie.pais_id) as residencia_fiscal
             FROM erp_prefacturas
             LEFT JOIN cxc_clie ON cxc_clie.id = erp_prefacturas.cliente_id
             LEFT JOIN cfdi_usos ON cfdi_usos.id = erp_prefacturas.cfdi_usos_id
