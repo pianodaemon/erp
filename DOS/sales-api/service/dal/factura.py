@@ -133,7 +133,7 @@ class FactRepr(BuilderGen):
                 'rfc': row['rfc'],
                 'nombre': unidecode.unidecode(row['razon_social']),
                 'domicilio_fiscal_receptor': row['cp'],
-                'residencia_fiscal': 'MEX',
+                'residencia_fiscal': row['residencia_fiscal'],
                 'regimen_fiscal_receptor': row['regimen_fiscal_receptor'],
                 'uso_cfdi': row['uso']
             }
