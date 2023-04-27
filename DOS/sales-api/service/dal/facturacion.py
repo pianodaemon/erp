@@ -92,7 +92,7 @@ def post_cfdi_json_into_aws_event(usuario_id, prefactura_id, serie, folio):
 
         try:
             # Upload the json representation to an AWS bucket
-            obj_name = upload_to_bucket(aws_profile, aws_bucket, dat['emisor']['rfc'], serie, folio, json_repr)
+            obj_name = upload_to_bucket(aws_profile, aws_bucket, dat['emisor']['rfc'], 'fac', serie, folio, json_repr)
             # Put the json-reference-event into AWS infrastructure
             put_event(aws_bucket, obj_name)
 
@@ -173,10 +173,11 @@ def convert_decimal_type(dat):
         t['base'] = float(t['base'])
 
 
-def upload_to_bucket(profile, bucket, rfc, serie, folio, content):
+def upload_to_bucket(profile, bucket, rfc, kind, serie, folio, content):
 
     ts = trunc(datetime.now().timestamp())
-    s3_obj_name = '{}/{}/{}_{}/{}.json'.format(rfc, 'reqs', serie, folio, ts)
+    s3_obj_name = '{}/{}/{}/{}_{}/{}.json'.format(rfc, 'reqs', kind, serie, folio, ts)
+    print(s3_obj_name)
     try:
         boto3.setup_default_session(profile_name=profile)
         s3 = boto3.resource('s3')
@@ -193,7 +194,9 @@ def put_event(aws_bucket, obj_name):
     subscriptor="medica"
     client = boto3.client('events')
     _bus = 'cfdi-eventbus-{}'.format(subscriptor)
-    payload = dict([("kind", "fac"), ("req", "S3://{}/{}".format(aws_bucket, obj_name))])
+    payload = {
+        "req": "S3://{}/{}".format(aws_bucket, obj_name)
+    }
     detailJsonString = json.dumps(payload)
 
     entry = {
